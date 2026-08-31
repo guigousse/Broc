@@ -1,4 +1,5 @@
 import { audioManager } from "@/lib/audio/audioManager";
+import { prefersReducedMotion } from "@/lib/transitionIris";
 
 interface FlyOpts {
   /** Rect de l'élément source (thumb, image…). */
@@ -21,6 +22,16 @@ interface FlyOpts {
   duration?: number;
   /** Joue le son d'ajout à la fin. Défaut: true. */
   playSound?: boolean;
+  /**
+   * L'objet vole NU : ni fond, ni filet, ni ombre portée.
+   *
+   * Le cadre fait exister un vol de VIGNETTE — un carré coloré qui dit la
+   * rareté. Mais les objets du catalogue sont détourés : posé derrière eux, ce
+   * même cadre dessine un grand carré de laiton autour de l'objet (refusé à la
+   * recette du 2026-08-26 sur l'achat au Bazar). L'image passe alors en
+   * `contain` : sans cadre à remplir, `cover` rognerait les bords de l'objet.
+   */
+  sansCadre?: boolean;
 }
 
 const PULSE_CLASS = "broc-pulse-once";
@@ -42,27 +53,43 @@ export function flyToTab(opts: FlyOpts): void {
     if (opts.playSound !== false) audioManager.playPickup();
     return;
   }
+
+  // `prefers-reduced-motion` : pas de clone qui traverse l'écran. On garde
+  // les effets attendus par les appelants (pulsation de la cible, son) et on
+  // respecte la durée nominale : les cérémonies (bilan, livraison, colis…)
+  // enchaînent leurs étapes sur cette durée, la raccourcir désynchroniserait
+  // leur chorégraphie.
+  if (prefersReducedMotion()) {
+    window.setTimeout(() => arrivee(target, opts.playSound !== false), duration);
+    return;
+  }
+
   const toRect = target.getBoundingClientRect();
 
   const clone = document.createElement("div");
+  const nu = opts.sansCadre === true;
   Object.assign(clone.style, {
     position: "fixed",
     left: `${opts.fromRect.left}px`,
     top: `${opts.fromRect.top}px`,
     width: `${opts.fromRect.width}px`,
     height: `${opts.fromRect.height}px`,
-    background: opts.fallbackBg,
-    border: `1.5px solid ${opts.borderColor}`,
+    ...(nu
+      ? {}
+      : {
+          background: opts.fallbackBg,
+          border: `1.5px solid ${opts.borderColor}`,
+          boxShadow: "0 8px 18px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25)",
+        }),
     boxSizing: "border-box",
     zIndex: "9999",
     pointerEvents: "none",
-    boxShadow: "0 8px 18px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25)",
     transition: `left ${duration}ms cubic-bezier(0.55, 0, 0.45, 1), top ${duration}ms cubic-bezier(0.45, 0, 0.55, 1), width ${duration}ms ease-in, height ${duration}ms ease-in, opacity ${duration}ms ease-in, transform ${duration}ms ease-in-out`,
   });
 
   if (opts.imageUrl) {
     clone.style.backgroundImage = `url(${opts.imageUrl})`;
-    clone.style.backgroundSize = "cover";
+    clone.style.backgroundSize = nu ? "contain" : "cover";
     clone.style.backgroundPosition = "center";
     clone.style.backgroundRepeat = "no-repeat";
   }
@@ -86,11 +113,16 @@ export function flyToTab(opts: FlyOpts): void {
 
   window.setTimeout(() => {
     clone.remove();
-    target.classList.remove(PULSE_CLASS);
-    // reflow pour redéclencher l'animation si déclenchée plusieurs fois
-    void target.offsetWidth;
-    target.classList.add(PULSE_CLASS);
-    if (opts.playSound !== false) audioManager.playPickup();
-    window.setTimeout(() => target.classList.remove(PULSE_CLASS), 650);
+    arrivee(target, opts.playSound !== false);
   }, duration);
+}
+
+/** Fin de vol : pulsation de la cible et son d'ajout. */
+function arrivee(target: HTMLElement, son: boolean): void {
+  target.classList.remove(PULSE_CLASS);
+  // reflow pour redéclencher l'animation si déclenchée plusieurs fois
+  void target.offsetWidth;
+  target.classList.add(PULSE_CLASS);
+  if (son) audioManager.playPickup();
+  window.setTimeout(() => target.classList.remove(PULSE_CLASS), 650);
 }

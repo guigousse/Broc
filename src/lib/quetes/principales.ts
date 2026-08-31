@@ -1,6 +1,4 @@
 import { creerCourrierMission, injecterLettreInvitationSiDue } from "@/lib/courrier";
-import { pointsOctroyables, POINTS_BONUS_CHAPITRE } from "@/lib/xp";
-import { pointsDepensesCompetences } from "@/data/competences";
 import { appliquerRecompense, recompenseEffective } from "@/lib/recompenses";
 import { calculerBrocantesDebloqueesParTier, evaluerCondition } from "@/lib/deblocage";
 import { QUETES_PRINCIPALES, chapitreParId, type ChapitrePrincipal } from "@/data/quetesPrincipales";
@@ -70,8 +68,9 @@ export function courrierDeChapitre(ch: ChapitrePrincipal, jour: number): Courrie
  * remise des clés) est livré immédiatement : versement délégué à
  * `recompenseEffective`/`appliquerRecompense` (ledger `mission_recompense`,
  * XP — `XP_QUETE_PRINCIPALE` par défaut, ou `payload.recompense.xp` explicite
- * — et énergie éventuelle), plus le bonus `POINTS_BONUS_CHAPITRE` propre à la
- * trame. Si `ch.invitationTier` est défini (ex. ch10), la lettre d'invitation
+ * — et énergie éventuelle). Aucun point de compétence : depuis le 2026-08-28
+ * ils ne viennent QUE du niveau de Brocanteur, un par niveau.
+ * Si `ch.invitationTier` est défini (ex. ch10), la lettre d'invitation
  * correspondante est injectée
  * dans la foulée (cf. `injecterLettreInvitationSiDue`). Pour les chapitres à
  * objectifs qui portent aussi une invitation (ex. ch4, ch8), l'injection a
@@ -113,19 +112,10 @@ export function accepterChapitre(
       { designation: `Mission · ${ch.payload.titre}`, courrierId: ch.id, templateIds: [] },
       timestamp,
     );
-    const avecXP = next.brocanteur;
+    // Plus de bonus de points de compétence ici (2026-08-28) : le niveau de
+    // Brocanteur est la seule source, à raison d'un point par niveau.
     next = {
       ...next,
-      brocanteur: {
-        ...avecXP,
-        pointsDisponibles:
-          avecXP.pointsDisponibles +
-          pointsOctroyables(
-            avecXP,
-            pointsDepensesCompetences(next.competencesDebloquees),
-            POINTS_BONUS_CHAPITRE,
-          ),
-      },
       courriers: injecterLettreInvitationSiDue(next.courriers, ch.invitationTier, next.jourActuel),
     };
   }

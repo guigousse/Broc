@@ -9,6 +9,7 @@ import type {
 import {
   getTemplate,
   poolPourTier,
+  tierMinTemplate,
   type ObjetTemplate,
 } from "@/data/objetTemplates";
 import type { Brocante, CelebriteEvenement } from "@/types/game";
@@ -22,6 +23,8 @@ import {
   calculerPrixMinAcceptDepuisPersona,
   getAffiniteCategorie,
 } from "@/lib/personas";
+import { CATEGORIE_ALBUM, type PieceCollection } from "@/data/pieces";
+import { tirerPiece } from "@/lib/albums";
 
 /** Braderie : rabais appliqué au prix affiché par tous les vendeurs. */
 export const RABAIS_BRADERIE = 0.7;
@@ -141,6 +144,18 @@ function instancier(
   };
 }
 
+/** Chance qu'UNE pièce d'album (carte ou timbre, 50/50) prenne un emplacement de la session. */
+export const CHANCE_PIECE_PAR_SESSION: Record<1 | 2 | 3 | 4, number> = { 1: 0.35, 2: 0.45, 3: 0.55, 4: 0.65 };
+
+/** Une pièce d'album sur l'étal : état forcé « Très bon » (pas de restauration), négo et persona comme un objet. */
+export function instancierPiece(piece: PieceCollection, tendances: readonly Tendance[], tier: 1 | 2 | 3 | 4 = 1, brocante?: Brocante): ObjetEnVente {
+  const template: ObjetTemplate = {
+    templateId: piece.id, nom: piece.nom, categorie: CATEGORIE_ALBUM[piece.album],
+    rarete: piece.rarete, prixRefBase: piece.prixRefBase, taille: "XS",
+  };
+  return instancier(template, tendances, tier, brocante, { etat: "Très bon" });
+}
+
 /**
  * Session de chinage du tutoriel : les 6 objets du scénario déclaratif,
  * dans l'ordre, tout forcé (état, prix, persona). Déterministe — la
@@ -179,6 +194,22 @@ function poidsRarete(rarete: Rarete, boost: boolean, tier: 1 | 2 | 3 | 4): numbe
   return boost && rarete !== "commun" ? base * CELEBRITE_BOOST_RARES : base;
 }
 
+/**
+ * Poids d'un objet NATIF du tier de la brocante au 2ᵉ étage du tirage. Le
+ * pool est cumulatif (un objet de T1 se trouve encore en T3) : sans ce poids,
+ * une brocante 3⭐ n'était qu'une 1⭐ avec plus de rares — ses propres pièces
+ * (le dernier tercile de prix) se noyaient dans deux tiers d'objets bon marché.
+ * Décision du 2026-08-28 : « 30 % de chances en plus sur son tier ». Le T4 n'a
+ * pas de tier natif propre (les terciles s'arrêtent à 3) : il favorise les T3.
+ */
+export const BONUS_TIER_NATIF = 1.3;
+
+function poidsTierNatif(template: ObjetTemplate, tier: 1 | 2 | 3 | 4): number {
+  return tierMinTemplate(template.templateId) === Math.min(tier, 3)
+    ? BONUS_TIER_NATIF
+    : 1;
+}
+
 function tirerTemplatePondere(
   pool: readonly ObjetTemplate[],
   boostRares: boolean,
@@ -206,8 +237,15 @@ function tirerTemplatePondere(
       break;
     }
   }
-  // 2ᵉ étage : uniforme parmi les templates de la rareté choisie.
-  return choisis[Math.floor(Math.random() * choisis.length)];
+  // 2ᵉ étage : parmi les templates de la rareté choisie, les natifs du tier
+  // pèsent BONUS_TIER_NATIF, les autres 1.
+  const poidsTemplates = choisis.map((t) => poidsTierNatif(t, tier));
+  let r2 = Math.random() * poidsTemplates.reduce((s, p) => s + p, 0);
+  for (let i = 0; i < choisis.length; i++) {
+    r2 -= poidsTemplates[i];
+    if (r2 <= 0) return choisis[i];
+  }
+  return choisis[choisis.length - 1];
 }
 
 /**
@@ -232,6 +270,41 @@ function poolGeneriquePour(brocante?: Brocante): readonly ObjetTemplate[] {
   return poolPourTier(brocante?.tier ?? 1);
 }
 
+/**
+ * Ce que la loupe de la carte de brocante montre : les objets NATIFS du tier
+ * (ceux que la brocante favorise, cf. BONUS_TIER_NATIF), filtrés par la
+ * spécialisation, précédés du poolExclusif — exactement les règles du tirage
+ * de `genererSession`, pour ne jamais promettre un objet qui n'y sort pas.
+ * Les objets des tiers inférieurs restent trouvables mais ne sont pas listés :
+ * la loupe sert à choisir OÙ chiner, pas à recopier le catalogue.
+ */
+export function objetsTrouvables(brocante: Brocante): ObjetTemplate[] {
+  const spe = brocante.specialisation;
+  const dansTheme = (t: ObjetTemplate) => !spe || t.categorie === spe;
+  const natif = Math.min(brocante.tier, 3);
+  const exclusifs = brocante.poolExclusif
+    .map((id) => getTemplate(id))
+    .filter((t): t is ObjetTemplate => t !== undefined && dansTheme(t));
+  const natifs = poolPourTier(brocante.tier).filter(
+    (t) => tierMinTemplate(t.templateId) === natif && dansTheme(t),
+  );
+  return [...exclusifs, ...natifs];
+}
+
+/**
+ * Combien d'objets des tiers INFÉRIEURS restent trouvables ici (même pool,
+ * même filtre de spécialisation que `objetsTrouvables`, sans le poolExclusif).
+ * La loupe l'annonce en une ligne au lieu de les lister. 0 pour une ★.
+ */
+export function objetsDesTiersPrecedents(brocante: Brocante): number {
+  const spe = brocante.specialisation;
+  const natif = Math.min(brocante.tier, 3);
+  return poolPourTier(brocante.tier).filter(
+    (t) =>
+      tierMinTemplate(t.templateId) < natif && (!spe || t.categorie === spe),
+  ).length;
+}
+
 export function genererSession(
   taille: number,
   tendances: readonly Tendance[] = [],
@@ -239,6 +312,7 @@ export function genererSession(
   celebrite?: CelebriteEvenement | null,
   /** Templates à ne jamais proposer (cf. uniquesExclusDuChinage). */
   exclus?: ReadonlySet<string>,
+  rngPiece: () => number = Math.random,
 ): ObjetEnVente[] {
   const celebritePresente =
     !!brocante && !!celebrite && celebrite.brocanteId === brocante.id;
@@ -305,6 +379,26 @@ export function genererSession(
     if (poolEstExclusif) exclusifsRestants -= 1;
     items.push(instancier(t, tendances, brocante?.tier ?? 1, brocante));
   }
+
+  // Pièce d'album : ≤ 1 par session, à la place d'un objet tiré (la taille ne
+  // bouge pas), position uniforme parmi les emplacements NON exclusifs —
+  // jamais à la place de l'objet d'exception de la session (M1 revue finale
+  // 2026-08-30). Indépendante du thème de la bourse — c'est un petit extra
+  // du vendeur.
+  const tier = brocante?.tier ?? 1;
+  const idsExclusifs = new Set((brocante?.poolExclusif ?? []) as readonly string[]);
+  const indicesNonExclusifs = items.reduce<number[]>((acc, it, i) => {
+    if (!idsExclusifs.has(it.objet.templateId)) acc.push(i);
+    return acc;
+  }, []);
+  if (indicesNonExclusifs.length > 0 && rngPiece() < CHANCE_PIECE_PAR_SESSION[tier]) {
+    const album = rngPiece() < 0.5 ? "classeur" : "timbres";
+    const idx = indicesNonExclusifs[
+      Math.min(indicesNonExclusifs.length - 1, Math.floor(rngPiece() * indicesNonExclusifs.length))
+    ];
+    items[idx] = instancierPiece(tirerPiece(album, rngPiece), tendances, tier, brocante);
+  }
+
   return items;
 }
 

@@ -7,6 +7,7 @@ import { objetsAtteignables } from "./atteignables";
 import { calculerRecompense } from "./recompense";
 import { genererTexte, genererTexteChiffre } from "./textes";
 import { FAMILLE, FORMES_HEBDOMADAIRES, contenuFormeChiffree, type FormeQuete } from "./formes";
+import { formeEligible } from "./eligibilite";
 
 export type TypePeriodique = "quotidienne" | "hebdomadaire";
 
@@ -82,26 +83,81 @@ function melanger<T>(arr: T[], rng: () => number): T[] {
 }
 
 /**
+ * Pool de tirage QUOTIDIEN. `objet` en est absent volontairement : la quête
+ * d'objet nommé est ajoutée à part, en un exemplaire garanti. L'inclure ici
+ * autoriserait deux ou trois quêtes d'objet le même jour — moins varié
+ * qu'avant ce chantier, ce qui serait un comble.
+ */
+const POOL_QUOTIDIEN: FormeQuete[] = [
+  "objetsRares",
+  "objetLegendaire",
+  "restauration",
+  "beneficeCumule",
+  "chiffreAffaires",
+  "profitVente",
+  "ventesCategorie",
+];
+
+/**
  * Formes composant un lot.
  *
- * Quotidienne : la journée reste tournée vers la chine, faisable en une session.
+ * Quotidienne : UNE quête d'objet nommé garantie (photo, commanditaire, négo —
+ * l'identité du jeu) plus deux formes distinctes tirées dans le pool éligible,
+ * le tout mélangé pour que l'objet garanti ne soit pas éternellement en tête.
+ * Garde-fou : au plus une forme de famille « vente » parmi les deux tirées —
+ * quatre des sept formes du pool en sont, et sans lui une journée sur trois
+ * environ ne serait qu'une paire d'objectifs de caisse. MAIS ce garde-fou ne
+ * s'active que si le pool éligible compte au moins DEUX formes hors famille
+ * « vente » : en dessous, il n'y a plus de choix à garder, seulement une
+ * ligne à imposer.
+ *
+ * Piège vérifié en revue (mesure : 500 graines sur partie neuve) : sur une
+ * partie neuve, `objetLegendaire` et `restauration` sont verrouillées — le
+ * pool hors-vente éligible se réduit à la seule `objetsRares`. Appliquer le
+ * garde-fou sans condition forçait alors `objetsRares` dans TOUS les lots
+ * (500/500) et ne laissait que 4 compositions distinctes possibles : très
+ * exactement la ligne unique que ce chantier existe pour supprimer. Ne
+ * resserre pas ce garde-fou à « au moins une forme hors-vente » sans relire
+ * cette mesure — c'est la condition qui recrée le bug.
+ *
  * Hebdomadaire : trois formes distinctes parmi les six, avec au moins une forme
  * de vente — sans ce garde-fou, une semaine pourrait n'être qu'une série de
  * quotidiennes en plus lent.
  */
-function formesDuLot(type: TypePeriodique, rng: () => number): FormeQuete[] {
-  if (type === "quotidienne") return ["objet", "objet", "objetsRares"];
+function formesDuLot(
+  state: GameState,
+  type: TypePeriodique,
+  rng: () => number,
+): FormeQuete[] {
+  if (type === "quotidienne") {
+    const eligibles = POOL_QUOTIDIEN.filter((f) => formeEligible(f, state));
+    const horsVenteEligibles = eligibles.filter((f) => FAMILLE[f] !== "vente");
+    const gardeFouActif = horsVenteEligibles.length >= 2;
+
+    const pool = melanger(eligibles, rng);
+    const tirees: FormeQuete[] = [];
+    for (const f of pool) {
+      if (tirees.length === 2) break;
+      if (
+        gardeFouActif &&
+        FAMILLE[f] === "vente" &&
+        tirees.some((t) => FAMILLE[t] === "vente")
+      ) {
+        continue;
+      }
+      tirees.push(f);
+    }
+    return melanger(["objet", ...tirees], rng);
+  }
 
   const choisies = melanger(FORMES_HEBDOMADAIRES, rng).slice(0, 3);
   if (choisies.some((f) => FAMILLE[f] === "vente")) return choisies;
 
   // Branche actuellement INATTEIGNABLE (et volontairement conservée) : sur
-  // les 6 formes, seules 2 ("objet", "objetsRares") sont de famille "chine" ;
-  // 3 tirages distincts contiennent donc TOUJOURS au moins une forme de
-  // vente, et le test « au moins une forme de vente » ne l'exerce jamais.
-  // Elle reste correcte en garde-fou pour un futur catalogue plus large
-  // (davantage de formes "chine") où le tirage pourrait un jour en manquer.
-  // Aucune vente tirée : on remplace la dernière par une forme de vente.
+  // les 6 formes hebdomadaires, seules 2 ("objet", "objetsRares") sont de
+  // famille "chine" ; 3 tirages distincts contiennent donc TOUJOURS au moins
+  // une forme de vente. Elle reste correcte en garde-fou pour un futur
+  // catalogue hebdomadaire plus large.
   const ventes = melanger(
     FORMES_HEBDOMADAIRES.filter((f) => FAMILLE[f] === "vente" && !choisies.includes(f)),
     rng,
@@ -152,6 +208,9 @@ function genererUneChiffree(
 
   const texte = genererTexteChiffre(contenu.gabaritCle, contenu.gabaritParams, rng);
 
+  const jetons =
+    contenu.jetons ?? (type === "quotidienne" ? JETONS_QUOTIDIENNE : JETONS_HEBDO);
+
   return {
     ...creerCourrierMission({
       id,
@@ -161,13 +220,11 @@ function genererUneChiffree(
       corps: texte.corps,
       categorie: type,
       cibles: [],
-      recompense: {
-        argent: contenu.recompenseArgent,
-        jetons: type === "quotidienne" ? JETONS_QUOTIDIENNE : JETONS_HEBDO,
-      },
+      recompense: { argent: contenu.recompenseArgent, jetons },
       objectifs: contenu.objectifs,
       gabaritId: texte.gabaritId,
       gabaritParams: contenu.gabaritParams,
+      ...(contenu.primeVariable ? { primeVariable: contenu.primeVariable } : {}),
     }),
     lu: true,
   };
@@ -183,7 +240,7 @@ export function genererLot(
   const prefixe = type === "quotidienne" ? "quo" : "heb";
   const pris = new Set<string>();
   const lot: Courrier[] = [];
-  const formes = formesDuLot(type, rng);
+  const formes = formesDuLot(state, type, rng);
   for (let i = 0; i < formes.length; i++) {
     const id = `${prefixe}_${cle}_${i}`;
     const forme = formes[i];

@@ -1,43 +1,28 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  marquerNotationNiveauFaite,
-  marquerPopupBorneVu,
-  notationNiveauFaite,
-  popupBorneVu,
-} from "./vu";
+import { marquerNotationNiveauFaite, notationNiveauFaite } from "./vu";
 
 beforeEach(() => {
   window.localStorage.clear();
 });
 
-describe("drapeaux de soutien", () => {
-  it("le pop-up de la borne n'a pas été vu au premier lancement", () => {
-    expect(popupBorneVu()).toBe(false);
-  });
-
-  it("une fois marqué, il reste vu", () => {
-    marquerPopupBorneVu();
-    expect(popupBorneVu()).toBe(true);
-  });
-
-  it("les deux drapeaux sont indépendants", () => {
-    marquerPopupBorneVu();
+describe("drapeau de soutien", () => {
+  it("la notation n'a pas été demandée au premier lancement", () => {
     expect(notationNiveauFaite()).toBe(false);
+  });
+
+  it("une fois marquée, elle reste faite", () => {
     marquerNotationNiveauFaite();
     expect(notationNiveauFaite()).toBe(true);
   });
 });
 
-// Spec §3 : rouvrir le pop-up à chaque tap (onze fois de suite, dans son
-// exemple) est le comportement à ne pas produire. Sans repli mémoire, un
-// `localStorage` qui refuse d'écrire (quota, navigation privée, WebView
-// capricieuse) ferait exactement ça, puisque `popupBorneVu()` resterait
-// indéfiniment faux. Ces tests forcent l'échec d'écriture pour vérifier que
-// le module s'en souvient quand même, au moins pour la session en cours.
-// `vi.resetModules()` + import dynamique : chaque test a besoin d'un module
-// « vierge », le drapeau mémoire vivant au niveau du module et non d'un état
-// réinitialisable autrement.
+// Sans repli mémoire, un `localStorage` qui refuse d'écrire (quota, navigation
+// privée, WebView capricieuse) ferait redemander la notation à chaque niveau
+// 10 de la session, `notationNiveauFaite()` restant indéfiniment faux. Ce test
+// force l'échec d'écriture pour vérifier que le module s'en souvient quand
+// même. `vi.resetModules()` + import dynamique : le drapeau mémoire vit au
+// niveau du module, il faut un module vierge pour l'observer.
 describe("repli mémoire quand l'écriture disque échoue", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -47,27 +32,11 @@ describe("repli mémoire quand l'écriture disque échoue", () => {
     }));
   });
 
-  it("le pop-up de la borne ne se rouvre pas dans la même session si le disque refuse d'écrire", async () => {
-    const { marquerPopupBorneVu: marquer, popupBorneVu: vu } = await import("./vu");
-    expect(vu()).toBe(false);
-    marquer();
-    expect(vu()).toBe(true);
-  });
-
   it("la notation de niveau ne se redemande pas dans la même session si le disque refuse d'écrire", async () => {
     const { marquerNotationNiveauFaite: marquer, notationNiveauFaite: faite } =
       await import("./vu");
     expect(faite()).toBe(false);
     marquer();
     expect(faite()).toBe(true);
-  });
-
-  it("les deux replis mémoire restent indépendants", async () => {
-    const {
-      marquerPopupBorneVu: marquerPopup,
-      notationNiveauFaite: faite,
-    } = await import("./vu");
-    marquerPopup();
-    expect(faite()).toBe(false);
   });
 });

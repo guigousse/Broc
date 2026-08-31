@@ -155,4 +155,88 @@ export const QUETES_GABARITS_EN: Record<
       "My {categorie} stock is overflowing. Move {nombre} of them for me and I'll owe you one.",
     ],
   },
+  "beneficeJour#0": {
+    titre: "Today's tally",
+    corps: [
+      "Hi,",
+      "No speeches: {montant} in profit before tonight. Then we'll see what you're worth.",
+    ],
+  },
+  "beneficeJour#1": {
+    titre: "We settle up tonight",
+    corps: [
+      "Hello,",
+      "Clear {montant} in profit by the end of the day and I'll put you in my book.",
+    ],
+  },
+  "chiffreJour#0": {
+    titre: "Keep it moving, today",
+    corps: [
+      "Hello,",
+      "Margin doesn't interest me — movement does. {montant} taken before closing.",
+    ],
+  },
+  "chiffreJour#1": {
+    titre: "One day's takings",
+    corps: [
+      "Hi,",
+      "Make that till sing before tonight — {montant} taken, not a penny less.",
+    ],
+  },
+  "margeJour#0": {
+    titre: "Today's coup",
+    corps: [
+      "Dear colleague,",
+      "One fine sale beats ten middling ones. {montant} of margin on a single object, and before tonight.",
+    ],
+  },
+  "margeJour#1": {
+    titre: "One sale, that's all",
+    corps: [
+      "Hello,",
+      "I don't care how much you sell today. I want {montant} of margin on ONE sale.",
+    ],
+  },
+  "categorieJour#0": {
+    titre: "Today's shelf",
+    corps: [
+      "Hello,",
+      "Today you mind the {categorie} shelf. Sell me {nombre} of them and we'll talk.",
+    ],
+  },
+  "categorieJour#1": {
+    titre: "Before closing",
+    corps: [
+      "Hi,",
+      "{nombre} pieces from the {categorie} shelf, sold before tonight. Simple enough?",
+    ],
+  },
+  "restauration#0": {
+    titre: "Bring back the shine",
+    corps: [
+      "Hello,",
+      "I can't stand a wreck. Take a piece, put it on the bench and bring it back to condition{etat}.",
+    ],
+  },
+  "restauration#1": {
+    titre: "A turn at the bench",
+    corps: [
+      "Hi,",
+      "One piece, one bench, a little patience. I'll take it back once it's been done up{etat}.",
+    ],
+  },
+  "legendaire#0": {
+    titre: "The piece of a lifetime",
+    corps: [
+      "Dear colleague,",
+      "You meet one of those once or twice in a career. If a legendary piece crosses your path today, don't let it go — I'll know how to show my gratitude.",
+    ],
+  },
+  "legendaire#1": {
+    titre: "If it surfaces, it's yours",
+    corps: [
+      "Hello,",
+      "Word is an exceptional piece is surfacing somewhere today. Get your hands on it. I'll pay the price of luck.",
+    ],
+  },
 };

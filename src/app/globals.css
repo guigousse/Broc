@@ -741,6 +741,38 @@
   unicode-range: U+1F00-1FFF;
 }
 
+/* Press Start 2P — la police 8-bit de la borne d'arcade, et d'elle SEULE.
+   Trois sous-ensembles seulement (latin, latin-ext, grec) : le cyrillique ne
+   sert à rien ici, et 29 Ko suffisent. Le grec est bien couvert, ce qui n'est
+   pas le cas de toutes les fontes pixel — c'est la raison de ce choix-là. */
+/* greek */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/google/g30.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/google/g31.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/google/g32.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* ============================================================
    BROC — NÉO-ART DÉCO VINTAGE DESIGN TOKENS
    ============================================================ */
@@ -790,6 +822,9 @@
   /* Rouge d'alerte SUR FOND SOMBRE (jauge d'énergie à zéro dans le header) :
      le vermillion ne mesure que 2,8:1 sur forest-800, celui-ci 5,1:1. */
   --red-signal-300: #E8836F;
+  /* Le rouge du cœur qui éclot dans le bouton « Soutenir » : plus vif que les
+     rouges d'alerte, qui virent au brique sur le vert du menu. */
+  --rouge-coeur: #D9453B;
   /* Bleu électrique du BAZARCOIN — la monnaie du Bazar. Le nuancier n'avait
      aucun bleu franc (`midnight-*` sont des gris bleutés) : celui-ci existe
      pour qu'une devise ne se confonde jamais avec l'autre, la caisse portant
@@ -843,6 +878,8 @@
   --font-handwriting: 'Caveat', 'Bradley Hand', 'Comic Sans MS', cursive;
   --font-broc-title: 'Verve Shadow', 'Cinzel', Georgia, serif;
   --font-brocante-title: 'Arcane Nine', 'Caveat', 'Bradley Hand', cursive;
+  /* Borne d'arcade uniquement — voir le commentaire au-dessus de son @font-face. */
+  --font-arcade: 'Press Start 2P', ui-monospace, Menlo, monospace;
 
   /* ============================================================
      Tokens dimensionnels fluides (Phase A — multi-écrans)
@@ -1819,4 +1856,20 @@ nav[aria-label="Navigation principale"] :focus-visible,
 @keyframes broc-arcade-neige {
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(-2px, 1px, 0); }
+}
+
+/* « Soutenir » : un cœur rouge éclot dans le cœur du bouton, dépasse sa taille
+   puis se pose. Le dépassement est la moitié de l'effet — sans lui, ce n'est
+   qu'un fondu. */
+@keyframes broc-coeur-jaillit {
+  0%   { transform: scale(0.15); opacity: 0; }
+  30%  { transform: scale(1.5);  opacity: 1; }
+  55%  { transform: scale(0.92); opacity: 1; }
+  75%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1.05); opacity: 1; }
+}
+.broc-coeur-jaillit {
+  animation: broc-coeur-jaillit 420ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  transform-origin: center;
+  filter: drop-shadow(0 0 6px rgba(217, 69, 59, 0.75));
 }

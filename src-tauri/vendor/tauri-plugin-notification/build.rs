@@ -19,6 +19,8 @@ const COMMANDS: &[&str] = &[
     "delete_channel",
     "create_channel",
     "permission_state",
+    // PATCH BROC — relecture du dernier tap sur une notif (lancement à froid).
+    "last_action",
 ];
 
 fn main() {

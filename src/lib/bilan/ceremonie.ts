@@ -7,6 +7,8 @@
  * en posant directement l'état final.
  */
 
+import { auPlafondNiveau } from "@/lib/xp";
+
 /** Écart entre deux envols d'items consécutifs. */
 export const DECALAGE_ITEM_MS = 220;
 /** Durée d'un vol (item ou pastille) — doit rester alignée sur le défaut de `flyToTab`. */
@@ -21,6 +23,28 @@ export const POP_PASTILLE_MS = 300;
 export const PAUSE_FINALE_MS = 1000;
 /** Délai avant sortie quand le joueur passe la cérémonie d'un tap. */
 export const SORTIE_APRES_PASSAGE_MS = 400;
+
+/**
+ * Décompte d'XP réellement montrable au bilan de cette session.
+ *
+ * Au niveau maximum, l'XP continue d'être créditée dans la save mais ne
+ * produit plus rien : la mettre en scène (cascade des lignes, pastille qui
+ * s'envole vers une barre déjà pleine) promet une progression qui n'existe
+ * pas. On rend donc un décompte vide, et la cérémonie se réduit d'elle-même
+ * aux envols d'objets (`phasesEnvoiItems` ne compte que les lignes affichées).
+ *
+ * Le verdict se prend sur l'instantané d'ENTRÉE de session, pas sur l'état
+ * courant : la session qui fait justement passer au niveau 100 doit encore
+ * montrer l'XP qui l'a portée là. `null` (aucun instantané) laisse tout
+ * passer — le silence doit être prouvé, jamais supposé.
+ */
+export function lignesXpDuBilan<T extends { montant: number }>(
+  lignes: readonly T[],
+  brocanteurEntree: { niveau: number } | null | undefined,
+): readonly T[] {
+  if (!brocanteurEntree || !auPlafondNiveau(brocanteurEntree)) return lignes;
+  return [];
+}
 
 export type EtapeCeremonie =
   /** Le sticker de l'item `index` part vers le stockage, sa ligne s'efface. */

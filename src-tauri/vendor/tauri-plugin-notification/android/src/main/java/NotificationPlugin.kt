@@ -127,8 +127,21 @@ class NotificationPlugin(private val activity: Activity): Plugin(activity) {
     }
     val dataJson = manager.handleNotificationActionPerformed(intent, notificationStorage)
     if (dataJson != null) {
+      // PATCH BROC — garder le tap en attente pour le JS (lancement à froid :
+      // aucun écouteur n'est encore abonné quand `load` rejoue l'intent).
+      actionEnAttente = dataJson
       trigger("actionPerformed", dataJson)
     }
+  }
+
+  /** PATCH BROC — dernier tap en attente, relu par la commande `lastAction`. */
+  private var actionEnAttente: JSObject? = null
+
+  @Command
+  fun lastAction(invoke: Invoke) {
+    val action = actionEnAttente
+    actionEnAttente = null
+    if (action != null) invoke.resolve(action) else invoke.resolve()
   }
 
   @Command

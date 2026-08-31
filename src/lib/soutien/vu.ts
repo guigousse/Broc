@@ -4,8 +4,11 @@ import {
 } from "@/lib/storage/safeLocalStorage";
 
 /**
- * Les deux « déjà vu » du soutien — le pop-up de la borne et la demande de
- * notation du niveau 10.
+ * Le « déjà vu » du soutien : la demande de notation du niveau 10.
+ *
+ * (La borne d'arcade en avait un elle aussi, tant que son pop-up ne s'ouvrait
+ * qu'une fois par appareil. Elle répond désormais à chaque tap — voir
+ * `EcranArcade` — et le drapeau est parti avec.)
  *
  * POURQUOI `localStorage` ET PAS LE `GameState`. Le dépôt range ce genre de
  * drapeau dans l'état de partie (`miniTutoVinyle`, `miniTutoCarnet`,
@@ -19,33 +22,16 @@ import {
  * migration de sauvegarde à écrire.
  */
 
-const CLE_POPUP_BORNE = "projet-broc:soutien:borne:v1";
 const CLE_NOTATION_NIVEAU = "projet-broc:soutien:notation-niveau:v1";
 
 // Repli en mémoire, pour quand l'écriture disque échoue (quota dépassé,
 // stockage désactivé en navigation privée, WebView capricieuse).
 // `safeLocalStorageSet` renvoie `false` dans ce cas précisément pour qu'on
-// puisse réagir — l'ignorer laisserait `popupBorneVu()` répondre faux pour
-// toujours, et le pop-up se rouvrirait à CHAQUE tap sur la borne : c'est le
-// harcèlement que la spec §3 nomme explicitement (onze fois de suite) comme
-// le comportement à ne pas produire. Ce drapeau ne survit pas un rechargement
-// de page, mais garantit au moins « une fois par session » quand le disque
-// ne répond pas — largement suffisant, la persistance réelle restant le
-// chemin normal.
-let popupBorneVuEnMemoire = false;
+// puisse réagir : sans ce drapeau, `notationNiveauFaite()` répondrait faux
+// pour toujours et la feuille de notation reviendrait à chaque niveau 10.
+// Il ne survit pas un rechargement de page, mais garantit au moins « une
+// fois par session » quand le disque ne répond pas.
 let notationNiveauFaiteEnMemoire = false;
-
-export function popupBorneVu(): boolean {
-  return (
-    popupBorneVuEnMemoire ||
-    safeLocalStorageGet<boolean>(CLE_POPUP_BORNE, false) === true
-  );
-}
-
-export function marquerPopupBorneVu(): void {
-  popupBorneVuEnMemoire = true;
-  safeLocalStorageSet(CLE_POPUP_BORNE, true);
-}
 
 export function notationNiveauFaite(): boolean {
   return (

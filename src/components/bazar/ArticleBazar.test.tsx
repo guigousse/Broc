@@ -1,9 +1,23 @@
 // @vitest-environment jsdom
+/**
+ * L'ÉTAGÈRE NE DIT PLUS LE PRIX — elle dit l'ÉTAT.
+ *
+ * Demande de l'auteur, 2026-08-26 : au pied de chaque objet en vente, les
+ * étoiles de son état ; le prix, lui, n'apparaît qu'au tap, dans la fiche.
+ * Une boutique montre sa marchandise, elle ne crie pas ses tarifs.
+ *
+ * Ce que ce fichier a PERDU au passage, et volontairement : la plaque de prix,
+ * son extinction quand la bourse ne suffisait pas, et le rouge du montant. Ces
+ * trois signaux décrivaient un comportement retiré, pas un comportement cassé.
+ * Le « il vous manque N jetons » vit dans `ArticleDetailBazar`, qui le disait
+ * déjà.
+ */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
-import { ArticleBazar, CHEVAUCHEMENT_ETIQUETTE_PX } from "./ArticleBazar";
-import { PLAQUE_ETIQUETTE, PLAQUE_ETIQUETTE_ETEINTE } from "./etiquette";
+import { ArticleBazar, CHEVAUCHEMENT_PIED_PX } from "./ArticleBazar";
 import { BAZAR_LAYOUT } from "./bazarLayout";
+import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
 import { qgPct } from "@/components/mobile/qg/layout";
 import {
   QgEditProvider,
@@ -12,15 +26,17 @@ import {
 
 afterEach(cleanup);
 
+/** Un objet en vente : le cas qui montre des étoiles. */
+const OBJET_PRISTIN = { etat: "Pristin état", rarete: "rare" } as const;
+
 function monter(props: Partial<React.ComponentProps<typeof ArticleBazar>> = {}) {
   const onOuvrir = vi.fn();
   const utils = render(
     <ArticleBazar
       cle="case1"
       visuel={<span data-testid="visuel" />}
-      libelle="5 pièces · Musique"
-      prix={3}
-      jetons={10}
+      libelle="Harmonica chromatique"
+      objet={OBJET_PRISTIN}
       onOuvrir={onOuvrir}
       {...props}
     />,
@@ -28,226 +44,187 @@ function monter(props: Partial<React.ComponentProps<typeof ArticleBazar>> = {}) 
   return { onOuvrir, ...utils };
 }
 
-describe("ArticleBazar", () => {
-  // La plaque montre la PIÈCE et le nombre, pas le mot : les cases font 89 px
-  // de large et « 3 Bazarcoins » n'y tient dans aucune des quatre langues. Le
-  // mot survit dans le nom accessible — un lecteur d'écran doit entendre une
-  // monnaie, pas un nombre nu qui se confondrait avec une quantité d'objets.
-  it("la plaque de prix montre le nombre et la pièce, sans le mot", () => {
-    monter({ prix: 3, jetons: 10 });
-    const plaque = screen.getByRole("img", { name: "3 Bazarcoins" });
-    expect(plaque.textContent).toBe("3");
-    expect(plaque.querySelector("svg")).toBeTruthy();
-  });
+function etoiles(): SVGSVGElement[] {
+  return Array.from(
+    screen.getByTestId("etoiles-case1").querySelectorAll("svg"),
+  );
+}
 
-  it("le singulier passe dans le nom accessible", () => {
-    monter({ prix: 1, jetons: 10 });
-    const plaque = screen.getByRole("img", { name: "1 Bazarcoin" });
-    expect(plaque.textContent).toBe("1");
-  });
-
-  it("montre le visuel, le libellé et le prix", () => {
+describe("ArticleBazar — l'état au pied de la case", () => {
+  it("un objet en vente montre ses trois étoiles, remplies de sa teinte de rareté", () => {
     monter();
-    expect(screen.getByTestId("visuel")).toBeTruthy();
-    expect(screen.getByRole("button", { name: /5 pièces · Musique/ })).toBeTruthy();
-    expect(screen.getByRole("img", { name: "3 Bazarcoins" })).toBeTruthy();
-  });
-
-  it("le singulier du prix est respecté", () => {
-    monter({ prix: 1, jetons: 10 });
-    expect(screen.getByRole("img", { name: "1 Bazarcoin" })).toBeTruthy();
-  });
-
-  // ── Le tap OUVRE, il n'achète plus ────────────────────────────────────────
-  // Recette du 2026-08-20 : un doigt mal posé sur l'étagère coûtait une
-  // semaine de jetons sans rien demander. L'achat a déménagé dans la fiche
-  // (`ArticleDetailBazar`), avec le message du manque et son minuteur.
-  it("le tap ouvre la fiche, quelle que soit la bourse", () => {
-    const { onOuvrir } = monter();
-    fireEvent.click(screen.getByRole("button", { name: /5 pièces · Musique/ }));
-    expect(onOuvrir).toHaveBeenCalledTimes(1);
-  });
-
-  it("hors de portée AUSSI, le tap ouvre la fiche : c'est elle qui dira le manque", () => {
-    const { onOuvrir } = monter({ prix: 12, jetons: 5 });
-    fireEvent.click(screen.getByRole("button", { name: /5 pièces · Musique/ }));
-    expect(onOuvrir).toHaveBeenCalledTimes(1);
-    // Plus rien ne s'affiche sur l'étagère : le message vit dans la fiche.
-    expect(screen.queryByRole("status")).toBeNull();
-  });
-
-  // ── La rature est remplacée par l'extinction (recette du 2026-08-20) ─────
-  // Le prix hors de portée était BARRÉ. L'auteur a changé la règle : la rature
-  // raye un chiffre qu'on cherche justement à lire, et sur une plaque de
-  // 0,7 rem elle se confond avec le trait du filet. C'est la COULEUR qui porte
-  // l'état, la plaque entière s'éteignant d'un bloc.
-  it("hors de portée : la plaque s'éteint en entier — fond, filet et texte", () => {
-    monter({ prix: 12, jetons: 5 });
-    // `toHaveStyle` n'existe pas ici : le dépôt n'installe PAS @testing-library/jest-dom.
-    // On lit la propriété de style directement.
-    const prix = screen.getByRole("img", { name: "12 Bazarcoins" }) as HTMLElement;
-    expect(prix.style.backgroundColor).toBe(PLAQUE_ETIQUETTE_ETEINTE.backgroundColor);
-    // Le raccourci `border` : jsdom ne le décompose pas quand la valeur passe
-    // par un `var()` (piège déjà documenté dans `etiquette.ts`), on lit donc
-    // la propriété telle qu'elle a été posée.
-    expect(prix.style.border).toBe("1px solid var(--ink-300)");
-    // Le TEXTE, lui, ne suit plus la plaque : il passe au rouge d'alerte.
-    expect(prix.style.color).toBe("var(--red-signal-300)");
-  });
-
-  /**
-   * Hors de portée, le montant ET le signe passent au rouge — l'extinction de
-   * la plaque dit « pas pour toi », le rouge dit « il t'en manque ». Les deux
-   * signaux ensemble, décidés à la recette du 2026-08-23.
-   *
-   * Le signe suit par `currentColor` plutôt que par une seconde teinte à
-   * accorder à la main : une seule couleur posée sur la plaque, et le nombre
-   * comme le signe la prennent.
-   */
-  it("hors de portée : le signe passe au rouge avec le montant", () => {
-    const { container } = monter({ prix: 12, jetons: 5 });
-    const trace = container.querySelector("svg path") as SVGElement;
-    expect(trace.getAttribute("stroke")).toBe("currentColor");
-  });
-
-  /**
-   * Le montant est écrit PLUS GRAND que le reste de la plaque, et ce n'est pas
-   * qu'une affaire de goût : sur le gris de la plaque éteinte, le rouge ne
-   * mesure que 3,56:1. C'est sous le seuil AA du texte courant (4,5:1) mais
-   * au-dessus de celui du GRAND texte (3:1), qui commence à 18,66 px en gras.
-   * 1,2 rem vaut 19,2 px — la taille est donc ce qui rend le rouge légal.
-   */
-  it("écrit le montant assez grand pour que le rouge y soit lisible", () => {
-    monter({ prix: 12, jetons: 5 });
-    const montant = screen.getByText("12") as HTMLElement;
-    expect(montant.style.fontSize).toBe("1.2rem");
-    expect(montant.style.fontWeight).toBe("700");
-    expect(Number.parseFloat(montant.style.fontSize) * 16).toBeGreaterThanOrEqual(18.66);
-  });
-
-  it("hors de portée : le prix n'est PLUS barré", () => {
-    monter({ prix: 12, jetons: 5 });
-    const prix = screen.getByRole("img", { name: "12 Bazarcoins" }) as HTMLElement;
-    expect(prix.style.textDecoration).not.toBe("line-through");
-  });
-
-  it("à portée : la plaque garde le couple de la maison", () => {
-    monter({ prix: 3, jetons: 10 });
-    const prix = screen.getByRole("img", { name: "3 Bazarcoins" }) as HTMLElement;
-    expect(prix.style.backgroundColor).toBe(PLAQUE_ETIQUETTE.backgroundColor);
-    // À portée, le montant prend le BLEU du Bazarcoin — le prix et la monnaie
-    // qui le paie sont d'une seule couleur. 4,82:1 sur le fond de la plaque.
-    expect(prix.style.color).toBe("var(--azur-400)");
-  });
-
-  // Éteinte, oui ; fantôme, non. Le fond et le texte doivent RESTER un couple
-  // contrasté : `paper-400` sur `ink-500`, 5,6:1, au-dessus du seuil AA.
-  it("les deux états ne partagent aucune des trois teintes", () => {
-    expect(PLAQUE_ETIQUETTE_ETEINTE.backgroundColor).not.toBe(
-      PLAQUE_ETIQUETTE.backgroundColor,
-    );
-    expect(PLAQUE_ETIQUETTE_ETEINTE.border).not.toBe(PLAQUE_ETIQUETTE.border);
-    expect(PLAQUE_ETIQUETTE_ETEINTE.color).not.toBe(PLAQUE_ETIQUETTE.color);
-  });
-
-  // Recette du 2026-08-20 sur téléphone : l'auteur a refusé la désaturation
-  // des articles trop chers. La marchandise reste en couleur ; seul le prix,
-  // barré, dit que la bourse ne suit pas.
-  it("hors de portée : l'article reste en COULEUR (aucun filtre)", () => {
-    monter({ prix: 12, jetons: 5 });
-    const article = screen.getByTestId("article-case1");
-    expect(article.style.filter).toBe("");
-  });
-
-  // Le bouton FONCTIONNE, quelle que soit la bourse : il ouvre la fiche.
-  // L'annoncer désactivé serait faux. `aria-disabled` a suivi l'achat dans la
-  // fiche, sur le bouton qui refuse vraiment quelque chose.
-  it("le bouton n'est jamais annoncé désactivé — il ouvre toujours", () => {
-    for (const jetons of [10, 0]) {
-      cleanup();
-      monter({ prix: 12, jetons });
-      const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
-      const valeur = bouton.getAttribute("aria-disabled");
-      expect(valeur === null || valeur === "false").toBe(true);
-      expect(bouton.hasAttribute("disabled")).toBe(false);
+    const rendues = etoiles();
+    expect(rendues).toHaveLength(3);
+    const teinte = getRarityColors("rare").outer;
+    for (const e of rendues) {
+      expect(e.getAttribute("fill")).toBe(teinte);
     }
   });
 
-  it("hors de portée : le bouton reste focusable au clavier", () => {
-    monter({ prix: 12, jetons: 5 });
-    const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
+  it("un état intermédiaire ne remplit que ses étoiles", () => {
+    monter({ objet: { etat: "Bon", rarete: "rare" } });
+    const remplies = etoiles().filter(
+      (e) => e.getAttribute("fill") === getRarityColors("rare").outer,
+    );
+    expect(remplies).toHaveLength(etoileCount("Bon"));
+    expect(etoiles()).toHaveLength(3);
+  });
+
+  /**
+   * Les étoiles sont posées sur une illustration peinte — un mur de sauge, une
+   * planche de bois clair — et non sur le fond d'écran uni des autres écrans.
+   * Sans ombre portée, un liseré de rareté clair s'y dissout.
+   */
+  it("les étoiles portent l'ombre qui les détache de l'illustration", () => {
+    monter();
+    expect(etoiles()[0].style.filter).toContain("rgba(0,0,0,0.5)");
+  });
+
+  // Un lot de pièces de restauration n'a pas d'état : rien à dire au pied.
+  // C'est l'ABSENCE de la prop qui le décide, pas une exception dans le code
+  // appelant — la scène passe ce qu'elle a, le composant montre ce qu'il sait.
+  it("le pied d'un lot de pièces reste nu", () => {
+    monter({ objet: undefined, libelle: "5 pièces · Musique" });
+    expect(screen.queryByTestId("etoiles-case1")).toBeNull();
+  });
+
+  it("l'étagère ne dit plus le prix — aucun chiffre, aucune pièce", () => {
+    const { container } = monter();
+    expect(container.textContent).toBe("");
+    expect(screen.queryByRole("img", { name: /Bazarcoin/ })).toBeNull();
+  });
+
+  /**
+   * Ce que voit l'œil, dit à l'oreille. Le prix quittait aussi le nom
+   * accessible : un joueur non-voyant n'a pas d'étoiles à regarder, et la
+   * rangée ne lui rendrait rien si elle restait muette. L'état passe donc dans
+   * le nom du BOUTON — l'élément qui s'annonce vraiment à la prise de focus.
+   */
+  it("le nom accessible du bouton dit l'état de l'objet", () => {
+    monter();
+    expect(
+      screen.getByRole("button", { name: /Harmonica chromatique.*Pristin/ }),
+    ).toBeTruthy();
+  });
+
+  it("un lot n'annonce que son libellé : il n'a pas d'état à dire", () => {
+    monter({ objet: undefined, libelle: "5 pièces · Musique" });
+    const bouton = screen.getByRole("button");
+    expect(bouton.getAttribute("aria-label")).toBe("5 pièces · Musique");
+  });
+
+  // ── L'ARTICLE VENDU (2026-08-26) ────────────────────────────────────────
+  // Il ne quitte plus l'étagère : il y reste en noir et blanc sous son cachet,
+  // jusqu'au renouvellement du lundi. La case ne promet plus rien — donc elle
+  // n'est plus une commande.
+  describe("un article vendu", () => {
+    const vendu = { objet: OBJET_PRISTIN, vendu: true } as const;
+
+    it("n'est plus un bouton : il n'y a plus rien à ouvrir", () => {
+      monter(vendu);
+      expect(screen.queryByRole("button")).toBeNull();
+      expect(screen.getByTestId("visuel")).toBeTruthy();
+    });
+
+    it("porte le cachet en diagonale de la chine", () => {
+      monter(vendu);
+      const cachet = screen.getByTestId("tampon");
+      expect(cachet.textContent).toBe("Vendu");
+      const encre = cachet.firstElementChild as HTMLElement;
+      expect(encre.style.transform).toBe("rotate(-18deg)");
+    });
+
+    // Son état ne renseigne plus personne — l'objet n'est plus à vendre — et
+    // une rangée colorée sous une vignette grise se contredirait.
+    it("perd ses étoiles d'état", () => {
+      monter(vendu);
+      expect(screen.queryByTestId("etoiles-case1")).toBeNull();
+    });
+
+    it("se dit vendu à qui ne le voit pas", () => {
+      monter(vendu);
+      const cadre = screen.getByRole("img", { name: /Harmonica chromatique.*Vendu/ });
+      expect(cadre).toBeTruthy();
+    });
+
+    it("un tap ne déclenche rien", () => {
+      const { onOuvrir } = monter(vendu);
+      fireEvent.click(screen.getByTestId("visuel"));
+      expect(onOuvrir).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── Le tap OUVRE, il n'achète pas ────────────────────────────────────────
+  // Recette du 2026-08-20 : un doigt mal posé sur l'étagère coûtait une
+  // semaine de jetons sans rien demander. L'achat vit dans la fiche.
+  it("le tap ouvre la fiche", () => {
+    const { onOuvrir } = monter();
+    fireEvent.click(screen.getByRole("button"));
+    expect(onOuvrir).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Le composant ne connaît PLUS la bourse du joueur — c'était la seule raison
+   * pour laquelle il la recevait. Il ne peut donc plus rien refuser, ni le
+   * laisser croire : pas d'`aria-disabled`, pas de `disabled`.
+   */
+  it("le bouton n'est jamais annoncé désactivé — il ouvre toujours", () => {
+    monter();
+    const bouton = screen.getByRole("button");
+    const valeur = bouton.getAttribute("aria-disabled");
+    expect(valeur === null || valeur === "false").toBe(true);
+    expect(bouton.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("le bouton reste focusable au clavier", () => {
+    monter();
+    const bouton = screen.getByRole("button");
     bouton.focus();
     expect(document.activeElement).toBe(bouton);
+  });
+
+  // Recette du 2026-08-20 sur téléphone : l'auteur a refusé la désaturation
+  // des articles trop chers. La marchandise reste en couleur, toujours.
+  it("l'article reste en COULEUR (aucun filtre sur la case)", () => {
+    monter();
+    expect(screen.getByTestId("article-case1").style.filter).toBe("");
   });
 
   // ── Revue du 2026-08-20, constat I1 ──────────────────────────────────────
   // jsdom n'a pas de moteur de layout : la seule trace observable de ces deux
   // défauts est le style en ligne. Le dépôt n'installe pas jest-dom, on lit
   // donc `element.style.*` directement.
-  describe("l'étiquette ne pousse pas l'article hors de l'étagère", () => {
+  describe("le pied ne pousse pas l'article hors de l'étagère", () => {
     it("le conteneur ne porte que le visuel : c'est LUI qui est ancré à la planche", () => {
       monter();
       const article = screen.getByTestId("article-case1");
       // Deux enfants seulement : le bouton (dans le flux, donc ancré par
-      // `bottom`) et la colonne d'étiquettes, hors flux.
+      // `bottom`) et la colonne du pied, hors flux.
       expect(article.children.length).toBe(2);
-      const [bouton, etiquettes] = [...article.children] as HTMLElement[];
+      const [bouton, pied] = [...article.children] as HTMLElement[];
       expect(bouton.tagName).toBe("BUTTON");
-      expect(etiquettes.style.position).toBe("absolute");
+      expect(pied.style.position).toBe("absolute");
     });
 
-    it("la colonne prix est À CHEVAL sur l'arête basse de la case, hors du flux", () => {
+    it("la colonne du pied est À CHEVAL sur l'arête basse de la case, hors du flux", () => {
       monter();
-      const etiquettes = screen.getByTestId("etiquettes-case1");
-      expect(etiquettes.style.position).toBe("absolute");
-      // Recette du 2026-08-20 : la plaque pendait sous le carré
-      // (`calc(100% + 2px)`) et semblait flotter entre deux rangées. Elle
-      // remonte maintenant PAR-DESSUS l'arête basse.
-      expect(etiquettes.style.top).toBe(`calc(100% - ${CHEVAUCHEMENT_ETIQUETTE_PX}px)`);
-      expect(CHEVAUCHEMENT_ETIQUETTE_PX).toBeGreaterThan(0);
-      expect(etiquettes.style.left).toBe("50%");
-      expect(etiquettes.style.transform).toBe("translateX(-50%)");
-    });
-
-    // Le fond du Bazar est un mur de sauge pâle : une étiquette écrite à même
-    // l'illustration ne se lit pas (constat de recette sur capture du décor
-    // fini). Le choix des teintes reste un jugement à l'œil, mais l'existence
-    // de la plaque, elle, s'atteste.
-    it("le prix est posé sur une plaque sombre, pas à même l'illustration", () => {
-      monter();
-      const prix = screen.getByRole("img", { name: "3 Bazarcoins" });
-      expect(prix.style.backgroundColor).toBe("var(--forest-800)");
-      // Le laiton de la chrome a laissé la place au bleu du Bazarcoin : le
-      // prix et la monnaie qui le paie sont désormais d'une seule couleur.
-      expect(prix.style.color).toBe("var(--azur-400)");
-      expect(prix.style.borderRadius).toBe("var(--radius-pill)");
-    });
-
-    it("hors de portée, c'est encore une plaque — éteinte, pas effacée", () => {
-      monter({ prix: 12, jetons: 5 });
-      const prix = screen.getByRole("img", { name: "12 Bazarcoins" });
-      expect(prix.style.backgroundColor).toBe("var(--ink-500)");
-      expect(prix.style.borderRadius).toBe("var(--radius-pill)");
-      // La plaque est passée d'`inline-block` à `inline-flex` le jour où la
-      // pièce est venue s'asseoir à côté du nombre : c'est la façon la plus
-      // sûre de les aligner et de les espacer. Ce qui compte pour ce test n'a
-      // pas bougé — la plaque reste une pastille en ligne, éteinte et non
-      // effacée.
-      expect(prix.style.display).toMatch(/^inline/);
-      expect(prix.style.alignItems).toBe("center");
+      const pied = screen.getByTestId("etoiles-case1");
+      expect(pied.style.position).toBe("absolute");
+      // Recette du 2026-08-20 : suspendu sous le carré (`calc(100% + 2px)`),
+      // le pied semblait flotter entre deux rangées. Il remonte PAR-DESSUS
+      // l'arête basse pour se lire comme posé sur la planche.
+      expect(pied.style.top).toBe(`calc(100% - ${CHEVAUCHEMENT_PIED_PX}px)`);
+      expect(CHEVAUCHEMENT_PIED_PX).toBeGreaterThan(0);
+      expect(pied.style.left).toBe("50%");
+      expect(pied.style.transform).toBe("translateX(-50%)");
     });
   });
 
   // ── Case carrée, visuel centré-bas : demande du 2026-08-20, round 2 ──────
-  // L'auteur cale le Bazar à la souris (`?qgedit=1`) et tire le cadre
-  // pointillé pour que son arête BASSE coïncide avec la planche peinte dans
-  // le fond : l'objet doit sembler y reposer, donc centré horizontalement
-  // mais justifié en bas, pas au centre des deux axes (round 1, dépassé).
   describe("la case est carrée, centre le visuel horizontalement et le justifie en bas", () => {
     it("le conteneur porte aspectRatio 1/1", () => {
       monter();
-      const article = screen.getByTestId("article-case1");
-      expect(article.style.aspectRatio).toBe("1 / 1");
+      expect(screen.getByTestId("article-case1").style.aspectRatio).toBe("1 / 1");
     });
 
     it("le conteneur centre horizontalement et justifie en bas (pas placeItems: center)", () => {
@@ -259,7 +236,7 @@ describe("ArticleBazar", () => {
 
     it("le bouton occupe toute la case et place son visuel comme le conteneur", () => {
       monter();
-      const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
+      const bouton = screen.getByRole("button");
       expect(bouton.style.width).toBe("100%");
       expect(bouton.style.height).toBe("100%");
       expect(bouton.style.justifyItems).toBe("center");
@@ -267,15 +244,10 @@ describe("ArticleBazar", () => {
     });
 
     // « L'objet doit toujours être visible en entier » (recette du
-    // 2026-08-20). Le bouton portait `overflow: hidden` comme filet contre un
-    // visuel trop grand ; rogner était le mauvais marché — l'auteur a vu ses
-    // articles coupés sur son téléphone. Plus rien ne peut déborder (vignette
-    // en `fill` + `contain` et sans inclinaison, engrenage plafonné à 100 %
-    // de sa boîte), donc le filet est parti.
+    // 2026-08-20) : plus rien ne peut déborder, le filet de rognage est parti.
     it("la case ne rogne rien : pas d'overflow: hidden", () => {
       monter();
-      const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
-      expect(bouton.style.overflow).toBe("");
+      expect(screen.getByRole("button").style.overflow).toBe("");
     });
   });
 });
@@ -296,14 +268,7 @@ describe("ArticleBazar suit l'outil de calage", () => {
   it("sans override, il est posé à sa coordonnée authorée", () => {
     render(
       <QgEditProvider enabled>
-        <ArticleBazar
-          cle="case1"
-          visuel={<span />}
-          libelle="lot"
-          prix={1}
-          jetons={10}
-          onOuvrir={vi.fn()}
-        />
+        <ArticleBazar cle="case1" visuel={<span />} libelle="lot" onOuvrir={vi.fn()} />
       </QgEditProvider>,
     );
     const article = screen.getByTestId("article-case1");
@@ -314,14 +279,7 @@ describe("ArticleBazar suit l'outil de calage", () => {
     render(
       <QgEditProvider enabled>
         <Deplacer left={120} />
-        <ArticleBazar
-          cle="case1"
-          visuel={<span />}
-          libelle="lot"
-          prix={1}
-          jetons={10}
-          onOuvrir={vi.fn()}
-        />
+        <ArticleBazar cle="case1" visuel={<span />} libelle="lot" onOuvrir={vi.fn()} />
       </QgEditProvider>,
     );
     fireEvent.click(screen.getByTestId("deplacer"));

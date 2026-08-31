@@ -208,6 +208,9 @@ export function ReserveTabs({
     <div style={rangee}>
       <button
         type="button"
+        /* Cible NOMMÉE du vol : l'objet qui sort de la cérémonie de
+           restauration rétrécit jusqu'ici (cf. `flyToTab`). */
+        data-fly-target="stockage-onglet"
         aria-current={actif === "stockage" ? "page" : undefined}
         aria-label={d.chrome.onglets.stockage}
         onClick={() => {

@@ -247,7 +247,7 @@ describe("PartiesModal — Supprimer", () => {
     expect(within(ligne(2)).getByText("Partie 2")).toBeTruthy();
   });
 
-  it("confirmer sur un slot NON actif : supprime et rafraîchit la liste sans reload", () => {
+  it("confirmer sur un slot NON actif : supprime et rafraîchit la liste sans reload", async () => {
     const location = mockLocation();
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
@@ -259,11 +259,15 @@ describe("PartiesModal — Supprimer", () => {
     fireEvent.click(within(dialogue).getByRole("button", { name: "Supprimer" }));
 
     expect(chargerIndex().slots[2]).toBeNull();
-    expect(within(ligne(2)).getByText("Emplacement vide")).toBeTruthy();
+    // F-01 : la suppression passe par `clearSlot` (asynchrone) — la liste
+    // se rafraîchit une fois l'effacement terminé.
+    await waitFor(() =>
+      expect(within(ligne(2)).getByText("Emplacement vide")).toBeTruthy(),
+    );
     expect(location.reload).not.toHaveBeenCalled();
   });
 
-  it("confirmer sur le slot ACTIF : supprime puis recharge la page", () => {
+  it("confirmer sur le slot ACTIF : supprime puis recharge la page", async () => {
     const location = mockLocation();
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     changerSlotActif(1);
@@ -274,7 +278,8 @@ describe("PartiesModal — Supprimer", () => {
     fireEvent.click(within(dialogue).getByRole("button", { name: "Supprimer" }));
 
     expect(chargerIndex().slots[1]).toBeNull();
-    expect(location.reload).toHaveBeenCalledTimes(1);
+    // Le reload n'a lieu qu'APRÈS la fin de `clearSlot` (F-01).
+    await waitFor(() => expect(location.reload).toHaveBeenCalledTimes(1));
   });
 
   it("confirmer sur le slot ACTIF : onAvantSuppressionActive est appelé AVANT supprimerSlot", () => {
@@ -360,7 +365,7 @@ describe("PartiesModal — Supprimer", () => {
     expect(chargerIndex().slots[1]).toBeNull();
   });
 
-  it("double clic sur Confirmer Supprimer : la garde one-shot évite un double déclenchement", () => {
+  it("double clic sur Confirmer Supprimer : la garde one-shot évite un double déclenchement", async () => {
     const location = mockLocation();
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     changerSlotActif(1);
@@ -382,7 +387,7 @@ describe("PartiesModal — Supprimer", () => {
     fireEvent.click(boutonConfirmer);
 
     expect(onAvantSuppressionActive).toHaveBeenCalledTimes(1);
-    expect(location.reload).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(location.reload).toHaveBeenCalledTimes(1));
   });
 
   it("onAvantSuppressionActive absent (prop optionnelle) : la suppression du slot actif reste sans erreur", () => {

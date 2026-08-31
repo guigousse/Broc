@@ -42,17 +42,17 @@ function makeSlide(dejaPossede: boolean, estNouveau = false): ChineSlide {
 }
 
 describe("ChineSlideVue — badge collection", () => {
-  it("affiche le badge ✓ quand le template a déjà été possédé", () => {
+  it("affiche le badge ✓ quand le joueur a encore l'objet (collection, stock ou étal)", () => {
     render(<ChineSlideVue slide={makeSlide(true)} />);
     expect(
-      screen.getByLabelText("Déjà possédé dans la collection"),
+      screen.getByLabelText("Déjà en votre possession ou dans la collection"),
     ).toBeTruthy();
   });
 
-  it("pas de badge pour une découverte jamais possédée", () => {
+  it("pas de badge pour un objet qu'il n'a plus (ou jamais eu)", () => {
     render(<ChineSlideVue slide={makeSlide(false)} />);
     expect(
-      screen.queryByLabelText("Déjà possédé dans la collection"),
+      screen.queryByLabelText("Déjà en votre possession ou dans la collection"),
     ).toBeNull();
   });
 });
@@ -147,5 +147,34 @@ describe("ChineSlideVue — tampon de statut", () => {
     render(<ChineSlideVue slide={makeSlide(false)} />);
     expect(screen.queryByText("Stock plein")).toBeNull();
     expect(screen.queryByText("Vendu")).toBeNull();
+  });
+});
+
+describe("ChineSlideVue — pièce (carte/timbre)", () => {
+  function pieceSlide(
+    templateId: string,
+    over: Partial<Extract<ChineSlide, { kind: "item" }>> = {},
+  ): ChineSlide {
+    const base = makeSlide(false) as Extract<ChineSlide, { kind: "item" }>;
+    return {
+      ...base,
+      ...over,
+      item: { ...base.item, objet: { ...base.item.objet, templateId } },
+    };
+  }
+
+  it("rend le visuel de pièce et tamponne « Classeur manquant » quand le classeur manque", () => {
+    const { container } = render(
+      <ChineSlideVue
+        slide={pieceSlide("carte.marteau_menuisier", { albumManquant: "classeur" })}
+      />,
+    );
+    expect(container.querySelector('[data-testid="piece-visuel"]')).not.toBeNull();
+    expect(screen.getByText("Classeur manquant")).toBeTruthy();
+  });
+
+  it("stock plein sans albumManquant : pas de « Stock plein » sur une pièce", () => {
+    render(<ChineSlideVue slide={pieceSlide("carte.marteau_menuisier")} plein />);
+    expect(screen.queryByText("Stock plein")).toBeNull();
   });
 });

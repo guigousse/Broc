@@ -15,7 +15,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import TitleScreen from "./page";
+import TitleScreen, { DUREE_COEUR_MS } from "./page";
 import { lireFlagIris } from "@/lib/transitionIris";
 import { audioManager } from "@/lib/audio/audioManager";
 import { DUREE_FERMETURE_MS } from "@/lib/transitionIris";
@@ -54,12 +54,13 @@ vi.mock("@/context/GameContext", () => ({
 }));
 
 const playClick = vi.fn();
+const playPop = vi.fn();
 vi.mock("@/context/SettingsContext", () => ({
-  useSettings: () => ({ playClick }),
-  // `SoutienSheet` (ouverte depuis « Soutenir » du menu principal) appelle
+  useSettings: () => ({ playClick, playPop }),
+  // `BoutonsSoutien` (rendue par la page « Soutenir » du menu principal) appelle
   // désormais `useSettingsSafe` : le mock du module doit fournir les deux
   // exports, sous peine de casser au rendu.
-  useSettingsSafe: () => ({ playClick }),
+  useSettingsSafe: () => ({ playClick, playPop }),
 }));
 
 let introOnFini: (() => void) | null = null;
@@ -206,6 +207,18 @@ describe("TitleScreen — musique jazz du titre", () => {
     expect(demarrerMusiqueTitre).toHaveBeenCalledWith(audioManager);
   });
 
+  // Sortie de l'app : le manager met le disque en pause volontaire (règle
+  // générale : la musique ne repart pas toute seule au retour). Sur le titre
+  // c'est l'inverse qui est voulu : le jazz est l'ambiance de l'écran.
+  it("le jazz reprend quand l'app revient au premier plan", () => {
+    const resume = vi.spyOn(audioManager, "resumeVinyl").mockImplementation(() => {});
+    render(<TitleScreen />);
+    resume.mockClear();
+    Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(resume).toHaveBeenCalledTimes(1);
+  });
+
   it("Continuer : fondu du bus gramophone sur la durée de fermeture de l'iris", () => {
     const fade = vi
       .spyOn(audioManager, "fadeOutVinylBus")
@@ -233,10 +246,48 @@ describe("TitleScreen — musique jazz du titre", () => {
     expect(fade).toHaveBeenCalledWith(DUREE_FERMETURE_MS);
   });
 
-  it("le menu principal propose Soutenir, qui ouvre la feuille", () => {
-    render(<TitleScreen />);
-    const bouton = screen.getByRole("button", { name: "Soutenir" });
-    fireEvent.click(bouton);
-    expect(screen.getByTestId("soutien-instagram")).toBeTruthy();
+  // Le cœur éclot d'ABORD, la page s'ouvre APRÈS : si les deux partaient
+  // ensemble, l'animation serait recouverte au premier tiers et ne servirait
+  // à rien. C'est tout l'objet de ce test.
+  it("Soutenir fait éclore le cœur, puis ouvre la page", () => {
+    vi.useFakeTimers();
+    try {
+      render(<TitleScreen />);
+      fireEvent.click(screen.getByRole("button", { name: "Soutenir" }));
+
+      expect(screen.getByTestId("soutien-coeur")).toBeTruthy();
+      expect(playPop).toHaveBeenCalled();
+      expect(screen.queryByTestId("soutien-instagram")).toBeNull();
+
+      act(() => {
+        vi.advanceTimersByTime(DUREE_COEUR_MS);
+      });
+
+      expect(screen.getByTestId("soutien-instagram")).toBeTruthy();
+      // Le cœur a fini son affaire : il ne reste pas allumé sous la page.
+      expect(screen.queryByTestId("soutien-coeur")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("taper deux fois sur Soutenir ne relance pas le compte à rebours", () => {
+    vi.useFakeTimers();
+    try {
+      render(<TitleScreen />);
+      const bouton = screen.getByRole("button", { name: "Soutenir" });
+      fireEvent.click(bouton);
+      act(() => {
+        vi.advanceTimersByTime(DUREE_COEUR_MS - 100);
+      });
+      fireEvent.click(bouton);
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      expect(screen.getByTestId("soutien-instagram")).toBeTruthy();
+      expect(playPop).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

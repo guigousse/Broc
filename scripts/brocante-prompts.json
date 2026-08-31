@@ -1,20 +1,128 @@
 [
-  { "id": "vide-grenier-quartier", "description": "a humble neighborhood yard sale scene, a few foldable tables on a sunny suburban street, modest objects displayed (plates, books, toys), a few suggested human silhouettes in the distance, casual and familial atmosphere" },
-  { "id": "marche-aux-puces-dimanche", "description": "a busy Sunday flea market scene, rows of vendor stalls with mixed antiques and bric-a-brac, awnings stretched overhead, a crowd of silhouetted browsers, lively atmosphere" },
-  { "id": "bouquinerie-plein-air", "description": "an outdoor open-air book stall scene, wooden trestle tables lined with cardboard boxes overflowing with old books, hardbacks stacked vertically, a quiet studious atmosphere" },
-  { "id": "vide-dressing-centre", "description": "a vintage clothing pop-up sale scene, garment racks displaying vintage dresses and jackets, folded textiles on a table, a small mannequin in the background, urban setting" },
-  { "id": "brocante-club-jeux", "description": "a vintage board games and toys flea market stand, stacked retro game boxes, scattered cards and dice, plush toys and small action figures, playful atmosphere" },
-  { "id": "deballage-collectionneurs", "description": "a serious collectors' display table at a market, neatly arranged glass cases with small numbered objects (figurines, coins, badges), labeled tags visible, organized atmosphere" },
-  { "id": "marche-saint-ouen", "description": "the iconic Paris Saint-Ouen flea market street scene, narrow cobblestoned alleys lined with antique shops, painted wooden facades, ornate iron signs, late afternoon light" },
-  { "id": "disquaire-independant", "description": "an independent vintage record shop interior, wooden crates filled with vinyl LPs, vintage hi-fi gear on shelves, jazz posters on the walls, dim warm lighting" },
-  { "id": "atelier-bricoleur", "description": "an old tinkerer workshop scene, vintage hand tools hung on a pegboard wall, sawdust on the wooden floor, half-restored furniture pieces in the corner" },
-  { "id": "marche-antiquaires-bibelots", "description": "a refined antiques market stall scene, silver candelabras, porcelain figurines, ornate clocks arranged on a velvet-draped table, soft museum-style lighting" },
-  { "id": "foire-chatou", "description": "the famous Foire de Chatou riverside antique fair scene, white tents along the Seine riverbank with reflections on the water, leafy trees, refined French countryside ambiance" },
-  { "id": "salon-grands-collectionneurs", "description": "an upscale collectors' salon scene, large vaulted hall with display cases lit by chandeliers, gentlemen in dark suits viewing exhibits, formal museum atmosphere" },
-  { "id": "drouot-mode-couture", "description": "the Drouot auction hall haute couture vintage fashion display, mannequins wearing 1920s evening gowns, beaded dresses on hangers, soft spotlights, Art Déco interior" },
-  { "id": "salon-violon-ancien", "description": "an antique violin specialist salon scene, several violins hanging on cream walls, a single violin on a green velvet stand in the foreground, refined musical atmosphere" },
-  { "id": "galerie-arts-decoratifs", "description": "an Art Déco decorative arts gallery interior, geometric patterned floors, gilded screens, lacquered chinese cabinets, sleek 1925 Paris exposition aesthetic" },
-  { "id": "galerie-tableaux-sculptures", "description": "a fine art gallery interior with framed oil paintings on cream walls and bronze sculptures on white pedestals, polished hardwood floor, soft museum lighting" },
-  { "id": "salon-antiquaires-drouot", "description": "the grand Drouot Paris auction house main hall, ornate Art Déco interior with marble columns, chandeliers, rows of bidders facing an auctioneer's podium, very prestigious atmosphere" },
-  { "id": "grande-braderie", "description": "a giant festive street flea-market, endless rows of stalls with bunting and banners stretching down a grand avenue, bargain price signs, dense joyful crowd, late-summer golden light" }
+  {
+    "id": "vide-grenier-quartier",
+    "nom": "Vide-grenier du quartier",
+    "accent": "cheerful sky blue (#6FA8DC) and poppy red (#C9553D)",
+    "description": "A friendly neighborhood yard sale on a small village square with plane trees. A handful of folding tables covered with checked cloths, modest treasures spread out: mismatched plates, a stack of paperback books, a wooden toy horse, a chipped enamel coffee pot, a box of old postcards. Bunting strung between two lampposts, a sunny Sunday morning, a couple of families browsing seen from behind in the middle distance. Warm, simple, homely.",
+    "maitre": "Jan Steen and Adriaen van Ostade — a cheerful Dutch village kermis: families, children, sunlit square, warm anecdotal detail"
+  },
+  {
+    "id": "marche-aux-puces-dimanche",
+    "nom": "Marché aux puces du dimanche",
+    "accent": "striped awning red (#B94A3A) and mustard yellow (#D9A441)",
+    "description": "A bustling Sunday flea market seen from slightly above: long rows of stalls under red-and-white striped canvas awnings, tables piled with bric-a-brac (brass lamps, mirrors, stacked chairs, crates of crockery, old suitcases), a dense crowd of browsers rendered as small colorful silhouettes filling the alleys. Lively, crowded, festive atmosphere, morning light.",
+    "maitre": "Pieter Aertsen and Joachim Beuckelaer — Flemish market-stall paintings: abundant goods piled in the foreground, bustling vendors and buyers behind"
+  },
+  {
+    "id": "bouquinerie-plein-air",
+    "nom": "Bouquinerie de plein air",
+    "accent": "leaf green (#6E9A5B) and burgundy book spines (#8B3A3A)",
+    "description": "An open-air second-hand book market along a tree-lined river quay: wooden trestle tables and cardboard boxes overflowing with old hardbacks and paperbacks, spines in faded burgundy, navy and green, a few prints clipped to a string above. Two readers seen from behind leafing through books. Quiet, studious afternoon under chestnut trees.",
+    "maitre": "Jean-Siméon Chardin with the foliage of Camille Corot — hushed, tender light, muted greens and browns, absorbed figures reading"
+  },
+  {
+    "id": "vide-dressing-centre",
+    "nom": "Vide-dressing du centre",
+    "accent": "bold seventies orange (#E0853A), teal (#3F8F8A) and hot pink (#D46A8E)",
+    "description": "A vintage clothing pop-up sale on a downtown pedestrian street: wheeled garment racks packed with seventies dresses, patterned shirts and colorful jackets, a table of dented leather handbags, silk scarves and forgotten brooches on a velvet tray, a tall mirror leaning against a shop window. Playful, colorful, urban atmosphere.",
+    "maitre": "James Tissot — meticulously painted fabrics, patterned dresses, fashionable urban figures, bright but refined colour"
+  },
+  {
+    "id": "brocante-club-jeux",
+    "nom": "Brocante du club de jeux",
+    "accent": "arcade purple (#7A5BA8), electric blue (#3E6FCB) and cherry red (#C8433B)",
+    "description": "A retro video games and toys flea market stand inside a community hall: plastic bins full of grey game cartridges, stacked boxes of old home consoles and board games, a CRT television on a table showing a colorful pixel game, joysticks and controllers, a shelf of plush toys and small action figures. Geeky, nostalgic, playful atmosphere with string lights.",
+    "maitre": "Jan Steen — a lively game-playing scene, boisterous figures gathered around tables, mischievous warmth, candlelit and lantern-lit hall"
+  },
+  {
+    "id": "deballage-collectionneurs",
+    "nom": "Déballage des collectionneurs",
+    "accent": "deep navy (#2F4A6E) and brass gold (#C9A04A)",
+    "description": "A serious collectors' fair in an elegant covered hall: neat rows of glass display cases on tables draped in navy cloth, small precious objects carefully arranged inside (coins, medals, watches, figurines, fountain pens), brass table lamps, a few distinguished gentlemen with magnifying glasses seen from behind. Select, orderly, hushed atmosphere.",
+    "maitre": "Gerard ter Borch — refined Dutch interior, gentlemen in dark cloth examining precious small objects, satin and glass rendered with jewel-like precision"
+  },
+  {
+    "id": "marche-saint-ouen",
+    "nom": "Grandes Puces de la Capitale",
+    "accent": "Paris zinc grey-blue (#5B7A8C), terracotta (#B5533C) and forest green shopfronts (#3F6B4F)",
+    "description": "The legendary flea market of the capital: a narrow covered alley of antique dealers' booths with painted wooden shopfronts in green and red, wrought-iron hanging sign brackets WITHOUT any lettering, gilded mirrors, chandeliers, armchairs and marble busts spilling out onto the cobblestones, a Haussmann-style facade and zinc rooftops glimpsed at the end. Late afternoon golden light. Historic, monumental atmosphere.",
+    "maitre": "Gustave Caillebotte and Camille Pissarro — Parisian street in late afternoon, wet cobblestones, zinc roofs, solid drawing with impressionist light"
+  },
+  {
+    "id": "disquaire-independant",
+    "nom": "Disquaire indépendant",
+    "accent": "warm amber lamp light (#E0A23C) with deep indigo (#2E3A6B) and record-sleeve red (#C23B3B)",
+    "description": "A cozy independent record shop in a vaulted stone cellar: wooden crates full of vinyl LPs with colorful sleeves stretching into the dark, a vintage turntable and hi-fi amplifier on the counter, a mustachioed shop owner seen from behind sorting records, jazz and rock posters (WITHOUT readable text) on the stone walls, warm pools of lamp light. Intimate, vinyl-lover atmosphere.",
+    "maitre": "Georges de La Tour — a single warm lamp carving figures and objects out of deep darkness, serene intimate chiaroscuro"
+  },
+  {
+    "id": "atelier-bricoleur",
+    "nom": "Atelier du bricoleur",
+    "accent": "sawdust ochre (#C9A04A), tool-steel blue (#5A6E85) and rust red (#A8542F)",
+    "description": "An old handyman's workshop turned into a tool sale: a pegboard wall hung with vintage hand tools (planes, hand saws, brace drills, hammers), Japanese saws and prewar screwdrivers laid out in wooden trays on a workbench, jars of screws, a half-restored chair and a bicycle wheel in the corner, sawdust on the floor, sunlight through a dusty window. Warm, busy, honest craftsman atmosphere.",
+    "maitre": "Adriaen van Ostade — a craftsman's workshop bathed in dusty window light, tools and wood shavings painted with loving detail, earthy palette"
+  },
+  {
+    "id": "marche-antiquaires-bibelots",
+    "nom": "Marché des antiquaires (bibelots)",
+    "accent": "emerald velvet (#2F6B4F), gold (#C9A04A) and porcelain blue (#4A6FA5)",
+    "description": "A refined antiques market stall under a white canvas tent: locked glass vitrines on tables draped in emerald velvet, silver candelabras, blue-and-white porcelain vases, gilded clocks, small bronzes and ivory figurines, a white-gloved dealer seen from behind presenting a piece to a client. Precious, careful, museum-like atmosphere.",
+    "maitre": "Willem Kalf — pronk still-life opulence: silver, blue-and-white porcelain and gilt gleaming on dark velvet, deep shadows"
+  },
+  {
+    "id": "foire-chatou",
+    "nom": "Grande Foire aux Antiquités",
+    "accent": "Seine river blue-green (#4F8A8B), white tents and geranium red (#C9553D)",
+    "description": "A grand antiques fair on a leafy island in the Seine, seen from slightly above: long rows of white marquee tents along the riverbank, poplar trees, rowing boats and a riverside guinguette with paper lanterns, the river mirroring the sky, well-dressed visitors as small silhouettes strolling between the tents. Impressionist countryside light, elegant and worldly summer atmosphere.",
+    "maitre": "Pierre-Auguste Renoir and Claude Monet — a riverside guinguette at Chatou, dappled summer light on the Seine, white tents, strolling figures, but with the tents and figures clearly drawn"
+  },
+  {
+    "id": "salon-grands-collectionneurs",
+    "nom": "Salon des grands collectionneurs",
+    "accent": "midnight blue (#1F2F55), oxblood (#7A2E2E) and candle gold (#D2B060)",
+    "description": "A private invitation-only collectors' salon in a grand mansion: a wood-paneled library with tall bookcases, crystal chandeliers, a long table with rare objects displayed on velvet cushions under glass domes, leather armchairs, a fireplace, a few gentlemen in evening dress conversing seen from behind. Confidential, exclusive, hushed atmosphere with warm candlelight.",
+    "maitre": "Rembrandt van Rijn — a group of distinguished gentlemen emerging from a dark panelled room, golden candlelight, solemn group-portrait gravity"
+  },
+  {
+    "id": "drouot-mode-couture",
+    "nom": "Hôtel des Ventes — Mode et Couture",
+    "accent": "champagne gold (#D6B76A), blush pink (#E3A9B0) and black lacquer",
+    "description": "A prestigious auction house sale devoted to fashion: an Art Deco saleroom with a raised podium where an auctioneer stands behind a lectern, mannequins along the wall wearing 1920s-1950s couture evening gowns and beaded dresses, iconic handbags and hatboxes displayed on tables, rows of seated bidders seen from behind, spotlights on the gowns. Glamorous, chic couture atmosphere.",
+    "maitre": "James Tissot and Edgar Degas — a fashionable Parisian saleroom, silk gowns and beaded dresses under spotlights, elegant seated crowd"
+  },
+  {
+    "id": "salon-violon-ancien",
+    "nom": "Salon du violon ancien",
+    "accent": "varnished violin amber (#B8702D), deep green velvet (#2F5E4A) and cream",
+    "description": "An antique violin specialist salon: dozens of violins and cellos hanging on cream walls and displayed in glass cases, a luthier's workbench with tools and varnish pots, a single violin resting on a green velvet stand in the foreground, a musician seen from behind trying an instrument near a tall window. Silent, reverent, refined musical atmosphere.",
+    "maitre": "Johannes Vermeer — cool daylight from a tall left-hand window, a music-room stillness, varnished wood glowing, pearl-like quiet"
+  },
+  {
+    "id": "galerie-arts-decoratifs",
+    "nom": "Galerie des arts décoratifs",
+    "accent": "peacock teal (#2E7C7A), gold (#C9A04A) and coral (#D9735A)",
+    "description": "An Art Deco decorative arts gallery interior: geometric patterned marble floor, gilded folding screens, lacquered cabinets, crystal and faience vases on pedestals, a sunburst mirror, a peacock-toned rug, 1925 Paris exposition aesthetic, a gallery owner seen from behind adjusting a vase. Elegant, luxurious, sumptuous gallery atmosphere.",
+    "maitre": "Tamara de Lempicka and the 1925 Paris Exposition — polished Art Deco volumes, lacquer and gold, geometric floor, sculptural highlights"
+  },
+  {
+    "id": "galerie-tableaux-sculptures",
+    "nom": "Galerie des Ventes — Tableaux & Sculptures",
+    "accent": "oxblood red walls (#7A2E2E), gold frames (#C9A04A) and white marble",
+    "description": "A grand fine art saleroom like an opera house: high oxblood-red walls hung with gilt-framed oil paintings (landscapes and portraits), marble and bronze sculptures on white pedestals, a sweeping staircase, polished parquet floor, elegant visitors seen from behind admiring the works. Theatrical, solemn, opulent atmosphere.",
+    "maitre": "David Teniers the Younger's picture-gallery paintings — a grand hall whose walls are covered floor to ceiling with gilt-framed canvases, sculptures on pedestals, connoisseurs in conversation"
+  },
+  {
+    "id": "salon-antiquaires-drouot",
+    "nom": "Grand Salon des Antiquaires",
+    "accent": "royal purple (#5A3A7A), rich gold (#D4AF37) and ivory",
+    "description": "The holy of holies: the Grand Salon des Antiquaires, a monumental Beaux-Arts hall with a glass dome, marble columns, giant chandeliers and red carpet, lavish stands of the greatest antique dealers overflowing with masterpieces (tapestries, thrones, suits of armor, giant vases, old master paintings), a distinguished crowd in evening dress seen from behind. Mythical, prestigious, once-in-a-lifetime atmosphere, golden light streaming through the dome.",
+    "maitre": "Jean Béraud — a monumental Beaux-Arts Parisian hall under a glass dome, crowd in evening dress, chandeliers, red carpet, brilliant society atmosphere"
+  },
+  {
+    "id": "grande-braderie",
+    "nom": "La Grande Braderie",
+    "accent": "festive red (#C8433B), sunny yellow (#E8B83A) and bright blue (#3E6FCB) bunting",
+    "description": "A gigantic two-day street braderie seen from above along a grand avenue: kilometers of stalls stretching to the horizon, colorful bunting and pennants zigzagging overhead between the facades, mountains of bargains on the pavement (furniture, crates, clothes, lamps, bicycles), a huge joyful crowd as a sea of small colorful figures, a brass band and mussel-and-fries terraces on the side. Late-summer golden light, the biggest party of the year for bargain hunters.",
+    "maitre": "Pieter Bruegel the Elder — a vast crowd seen from above filling a whole avenue, hundreds of small lively figures, bunting, festive abundance"
+  }
 ]

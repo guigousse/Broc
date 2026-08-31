@@ -468,21 +468,6 @@
 "description": "a vintage 64-bit era video game cardboard box, slight three-quarter view, cover artwork showing a grown wandering minstrel with shoulder-length brown hair, a wide-brimmed brown hat and a burgundy travelling cape over a brown tunic, playing a transverse flute on green rolling hills with a distant castle behind him, fictional stylized title 'SOLDA' across the cover, a plain geometric '64' emblem in the corner, worn cardboard edges"
 },
 {
-"templateId": "jx.lot_de_cartes_l_assemblee_des_mages",
-"rarete": "commun",
-"description": "a hand-held fan of five vintage collectible trading cards spread out in an arc; the front-most card, positioned at the far LEFT and overlapping all the others on top, faces backwards showing its decorative card back with the title \"L'ASSEMBLÉE DES MAGES\" on a banner and a central ornate emblem; the other four cards fan out to the right behind it, facing front, each showing a different invented fantasy wizard, dragon or spell scene in a framed illustration with an invented short name on a top banner and small numeric stats in the bottom corners, inspired by classic trading-card design, consistent ornate borders on every card, top-down view, no real brand logos"
-},
-{
-"templateId": "jx.lot_de_cartes_de_yo_hi_ah",
-"rarete": "commun",
-"description": "a hand-held fan of five vintage collectible trading cards spread out in an arc; the front-most card, positioned at the far LEFT and overlapping all the others on top, faces backwards showing its decorative card back with the title \"YO-HI-AH\" on a banner and a central ornate emblem; the other four cards fan out to the right behind it, facing front, each showing a different invented fierce fantasy monster in a framed illustration with an invented short name on a top banner and small numeric stats in the bottom corners, inspired by classic trading-card design, consistent ornate borders on every card, top-down view, no real brand logos"
-},
-{
-"templateId": "jx.cartes_pocket_monster_set_jungle",
-"rarete": "commun",
-"description": "a hand-held fan of five vintage collectible trading cards spread out in an arc; the front-most card, positioned at the far LEFT and overlapping all the others on top, faces backwards showing its decorative card back with the title \"POCKET MONSTER\" on a banner and a central ornate emblem; the other four cards fan out to the right behind it, facing front, each showing a different original invented cute fantasy creature in a jungle setting in a framed illustration with an invented short name on a top banner and small numeric stats in the bottom corners, inspired by classic trading-card design, consistent ornate borders on every card, top-down view, no real brand logos"
-},
-{
 "templateId": "jx.jeu_magnatimmo_annees_80",
 "rarete": "commun",
 "description": "a vintage 1980s real-estate trading board game box, three-quarter top view, the title \"MAGNATIMMO\" printed boldly on the worn cardboard lid, a cheerful plump property-developer character in a pinstripe suit and a fedora (no top hat, no monocle, no cane, no moustache) holding a small house and a fan of banknotes, a few small buildings, no real brand logos, invented game"
@@ -568,11 +553,6 @@
 "description": "a small group of tiny collectible surprise-egg figurines in playful poses, invented characters, no logos, top-down view"
 },
 {
-"templateId": "jx.cartes_pocket_monster_1ere_edition",
-"rarete": "rare",
-"description": "a hand-held fan of five vintage collectible trading cards spread out in an arc; the front-most card, positioned at the far LEFT and overlapping all the others on top, faces backwards showing its decorative card back with the title \"POCKET MONSTER\" on a banner and a central ornate emblem; the other four cards fan out to the right behind it, facing front, each showing a different original invented cute fantasy creature in a framed illustration with an invented short name on a top banner and small numeric stats in the bottom corners, inspired by classic trading-card design, vintage first-edition worn look, consistent ornate borders on every card, top-down view, no real brand logos"
-},
-{
 "templateId": "jx.figurine_de_guerre_galactique_1978",
 "rarete": "rare",
 "description": "a vintage 1978 science-fiction space-saga action figure sealed on an original blister card, invented character not resembling any existing franchise, no logos or text"
@@ -591,11 +571,6 @@
 "templateId": "jx.borne_arcade_mini",
 "rarete": "rare",
 "description": "a small tabletop arcade cabinet with an illuminated pixel space-shooter screen of descending alien invaders, invented artwork, no brand logos"
-},
-{
-"templateId": "jx.cartes_pocket_monster_holographiques_japonaise",
-"rarete": "rare",
-"description": "a hand-held fan of five vintage collectible trading cards spread out in an arc; the front-most card, positioned at the far LEFT and overlapping all the others on top, faces backwards showing its decorative card back with the title \"POCKET MONSTER\" on a banner and a central ornate emblem; the other four cards fan out to the right behind it, facing front, each showing a different original invented cute fantasy creature in a framed illustration with an invented short name on a top banner and small numeric stats in the bottom corners, inspired by classic trading-card design, shimmering holographic foil, consistent ornate borders on every card, top-down view, no real brand logos"
 },
 {
 "templateId": "jx.cartouche_gachette_du_temps_rpg_16_bit",

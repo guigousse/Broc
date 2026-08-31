@@ -164,6 +164,10 @@ export type ObjectifMission =
   | { type: "niveau"; niveau: number }
   /* Périodiques (SP5) — comptés APRÈS l'apparition de la quête. */
   | { type: "objetsRares"; nombre: number }
+  /** « Mets la main sur une pièce légendaire » (SP5 quotidiennes variées).
+   *  Membre distinct plutôt qu'un paramètre de rareté greffé sur `objetsRares` :
+   *  aucun objectif déjà sauvegardé ne change de forme, donc pas de migration. */
+  | { type: "objetLegendaire"; nombre: number }
   | { type: "beneficeCumule"; montant: number }
   | { type: "ventesCategorie"; categorie: CategorieObjet; nombre: number };
 
@@ -172,6 +176,13 @@ export interface RestaurationAccomplie {
   timestamp: number;
   etatFinal: EtatObjet;
 }
+
+/**
+ * Prime dont le MONTANT n'est connu qu'à la livraison : il dépend de ce que le
+ * joueur a trouvé, pas de ce que la quête valait à sa naissance. Résolue par
+ * `recompenseEffective` quand un contexte lui est fourni.
+ */
+export type PrimeVariable = { type: "pourcentageLegendaire"; taux: number };
 
 /** Mission reçue par lettre : fournir un ou plusieurs objets contre récompense. */
 export interface CourrierPayloadMission {
@@ -208,6 +219,8 @@ export interface CourrierPayloadMission {
   gabaritId?: string;
   /** Paramètres de régénération (état min…). ADDITIF, absent ⇒ payload FR. */
   gabaritParams?: CourrierGabaritParams;
+  /** Prime résolue à la livraison. ADDITIF : absent ⇒ récompense figée. */
+  primeVariable?: PrimeVariable;
 }
 
 export type CourrierPayload = CourrierPayloadLettre | CourrierPayloadMission;
@@ -489,6 +502,32 @@ export interface GameState {
   activesUtilisees?: ActivesUtilisees;
   /** ADDITIF (v20) : étal courant du Bazar. Absent tant que le Bazar n'a pas ouvert. */
   bazar?: EtalBazar;
+  /** Classeur de cartes et album de timbres (2026-08-30). Absent = jamais renseigné (vieille save) : lire via `albumsDe`. */
+  albums?: AlbumsState;
+}
+
+export interface AlbumState {
+  achete: boolean;
+  /** id de pièce → quantité possédée (≥ 1). Absent = jamais obtenue. */
+  pieces: Record<string, number>;
+  /** Pièces obtenues pas encore consultées dans l'album (pastille « nouveau »). */
+  nouvelles: string[];
+}
+export interface PlacementTimbre {
+  page: 0 | 1;
+  ligne: 0 | 1 | 2 | 3 | 4;
+  /** Centre du timbre en fraction de la largeur de page, 0..1. */
+  x: number;
+}
+export interface AlbumTimbresState extends AlbumState {
+  /** Timbres posés sur une page. Absent = dans le bac « en vrac ». */
+  placements: Record<string, PlacementTimbre>;
+  /** Ordre d'empilement : le DERNIER id est dessus. */
+  ordreZ: string[];
+}
+export interface AlbumsState {
+  classeur: AlbumState;
+  timbres: AlbumTimbresState;
 }
 
 /** Un lot de pièces de restauration à l'étal du Bazar. */
@@ -503,6 +542,16 @@ export interface LotPiecesBazar {
 /** Un objet de l'étagère du haut, exemplaire unique, livré en Pristin état. */
 export interface ObjetBazar {
   templateId: string;
+  /**
+   * L'article a été acheté. Il RESTE sur l'étagère jusqu'au renouvellement du
+   * lundi, en noir et blanc et tamponné « Vendu » (2026-08-26) — d'où le
+   * marquage plutôt que l'effacement : une case vidée n'a plus rien à montrer.
+   *
+   * Optionnel : les parties d'avant portent un `null` à la place de l'article
+   * acheté, et l'étal se renouvelle de toute façon chaque lundi. Aucune
+   * migration à écrire pour un champ dont l'absence signifie « en vente ».
+   */
+  vendu?: boolean;
   /** `prixRefBase` du template au moment de la composition (snapshot). */
   valeurBase: number;
   /** Prix en jetons — `Math.ceil(valeurBase / 25)`, minimum 1. */
@@ -587,6 +636,9 @@ export interface ObjetSnapshot {
 
 export interface AchatHistorique extends ObjetSnapshot {
   prixPaye: number;
+  /** Pièce (carte/timbre) : album où elle a été rangée (pas l'inventaire).
+   *  Absent pour un objet ordinaire. */
+  album?: "classeur" | "timbres";
 }
 
 export interface VenteHistorique extends ObjetSnapshot {

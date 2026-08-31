@@ -189,7 +189,11 @@ export function ScenePlaquesBar({
       ? d.chine.tier4Aria
       : tr(d.chine.tierEtoilesAria, { tier, etoiles: "★".repeat(tier) });
   return (
-    <div style={barStyle(position)} aria-label={d.chine.navigationParTierAria}>
+    <div
+      style={barStyle(position)}
+      aria-label={d.chine.navigationParTierAria}
+      data-scene-plaques-bar
+    >
       {evenementVisible && (
         // Aura dorée pulsante — inline pour éviter le piège du globals.css périmé.
         <style>{`@keyframes aura-evenement {

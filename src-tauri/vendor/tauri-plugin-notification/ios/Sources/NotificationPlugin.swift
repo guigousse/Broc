@@ -156,6 +156,9 @@ struct BatchArgs: Decodable {
 class NotificationPlugin: Plugin {
   let notificationHandler = NotificationHandler()
   let notificationManager = NotificationManager()
+  /// PATCH BROC — dernier tap sur une notif, en attente d'être relu par le JS
+  /// (cf. `NotificationHandler.didReceive` et `lastAction`).
+  var actionEnAttente: ReceivedNotification?
 
   override init() {
     super.init()
@@ -263,6 +266,20 @@ class NotificationPlugin: Plugin {
       })
       invoke.resolve(ret)
     })
+  }
+
+  /// PATCH BROC — rend le dernier tap en attente (ou null) et l'oublie.
+  @objc func lastAction(_ invoke: Invoke) {
+    if let action = actionEnAttente {
+      actionEnAttente = nil
+      do {
+        try invoke.resolve(action)
+      } catch {
+        invoke.reject(error.localizedDescription)
+      }
+    } else {
+      invoke.resolve()
+    }
   }
 
   @objc func createChannel(_ invoke: Invoke) {

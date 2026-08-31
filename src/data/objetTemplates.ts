@@ -3,6 +3,7 @@ import { LEGENDAIRES } from "@/data/legendaires";
 import { UNIQUES } from "@/data/uniques";
 import { TAILLES_OVERRIDE } from "@/data/objetTemplatesTailles";
 import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
+import { templateDePiece } from "@/data/pieces";
 
 export interface ObjetTemplate {
   templateId: string;
@@ -95,7 +96,7 @@ const MUSIQUE_R: Row[] = [
 ];
 
 // ============================================================
-// JEUX & LOISIRS — 40 communs + 12 rares
+// JEUX & LOISIRS — 40 communs + 11 rares
 // ============================================================
 const JEUX_C: Row[] = [
   ["jx.cartouche_le_plombier_sauteur_8_bit", "Cartouche 'Le Plombier Sauteur' (8-bit)", 80],
@@ -118,9 +119,9 @@ const JEUX_C: Row[] = [
   ["jx.jeu_engrenage_de_metal_infiltration_32_bit", "Jeu 'Engrenage de Métal' — infiltration (32-bit)", 40],
   ["jx.jeu_d_aventure_japonais_128_bit", "Jeu d'aventure japonais (128-bit)", 60],
   ["jx.jeu_solda_flute_temporelle_aventure_3d_64_bit", "Jeu 'Solda — Flûte temporelle' (aventure 3D 64-bit)", 55],
-  ["jx.lot_de_cartes_l_assemblee_des_mages", "Lot de cartes 'L'Assemblée des Mages'", 80],
-  ["jx.lot_de_cartes_de_yo_hi_ah", "Lot de cartes de Yo-Hi-ah", 35],
-  ["jx.cartes_pocket_monster_set_jungle", "Cartes 'Pocket Monster' — set Jungle", 60],
+  ["jx.puzzle_en_bois_1000_pieces_paysage_alpin", "Puzzle en bois 1000 pièces — paysage alpin", 80],
+  ["jx.jeu_de_l_oie_lithographie_1900", "Jeu de l'oie lithographié (1900)", 35],
+  ["jx.boite_de_construction_metallique_no_3", "Boîte de construction métallique n°3", 60],
   ["jx.jeu_magnatimmo_annees_80", "Jeu Magnatimmo (années 80)", 22],
   ["jx.jeu_question_pour_un_fromage_culture_generale", "Jeu 'Question pour un fromage' (culture générale)", 18],
   ["jx.jeu_kicekatue_mr_mayonnaise_vintage", "Jeu 'Kicékatué Mr. Mayonnaise ?' (vintage)", 20],
@@ -141,12 +142,11 @@ const JEUX_C: Row[] = [
 ];
 
 const JEUX_R: Row[] = [
-  ["jx.cartes_pocket_monster_1ere_edition", "Cartes 'Pocket Monster' 1ère édition", 220],
+  ["jx.locomotive_a_vapeur_electrique_1950", "Locomotive à vapeur électrique (1950)", 220],
   ["jx.figurine_de_guerre_galactique_1978", "Figurine de Guerre galactique (1978)", 110],
   ["jx.figurine_de_dark_father_1977", "Figurine de Dark Father (1977)", 180],
   ["jx.flipper_a_plateau_annees_60", "Flipper à plateau années 60", 750],
   ["jx.borne_arcade_mini", "Mini borne d'arcade — Envahisseurs de l'Espace", 280],
-  ["jx.cartes_pocket_monster_holographiques_japonaise", "Cartes 'Pocket Monster' holographiques japonaises", 360],
   ["jx.cartouche_gachette_du_temps_rpg_16_bit", "Cartouche 'Gâchette du Temps' (RPG 16-bit)", 200],
   ["jx.console_d_arcade_domestique_neo", "Console d'arcade domestique 'Néo'", 600],
   ["jx.train_electrique_ho_de_precision", "Train électrique HO de précision", 320],
@@ -553,9 +553,9 @@ export function poolPourTier(tier: 1 | 2 | 3 | 4): ObjetTemplate[] {
 
 export const ALL_TEMPLATES: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES, ...UNIQUES];
 
-/** Résout un templateId vers son template (incluant les légendaires). */
+/** Résout un templateId vers son template (légendaires, uniques… et les pièces d'album). */
 export function getTemplate(templateId: string): ObjetTemplate | undefined {
-  return ALL_TEMPLATES.find((t) => t.templateId === templateId);
+  return ALL_TEMPLATES.find((t) => t.templateId === templateId) ?? templateDePiece(templateId);
 }
 
 const TAILLE_DEFAUT: Record<CategorieObjet, TailleObjet> = {

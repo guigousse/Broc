@@ -8,11 +8,14 @@ import { flyToTab } from "@/lib/flyAnimation";
 import {
   degelerBudgetAffichage,
   degelerEnergieAffichage,
+  degelerJetonsAffichage,
   degelerXpAffichage,
   gelerBudgetAffichage,
   gelerEnergieAffichage,
+  gelerJetonsAffichage,
   gelerXpAffichage,
 } from "@/lib/affichageGele";
+import { audioManager } from "@/lib/audio/audioManager";
 import type { Courrier, GameState } from "@/types/game";
 
 /** Fond du clone en vol, au teint du jeton (cf. JETON_STYLES de RecompenseJetons). */
@@ -20,6 +23,9 @@ const FONDS_JETON: Record<JetonVol, string> = {
   argent: "radial-gradient(circle at 35% 30%, #b03030, #6e1f1f)",
   xp: "radial-gradient(circle at 35% 30%, #efe3c0, #c8a24a)",
   energie: "radial-gradient(circle at 35% 30%, #4a8a63, #2c5e3f)",
+  // Le bleu de la devise, sur la nuit du Bazar : c'est lui qui distingue une
+  // pièce d'un billet quand les deux tombent dans la même caisse.
+  bazar: "radial-gradient(circle at 35% 30%, var(--azur-400), var(--midnight-800))",
 };
 
 /** Durée du fondu de retrait de la carte livrée, en ms. */
@@ -68,6 +74,7 @@ export function useCeremonieLivraison({
       degelerXpAffichage();
       degelerBudgetAffichage();
       degelerEnergieAffichage();
+      degelerJetonsAffichage();
     },
     [],
   );
@@ -75,12 +82,17 @@ export function useCeremonieLivraison({
   const lancer = (courrierId: string) => {
     const courrier = byId.get(courrierId);
     if (!courrier || courrier.payload.type !== "mission" || ceremonieId) return;
-    const rEff = recompenseEffective(courrier.payload);
+    const rEff = recompenseEffective(courrier.payload, {
+      state,
+      reso: state.missions.find((m) => m.courrierId === courrierId) ?? {},
+      jourRecu: courrier.jourRecu,
+    });
     const maintenant = tempsConfiance?.() ?? Date.now();
     const avant = {
       brocanteur: state.brocanteur,
       budget: state.budget,
       energie: energieCourante(state, maintenant),
+      jetons: state.jetons ?? 0,
     };
     const res = onLivrerMission(courrierId);
     if (!res.ok) return;
@@ -92,6 +104,7 @@ export function useCeremonieLivraison({
     if (rEff.xp > 0) gelerXpAffichage(avant.brocanteur);
     if (rEff.argent > 0) gelerBudgetAffichage(avant.budget);
     if (rEff.energie > 0) gelerEnergieAffichage(avant.energie);
+    if (rEff.jetons > 0) gelerJetonsAffichage(avant.jetons);
     setCeremonieId(courrierId);
 
     // Les timers de la cérémonie précédente ont tous tiré (le garde-fou
@@ -113,13 +126,23 @@ export function useCeremonieLivraison({
             fromRect: (jeton ?? racine ?? document.body).getBoundingClientRect(),
             imageUrl: null,
             fallbackBg: FONDS_JETON[etape.jeton],
-            borderColor: "#c8a24a",
+            borderColor: etape.jeton === "bazar" ? "var(--azur-400)" : "#c8a24a",
             targetSelector: CIBLES_VOL[etape.jeton],
+            // Les Bazarcoins ont leur propre tintement, joué à l'atterrissage
+            // (ci-dessous) : le petit son d'ajout le doublerait.
+            playSound: etape.jeton !== "bazar",
           });
         } else if (etape.type === "atterrissage") {
           if (etape.jeton === "xp") degelerXpAffichage();
           else if (etape.jeton === "energie") degelerEnergieAffichage();
-          else degelerBudgetAffichage();
+          else if (etape.jeton === "bazar") {
+            degelerJetonsAffichage();
+            // Le tintement se joue ICI et non à l'arrivée du clone : la frise
+            // est la seule horloge de la cérémonie, et l'atterrissage y tombe
+            // au même instant. Deux horloges à accorder à la main finissent
+            // toujours par diverger.
+            void audioManager.playJetonBazar();
+          } else degelerBudgetAffichage();
         } else {
           // Filet : quoi qu'il arrive, aucun compteur ne reste gelé après la
           // cérémonie (les dégels sont idempotents et sans effet si rien n'est
@@ -127,6 +150,7 @@ export function useCeremonieLivraison({
           degelerXpAffichage();
           degelerBudgetAffichage();
           degelerEnergieAffichage();
+          degelerJetonsAffichage();
           // La carte se fond / se rétracte avant de quitter la liste.
           const el = document.querySelector<HTMLElement>(`[data-commande-id="${courrierId}"]`);
           if (el) {

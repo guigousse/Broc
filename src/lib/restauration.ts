@@ -80,3 +80,15 @@ export function formatDuree(ms: number): string {
   if (totalMin >= 1) return `${totalMin} min`;
   return `${Math.ceil(ms / 1000)} s`;
 }
+
+/**
+ * Angle (degrés) du secteur encore couvert par le voile de l'établi.
+ *
+ * Le voile part de midi et occupe le temps RESTANT dans le sens horaire ;
+ * la part découverte grandit donc dans l'antihoraire depuis midi. Il n'y a
+ * rien à retirer au moment du « prêt » : l'angle atteint 0° pile à `finMs`,
+ * le voile s'est effacé tout seul avec le temps.
+ */
+export function angleVoileDeg(enRest: Timer, now: number): number {
+  return 360 * (1 - progression(enRest, now));
+}

@@ -215,4 +215,25 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "And with some “Influence”, you can even have an article you don't like rewritten. Ah, the press…",
     "From next Monday, the kiosk will drop it at your door. A few coins well spent, believe me. I'll leave this one on the corner of the desk.",
   ],
+  bazar_tenancier_1: [
+    "Come in, come in! Every piece here has lived two lives already — the next one is yours to write.",
+  ],
+  bazar_tenancier_2: [
+    "Perfect timing: I polished the whole window this morning. Shines, doesn't it?",
+  ],
+  bazar_tenancier_3: [
+    "Take your time, please. Fine pieces like to be looked at before they let themselves be taken.",
+  ],
+  bazar_tenancier_4: [
+    "Someone offered me double for that one the other day. I said no — it was waiting for someone.",
+  ],
+  bazar_tenancier_5: [
+    "We pay in Bazarcoins here, an old habit of the house. Believe me, it beats francs.",
+  ],
+  bazar_tenancier_6: [
+    "Thirty years behind this counter and it still surprises me. Look what came in this week!",
+  ],
+  bazar_tenancier_delai: [
+    "The next delivery is due in {t} — come back and see me!",
+  ],
 };

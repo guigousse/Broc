@@ -59,3 +59,11 @@ src-tauri/vendor/tauri-plugin-stockage/Cargo.lock
 # target/ standalone : présent car la tâche 1 a fait tourner `cargo test`
 # directement dans ce répertoire, hors du workspace src-tauri.
 src-tauri/vendor/tauri-plugin-stockage/target/
+
+# Pages d'injection de sauvegardes de test (scripts/_gen-saves-*.ts) :
+# outil de dev servi par `next dev`, jamais livré dans l'app.
+public/dev-save-*.html
+out/dev-save-*.html
+
+# Scripts de génération de sauvegardes de test (outil local)
+scripts/_gen-saves-*.ts

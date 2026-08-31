@@ -20,10 +20,12 @@ import {
   type NiveauCamion,
   type Objet,
   type ObjetEnVitrine,
+  type PlacementTimbre,
   type Session,
   type TutorielEtape,
 } from "@/types/game";
 import { getCamion } from "@/data/camion";
+import type { AlbumId } from "@/data/pieces";
 import {
   COLIS_TUTORIEL_TAILLE,
   objetColisTutoriel,
@@ -54,10 +56,8 @@ import { chapitreParId } from "@/data/quetesPrincipales";
 import { accepterChapitre } from "@/lib/quetes/principales";
 import { prochainLundi } from "@/lib/calendrier";
 import {
-  appliquerGainXPBrocanteur,
+  crediterXPBrocanteur,
   emptyBrocanteur,
-  pointsOctroyables,
-  POINTS_BONUS_CHAPITRE,
   XP_DECOUVERTE_COLLECTION,
   XP_RESTAURATION_ETAPE,
   multiplicateurXPRarete,
@@ -73,6 +73,7 @@ import { tirerMeteo, tirerMeteoSemaine, indexJourSemaine } from "@/lib/meteo";
 import { tirerCelebrite } from "@/lib/celebrite";
 import { getProchaineUpgradeStockage, getStockageTier } from "@/data/stockage";
 import { stockageEstPlein } from "@/lib/stockage";
+import { estVendable } from "@/lib/vitrine";
 import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
 import { settleBazar } from "@/lib/bazar/settleBazar";
@@ -82,6 +83,14 @@ import {
   type AchatBazar,
   type RaisonRefus,
 } from "@/lib/bazar/achat";
+import { acheterAlbum, acheterPaquet, appliquerPaquet } from "@/lib/bazar/albums";
+import {
+  albumsDe,
+  marquerConsultee as marquerConsulteeAlbum,
+  poserTimbre as poserTimbreAlbum,
+  recyclerDoublons,
+  rendreAuBac as rendreAuBacAlbum,
+} from "@/lib/albums";
 import { appliquerFinTutoriel, ETAPES_TUTORIEL } from "@/lib/tutoriel";
 import { logEvenement } from "@/lib/analytics/contexte";
 import { EVENEMENTS } from "@/lib/analytics/analytics";
@@ -97,6 +106,7 @@ import {
 import { getTemplate } from "@/data/objetTemplates";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import {
+  appliquerAccelerationRestauration,
   appliquerRecuperation,
   coutAmelioration,
   rendementDemantelement,
@@ -145,6 +155,8 @@ import { localeCourante } from "@/lib/i18n/locales";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { slotActif, type NumeroSlot } from "@/lib/storage/slots";
 import type { GenreErreur } from "@/lib/storage/pontNatif";
+import { estPiece } from "@/data/pieces";
+import { acheterPiece } from "@/lib/albums";
 
 /**
  * Raison d'échec localisée (SP4 i18n). GameContext exécute ses raisons dans des
@@ -165,9 +177,16 @@ function categorieLocalisee(cat: Parameters<typeof libelleCategorie>[0]): string
 }
 
 /** Traduit le `RaisonRefus` brut d'`achat.ts` en message localisé. */
-function raisonLocaliseeBazar(raison: RaisonRefus): string {
+function raisonLocaliseeBazar(achat: AchatBazar, raison: RaisonRefus): string {
   if (raison === "jetons") return raisonLocalisee("bazarPasAssezDeJetons");
   if (raison === "stockagePlein") return raisonLocalisee("stockagePlein");
+  if (raison === "indisponible") {
+    // "indisponible" recouvre deux refus bien distincts pour les nouveaux
+    // achats du Bazar : un album déjà acheté (album), ou un paquet tenté
+    // sans l'album qui le débloque (paquet — même clé que l'achat de pièce).
+    if (achat.type === "album") return raisonLocalisee("bazarAlbumDejaAchete");
+    if (achat.type === "paquet") return raisonLocalisee("albumManquant");
+  }
   return raisonLocalisee("bazarArticleIndisponible");
 }
 
@@ -315,7 +334,24 @@ interface GameActionsValue {
    */
   rafraichirPeriodiques: () => void;
   /** Achète à l'étal du Bazar (lot de pièces ou objet de vitrine). */
-  acheterAuBazar: (achat: AchatBazar) => { ok: boolean; raison?: string };
+  acheterAuBazar: (achat: AchatBazar) => { ok: boolean; raison?: string; pieces?: string[] };
+  /**
+   * Recycle tous les doublons d'un album contre des pièces de réparation
+   * (catégorie de l'album). Renvoie `n` (doublons recyclés) — le toast est
+   * à la charge de l'appelant.
+   */
+  recyclerDoublonsAlbum: (albumId: AlbumId) => number;
+  /** Marque une pièce (carte/timbre) consultée — éteint sa pastille « nouveau ». */
+  marquerPieceConsultee: (id: string) => void;
+  /** Pose un timbre du bac sur une page/ligne/x de l'album de timbres. */
+  poserTimbre: (
+    id: string,
+    page: 0 | 1,
+    ligne: PlacementTimbre["ligne"],
+    x: number,
+  ) => void;
+  /** Retire un timbre posé, le renvoie au bac « en vrac ». */
+  rendreTimbreAuBac: (id: string) => void;
 }
 
 type GameContextValue = GameStateValue & GameActionsValue;
@@ -384,8 +420,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // L'état n'appartient plus au slot actif (bascule de partie en cours) :
       // écrire maintenant détruirait la save du nouveau slot. On abandonne —
       // cet état est de toute façon en train d'être détaché.
-      if (slotActif() !== slotEtatRef.current) return;
-      obtenirGameRepository().save(state).then((res) => {
+      // F-04 : le slot cible est capturé ICI, synchronement, et passé
+      // explicitement au repository — il ne doit jamais le re-résoudre après
+      // un await, pendant lequel `detacherPartie(); changerSlotActif(n)` a pu
+      // basculer l'actif.
+      const slot = slotEtatRef.current;
+      if (slot === null || slotActif() !== slot) return;
+      obtenirGameRepository().save(state, slot).then((res) => {
+        // Écriture invalidée en vol (bascule/suppression pendant l'await) :
+        // ni verdict ni toast, l'état n'appartient plus à personne.
+        if (res.ok && res.annulee) return;
         // Ruling R13 : l'updater ci-dessous est PUR (aucun effet de bord) —
         // React ne garantit pas qu'un updater fonctionnel ne s'exécute
         // qu'une fois (StrictMode le rejoue en dev). La transition
@@ -856,6 +900,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (objet: Objet, prix: number): { ok: boolean; raison?: string } => {
       const current = stateRef.current;
       if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
+      if (estPiece(objet.templateId)) {
+        const pre = acheterPiece(current, objet, prix);
+        if (!pre.ok) {
+          return pre.raison === "budget"
+            ? { ok: false, raison: raisonLocalisee("ilManqueEuros", { n: prix - current.budget }) }
+            : { ok: false, raison: raisonLocalisee("albumManquant") };
+        }
+        setState((prev) => {
+          if (!prev) return prev;
+          const r = acheterPiece(prev, objet, prix);
+          return r.ok ? r.state : prev;
+        });
+        return { ok: true };
+      }
       if (current.budget < prix)
         return {
           ok: false,
@@ -1077,10 +1135,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const acheterAuBazar = useCallback(
-    (achat: AchatBazar): { ok: boolean; raison?: string } => {
+    (achat: AchatBazar): { ok: boolean; raison?: string; pieces?: string[] } => {
       const current = stateRef.current;
       if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
       const now = tempsConfiance() ?? Date.now();
+
+      // Le paquet a une forme à part : c'est le seul achat qui TIRE au hasard
+      // (`acheterPaquet`). Le tirage n'a le droit de se produire qu'UNE fois
+      // — ici, dans le pré-check — et l'updater ne fait que le REJOUER avec
+      // les ids déjà connus (`appliquerPaquet`), pour rester pur et
+      // rejouable comme les autres branches de `setState`.
+      if (achat.type === "paquet") {
+        const pre = acheterPaquet(current, achat.album);
+        if (!pre.ok) return { ok: false, raison: raisonLocaliseeBazar(achat, pre.raison) };
+        const pieces = pre.pieces!;
+        setState((prev) => {
+          if (!prev) return prev;
+          const r = appliquerPaquet(prev, achat.album, pieces);
+          return r.ok ? r.state : prev;
+        });
+        return { ok: true, pieces };
+      }
+
       // Pré-check sur stateRef.current pour un refus immédiat, informatif,
       // sans toucher setState — MAIS même discipline que `acheterObjet` juste
       // au-dessus : le retour ne promet que ce que l'updater re-vérifie sur
@@ -1090,18 +1166,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const precheck =
         achat.type === "pieces"
           ? acheterLotPieces(current, achat.index)
-          : acheterArticle(current, achat.index, now);
+          : achat.type === "objet"
+            ? acheterArticle(current, achat.index, now)
+            : acheterAlbum(current, achat.album);
       if (!precheck.ok) {
         // Localiser comme le font les actions voisines : jamais de clé brute
         // remontée à l'UI.
-        return { ok: false, raison: raisonLocaliseeBazar(precheck.raison) };
+        return { ok: false, raison: raisonLocaliseeBazar(achat, precheck.raison) };
       }
       setState((prev) => {
         if (!prev) return prev;
         const r =
           achat.type === "pieces"
             ? acheterLotPieces(prev, achat.index)
-            : acheterArticle(prev, achat.index, now);
+            : achat.type === "objet"
+              ? acheterArticle(prev, achat.index, now)
+              : acheterAlbum(prev, achat.album);
         return r.ok ? r.state : prev;
       });
       return { ok: true };
@@ -1152,6 +1232,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // que dans `reset` : les listeners du flush survivent jusqu'au commit).
   const detacherPartie = useCallback(() => {
     slotEtatRef.current = null;
+    // F-04 : une save déjà lancée (debounce/flush) et encore en vol ne doit
+    // plus rien écrire — le slot actif est sur le point de changer.
+    obtenirGameRepository().invaliderEcrituresEnVol();
     setState(null);
   }, []);
 
@@ -1322,6 +1405,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (!prev || !prev.vitrine) return prev;
         const objet = prev.inventaireJoueur.find((o) => o.id === objetId);
         if (!objet) return prev;
+        // Dernier filet sur les pièces uniques : elles ne réapparaissent
+        // jamais en chinage une fois possédées, donc les vendre serait une
+        // perte définitive. Les écrans les écartent déjà du coffre
+        // (`stockChargeable`) ; ce goulot garantit qu'aucun chemin d'appel
+        // non prévu ne peut en faire fuir une.
+        if (!estVendable(objet)) return prev;
         const nouvelEntree: ObjetEnVitrine = {
           objet,
           prixVente,
@@ -1486,15 +1575,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (current.vitrine.tempsRestantSec === tempsRestantSec) return;
     // Même garde d'appartenance que l'auto-save : jamais d'écriture d'un
     // état dans un slot qui n'est plus le sien.
-    if (slotActif() !== slotEtatRef.current) return;
+    const slot = slotEtatRef.current;
+    if (slot === null || slotActif() !== slot) return;
     // Persistance synchrone immédiate depuis le dernier état COMMITÉ : filet
     // pour la suspension iOS (l'effet d'auto-save post-commit peut ne jamais
     // tourner). Peut manquer une mutation encore en attente dans la même
-    // frame — l'auto-save la réécrira au commit suivant.
-    void obtenirGameRepository().save({
-      ...current,
-      vitrine: { ...current.vitrine, tempsRestantSec },
-    });
+    // frame — l'auto-save la réécrira au commit suivant. Slot capturé et
+    // passé explicitement (F-04), comme dans l'auto-save.
+    void obtenirGameRepository().save(
+      {
+        ...current,
+        vitrine: { ...current.vitrine, tempsRestantSec },
+      },
+      slot,
+    );
     // Forme updater (PAS valeur) : ne doit jamais écraser une mutation en
     // attente posée dans la même frame (ex. vente conclue juste avant le
     // passage en arrière-plan).
@@ -1756,14 +1850,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (montant <= 0) return;
     setState((prev) => {
       if (!prev) return prev;
-      return {
-        ...prev,
-        brocanteur: appliquerGainXPBrocanteur(
-          prev.brocanteur,
-          montant,
-          pointsDepensesCompetences(prev.competencesDebloquees),
-        ),
-      };
+      return crediterXPBrocanteur(prev, montant);
     });
   }, []);
 
@@ -1783,18 +1870,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (!prev) return prev;
         const next = appliquerRecuperation(prev, objetId, now);
         if (!next) return prev;
-        return {
-          ...next,
-          brocanteur: appliquerGainXPBrocanteur(
-            next.brocanteur,
-            XP_RESTAURATION_ETAPE *
-              multiplicateurXPRarete(
-                objet.rarete,
-                !!getTemplate(objet.templateId)?.unique,
-              ),
-            pointsDepensesCompetences(prev.competencesDebloquees),
-          ),
-        };
+        return crediterXPBrocanteur(
+          next,
+          XP_RESTAURATION_ETAPE *
+            multiplicateurXPRarete(
+              objet.rarete,
+              !!getTemplate(objet.templateId)?.unique,
+            ),
+        );
       });
       return { ok: true };
     },
@@ -1814,25 +1897,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const now = tempsConfiance() ?? Date.now();
       if (!peutTerminerImmediat(objet.enRestauration, now))
         return { ok: false, raison: raisonLocalisee("horsFenetre30min") };
-      const fin = objet.enRestauration.finMs;
+      // L'échéance tombe à maintenant : l'établi passe en « prêt ». L'objet
+      // n'est PAS livré ici — sa récupération (et l'XP qui va avec) reste au
+      // tap du joueur, qui déclenche la cérémonie comme pour une restauration
+      // arrivée à terme. La notif « objet restauré » encore programmée
+      // s'annule d'elle-même : la resync est cadencée sur `finMs`.
       setState((prev) => {
         if (!prev) return prev;
-        // Forcer la complétion : on applique avec now = finMs (>= finMs), mais
-        // on trace au temps réel — finMs peut être 30 min dans le futur.
-        const next = appliquerRecuperation(prev, objetId, fin, Math.min(now, fin));
-        if (!next) return prev;
-        return {
-          ...next,
-          brocanteur: appliquerGainXPBrocanteur(
-            next.brocanteur,
-            XP_RESTAURATION_ETAPE *
-              multiplicateurXPRarete(
-                objet.rarete,
-                !!getTemplate(objet.templateId)?.unique,
-              ),
-            pointsDepensesCompetences(prev.competencesDebloquees),
-          ),
-        };
+        return appliquerAccelerationRestauration(prev, objetId, now) ?? prev;
       });
       return { ok: true };
     },
@@ -1869,14 +1941,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         collection: marquerDejaPossedeFn(prev.collection, templateId),
       };
       if (dejaConnu) return next;
-      return {
-        ...next,
-        brocanteur: appliquerGainXPBrocanteur(
-          next.brocanteur,
-          XP_DECOUVERTE_COLLECTION,
-          pointsDepensesCompetences(prev.competencesDebloquees),
-        ),
-      };
+      return crediterXPBrocanteur(next, XP_DECOUVERTE_COLLECTION);
     });
   }, []);
 
@@ -2063,9 +2128,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // Certaines missions (finale de l'arc principal) valident à la possession
       // sans consommer l'objet : le joueur garde la pièce.
       const conserver = payloadMission.conserverCibles === true;
-      const categorieMission = payloadMission.categorie;
       const now = tempsConfiance() ?? Date.now();
-      const rEff = recompenseEffective(payloadMission);
+      const rEff = recompenseEffective(payloadMission, {
+        state: current,
+        reso,
+        jourRecu: courrier.jourRecu,
+      });
       setState((prev) => {
         if (!prev) return prev;
         const resoPrev = prev.missions.find((m) => m.courrierId === courrierId);
@@ -2098,22 +2166,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
           },
           now,
         );
-        const avecXP = credited.brocanteur;
-        // Bonus de points de compétence par chapitre livré (décision D4),
-        // appliqué APRÈS le gain d'XP pour ne pas écraser les points de level-up.
-        const brocanteur =
-          categorieMission === "principale"
-            ? {
-                ...avecXP,
-                pointsDisponibles:
-                  avecXP.pointsDisponibles +
-                  pointsOctroyables(
-                    avecXP,
-                    pointsDepensesCompetences(credited.competencesDebloquees),
-                    POINTS_BONUS_CHAPITRE,
-                  ),
-              }
-            : avecXP;
         // Chapitre de la trame portant une invitation (ex. ch4/ch8, à
         // objectifs → livrés ici, contrairement aux chapitres narratifs
         // injectés directement dans `accepterChapitre`) : la lettre des
@@ -2123,12 +2175,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
           chapitreParId(courrierId)?.invitationTier,
           prev.jourActuel,
         );
+        // Aucun bonus de points de compétence ici (2026-08-28, fin de
+        // l'ancienne décision D4) : les points ne tombent QUE du niveau de
+        // Brocanteur, un par niveau. Le brocanteur d'`appliquerRecompense`
+        // passe donc tel quel.
         return {
           ...credited,
           courriers,
           inventaireJoueur: invMaj,
           missions: missionsMaj,
-          brocanteur,
         };
       });
       return { ok: true };
@@ -2211,6 +2266,40 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  // Classeur de cartes & album de timbres (2026-08-30) : mêmes règles que le
+  // reste du fichier — `n` lu sur `stateRef.current` AVANT le `setState`
+  // (jamais dans l'updater, qui peut rejouer en StrictMode).
+  const recyclerDoublonsAlbum = useCallback((albumId: AlbumId): number => {
+    const current = stateRef.current;
+    if (!current) return 0;
+    const n = recyclerDoublons(current, albumId).n;
+    setState((prev) => (prev ? recyclerDoublons(prev, albumId).state : prev));
+    return n;
+  }, []);
+
+  const marquerPieceConsultee = useCallback((id: string) => {
+    setState((prev) =>
+      prev ? { ...prev, albums: marquerConsulteeAlbum(albumsDe(prev), id) } : prev,
+    );
+  }, []);
+
+  const poserTimbre = useCallback(
+    (id: string, page: 0 | 1, ligne: PlacementTimbre["ligne"], x: number) => {
+      setState((prev) =>
+        prev
+          ? { ...prev, albums: poserTimbreAlbum(albumsDe(prev), id, page, ligne, x) }
+          : prev,
+      );
+    },
+    [],
+  );
+
+  const rendreTimbreAuBac = useCallback((id: string) => {
+    setState((prev) =>
+      prev ? { ...prev, albums: rendreAuBacAlbum(albumsDe(prev), id) } : prev,
+    );
+  }, []);
+
   const stateValue = useMemo<GameStateValue>(
     () => ({ state, isHydrated, etatSauvegarde }),
     [state, isHydrated, etatSauvegarde],
@@ -2281,6 +2370,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       rafraichirEnergie,
       rafraichirPeriodiques,
       acheterAuBazar,
+      recyclerDoublonsAlbum,
+      marquerPieceConsultee,
+      poserTimbre,
+      rendreTimbreAuBac,
     }),
     [
       nouvellePartie,
@@ -2344,6 +2437,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       rafraichirEnergie,
       rafraichirPeriodiques,
       acheterAuBazar,
+      recyclerDoublonsAlbum,
+      marquerPieceConsultee,
+      poserTimbre,
+      rendreTimbreAuBac,
     ],
   );
 

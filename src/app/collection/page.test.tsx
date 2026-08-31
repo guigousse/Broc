@@ -7,10 +7,13 @@
  * elle s'y tronquait. Le titre passe à gauche, la valeur prend toute la
  * place restante à droite (mode `left` de `PageHeaderBar`).
  */
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import CollectionPage from "./page";
 import { CATEGORIES } from "@/data/categories";
+import { initAlbums } from "@/lib/albums";
+import { piecesDe } from "@/data/pieces";
+import type { AlbumsState } from "@/types/game";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
@@ -18,6 +21,15 @@ vi.mock("next/navigation", () => ({
 }));
 
 const collectionVide = Object.fromEntries(CATEGORIES.map((c) => [c, []]));
+
+// Requis par `ClasseurOverlay`/`AlbumTimbresOverlay` (Tâche 13, câblées à la
+// page) — `useGame()` les destructure inconditionnellement.
+const recyclerDoublonsAlbum = vi.fn();
+const marquerPieceConsultee = vi.fn();
+const poserTimbre = vi.fn();
+const rendreTimbreAuBac = vi.fn();
+
+let mockAlbums: AlbumsState = initAlbums();
 
 vi.mock("@/context/GameContext", () => ({
   useGame: () => ({
@@ -31,7 +43,15 @@ vi.mock("@/context/GameContext", () => ({
       niveauStockage: 1,
       competencesDebloquees: [],
       tutorielEtape: "termine",
+      albums: mockAlbums,
     },
+    donnerACollection: vi.fn(),
+    retirerDeCollection: vi.fn(),
+    marquerVuDansCollection: vi.fn(),
+    recyclerDoublonsAlbum,
+    marquerPieceConsultee,
+    poserTimbre,
+    rendreTimbreAuBac,
   }),
   useGameActions: () => ({ avancerTutoriel: vi.fn(), tempsConfiance: () => Date.now() }),
   useGameStateOnly: () => ({ state: null }),
@@ -42,7 +62,10 @@ vi.mock("@/components/ui/Toast", () => ({
   useToastSafe: () => ({ toast: vi.fn() }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  mockAlbums = initAlbums();
+});
 
 describe("Collection — en-tête", () => {
   it("le titre est justifié à gauche, la valeur à droite", () => {
@@ -65,5 +88,63 @@ describe("Collection — en-tête", () => {
     expect(zone.style.justifyContent).toBe("flex-end");
     const barre = zone.parentElement as HTMLElement;
     expect(barre.lastElementChild).toBe(zone);
+  });
+});
+
+/**
+ * Tuiles Classeur de cartes / Album de timbres (Tâche 13) : injectées dans
+ * la grille de la Collection via `casesSpeciales` de `CollectionGrid`.
+ *
+ * `MobileLayout` expose un `<main>` réellement `overflow-y: auto` : jsdom
+ * calcule bien son overflow (styles inline, lus par `getComputedStyle`),
+ * donc `CollectionGrid` y prend la branche virtualisée — contrairement aux
+ * tests de `CollectionGrid` isolé, jamais montés sous un tel ancêtre. Or
+ * `@tanstack/react-virtual` mesure le viewport via `offsetHeight`, toujours
+ * 0 en jsdom (pas de layout réel) : sans ce stub, la plage visible calculée
+ * est vide et AUCUNE case (slot ou spéciale) ne rend, quel que soit le
+ * contenu passé à `CollectionGrid`.
+ */
+describe("Collection — tuiles d'album", () => {
+  let offsetHeightDesc: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    offsetHeightDesc = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetHeight",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get: () => 800,
+    });
+  });
+
+  afterEach(() => {
+    if (offsetHeightDesc) {
+      Object.defineProperty(HTMLElement.prototype, "offsetHeight", offsetHeightDesc);
+    }
+  });
+
+  it("montre deux tuiles d'album cadenassées avant achat", () => {
+    render(<CollectionPage />);
+    const tuiles = screen.getAllByTestId("tuile-album") as HTMLButtonElement[];
+    expect(tuiles).toHaveLength(2);
+    // Le dépôt n'installe pas jest-dom : lecture directe des propriétés DOM.
+    expect(tuiles[0].disabled).toBe(true);
+    expect(tuiles[0].getAttribute("aria-label")).toContain("En vente au Bazar");
+  });
+
+  it("après achat, la tuile porte le compteur et ouvre le classeur", () => {
+    const [c0, c1, c2] = piecesDe("classeur").map((p) => p.id);
+    mockAlbums = {
+      classeur: { achete: true, pieces: { [c0]: 1, [c1]: 1, [c2]: 1 }, nouvelles: [] },
+      timbres: initAlbums().timbres,
+    };
+    render(<CollectionPage />);
+    const t = screen.getAllByTestId("tuile-album")[0];
+    // Même gabarit i18n que le compteur d'AlbumShell ("{n} / {total}").
+    expect(t.textContent).toContain("3 / 50");
+    expect(t.getAttribute("aria-label")).toContain("3 / 50");
+    fireEvent.click(t);
+    expect(screen.getByRole("dialog", { name: "Classeur de cartes" })).toBeTruthy();
   });
 });

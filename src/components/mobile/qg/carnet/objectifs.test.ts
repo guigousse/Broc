@@ -16,7 +16,7 @@ describe("objectifEnEuros", () => {
     }
   });
   it("les types qui comptent autre chose sont faux", () => {
-    for (const t of ["objet", "objetsRares", "ventesCategorie", "niveau", "restauration"] as const) {
+    for (const t of ["objet", "objetsRares", "objetLegendaire", "ventesCategorie", "niveau", "restauration"] as const) {
       expect(objectifEnEuros(t)).toBe(false);
     }
   });
@@ -38,6 +38,7 @@ describe("libelleObjectif", () => {
       { type: "valeurCollection", montant: 1500 },
       { type: "niveau", niveau: 12 },
       { type: "objetsRares", nombre: 2 },
+      { type: "objetLegendaire", nombre: 1 },
       { type: "beneficeCumule", montant: 850 },
       { type: "ventesCategorie", categorie: "Musique", nombre: 4 },
     ];
@@ -95,6 +96,8 @@ describe("progressionAffichee", () => {
     // la carte affiche un cadre de scotch sur rien. Ce test est le seul filet.
     const objectifDeForme: Record<string, ObjectifMission> = {
       objetsRares: { type: "objetsRares", nombre: 2 },
+      objetLegendaire: { type: "objetLegendaire", nombre: 1 },
+      restauration: { type: "restauration", etatMin: "Bon" },
       beneficeCumule: { type: "beneficeCumule", montant: 850 },
       chiffreAffaires: { type: "ventesCumulees", montant: 900 },
       profitVente: { type: "profitVente", montant: 120 },

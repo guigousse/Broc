@@ -278,3 +278,41 @@ describe("ChineNegoDrawer — cible du grand-père", () => {
     expect(screen.getByText("25€")).toBeTruthy();
   });
 });
+
+describe("ChineNegoDrawer — verrou album manquant / pièce", () => {
+  function renderReplie(
+    item: ObjetEnVente,
+    extra: Partial<Parameters<typeof ChineNegoDrawer>[0]> = {},
+  ) {
+    return render(
+      <ChineNegoDrawer
+        item={item}
+        budget={1000}
+        plein={false}
+        expanded={false}
+        onExpand={() => {}}
+        onCollapse={() => {}}
+        onUpdateNego={vi.fn()}
+        onConclu={() => {}}
+        onAcheterDirect={() => {}}
+        {...extra}
+      />,
+    );
+  }
+
+  it("verrouAlbum : ni Négocier ni Acheter, l'aide « En vente au Bazar » est visible", () => {
+    renderReplie(makeItem(null), { verrouAlbum: "timbres" });
+    expect(screen.queryByRole("button", { name: /négocier/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /acheter/i })).toBeNull();
+    expect(screen.getByText("En vente au Bazar")).toBeTruthy();
+    expect(screen.getByText("Album manquant")).toBeTruthy();
+  });
+
+  it("une pièce ignore « Stock plein »", () => {
+    const base = makeItem(null);
+    const item = { ...base, objet: { ...base.objet, templateId: "timbre.renard_roux" } };
+    renderReplie(item, { plein: true });
+    const acheter = screen.getByRole("button", { name: /acheter/i }) as HTMLButtonElement;
+    expect(acheter.disabled).toBe(false);
+  });
+});

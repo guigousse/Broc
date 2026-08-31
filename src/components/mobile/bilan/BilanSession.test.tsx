@@ -79,6 +79,7 @@ vi.mock("@/lib/i18n/LangueContext", () => ({
         xpVentes: "Ventes",
         xpJustePrix: "Juste prix",
         recetteAria: "Recette : {montant} €",
+        rangeeDansAlbum: "rangée dans l'album",
       },
     },
     tr: (modele: string, vars: Record<string, string | number>) =>
@@ -175,6 +176,29 @@ describe("BilanSession — état initial", () => {
   it("rien à montrer : le bouton propose directement la sortie", () => {
     monter({ items: [], xpLignes: [] });
     expect(bouton("Rentrer à la boutique")).toBeTruthy();
+  });
+});
+
+describe("BilanSession — pièce (carte/timbre)", () => {
+  it("une pièce achetée est rangée dans l'album : mention + visuel de pièce", () => {
+    monter({
+      items: [
+        {
+          templateId: "timbre.renard_roux",
+          nom: "Renard roux",
+          categorie: "Livres & Papeterie" as const,
+          prix: 12,
+          album: "timbres",
+        },
+      ],
+    });
+    expect(screen.getByText(/rangée dans l'album/)).toBeTruthy();
+    expect(document.querySelector('[data-testid="piece-visuel"]')).not.toBeNull();
+  });
+
+  it("un objet ordinaire n'affiche pas la mention album", () => {
+    monter();
+    expect(screen.queryByText(/rangée dans l'album/)).toBeNull();
   });
 });
 

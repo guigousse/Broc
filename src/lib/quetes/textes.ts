@@ -12,7 +12,9 @@ export interface Gabarit {
  */
 export type GabaritQueteId =
   | `${"generique" | "jeux-video" | "set-designer" | "mode" | "art"}#${number}`
-  | `${"rares" | "benefice" | "chiffre" | "marge" | "categorie"}#${number}`;
+  | `${"rares" | "benefice" | "chiffre" | "marge" | "categorie"}#${number}`
+  | `${"beneficeJour" | "chiffreJour" | "margeJour" | "categorieJour"}#${number}`
+  | `${"restauration" | "legendaire"}#${number}`;
 
 /** Résultat de `genererTexte` : le texte FR mis en forme + le gabarit tiré. */
 export interface TexteGenere {
@@ -71,6 +73,30 @@ const CHIFFREES: Record<string, Gabarit[]> = {
     { titre: "Spécialiste demandé", corps: ["Bonjour,", "J'ai besoin de quelqu'un qui connaît son rayon. Vends {nombre} objets de la catégorie {categorie} et tu auras ma confiance."] },
     { titre: "Vider le rayon", corps: ["Salut,", "Mon stock déborde du côté {categorie}. Écoule-m'en {nombre} et je te revaudrai ça."] },
   ],
+  beneficeJour: [
+    { titre: "La journée compte", corps: ["Salut,", "Pas de grands discours : {montant} de bénéfice avant ce soir. On verra bien ce que tu vaux."] },
+    { titre: "Ce soir, on fait les comptes", corps: ["Bonjour,", "Dégage {montant} de bénéfice d'ici la fin de la journée et je t'inscris sur mon carnet."] },
+  ],
+  chiffreJour: [
+    { titre: "Faire tourner, aujourd'hui", corps: ["Bonjour,", "Peu importe la marge : je veux du mouvement. {montant} encaissés avant la fermeture."] },
+    { titre: "La caisse d'un seul jour", corps: ["Salut,", "Fais chanter ta caisse avant ce soir — {montant} encaissés, pas un centime de moins."] },
+  ],
+  margeJour: [
+    { titre: "Le coup du jour", corps: ["Cher confrère,", "Une belle vente vaut dix médiocres. {montant} de marge sur un seul objet, et avant ce soir."] },
+    { titre: "Une seule vente", corps: ["Bonjour,", "Je ne veux pas savoir combien tu vends aujourd'hui. Je veux {montant} de marge sur UNE vente."] },
+  ],
+  categorieJour: [
+    { titre: "Le rayon du jour", corps: ["Bonjour,", "Aujourd'hui tu t'occupes du rayon {categorie}. Vends-m'en {nombre} et on en reparle."] },
+    { titre: "Avant la fermeture", corps: ["Salut,", "{nombre} objets de la catégorie {categorie}, vendus avant ce soir. Simple, non ?"] },
+  ],
+  restauration: [
+    { titre: "Rendre son éclat", corps: ["Bonjour,", "J'ai horreur du délabré. Prends une pièce, passe-la à l'établi et remets-la en état{etat}."] },
+    { titre: "Un passage à l'établi", corps: ["Salut,", "Une pièce, un établi, un peu de patience. Je la reprends une fois retapée{etat}."] },
+  ],
+  legendaire: [
+    { titre: "La pièce d'une vie", corps: ["Cher confrère,", "On ne croise ça qu'une ou deux fois dans une carrière. Si une pièce légendaire passe devant toi aujourd'hui, ne la laisse pas filer — je saurai me montrer reconnaissant."] },
+    { titre: "Si elle sort, elle est à toi", corps: ["Bonjour,", "Il paraît qu'une pièce d'exception va sortir quelque part aujourd'hui. Mets la main dessus. Je paierai le prix de la chance."] },
+  ],
 };
 
 /** Format monétaire FR des gabarits : « 1 800 € » (espace insécable fine). */
@@ -116,7 +142,7 @@ export function nombreVariantesCommanditaire(gabaritCle: string): number {
  */
 export function genererTexteChiffre(
   gabaritCle: string,
-  params: { nombre?: number; montant?: number; categorie?: string },
+  params: { nombre?: number; montant?: number; categorie?: string; etatMin?: EtatObjet },
   rng: () => number = Math.random,
 ): TexteGenere {
   const gabarits = CHIFFREES[gabaritCle] ?? CHIFFREES.benefice;
@@ -124,8 +150,10 @@ export function genererTexteChiffre(
   const index = Math.floor(rng() * gabarits.length);
   const g = gabarits[index] ?? gabarits[0];
   const indexReel = gabarits[index] ? index : 0;
+  const etat = params.etatMin ? ` (état min : ${params.etatMin})` : "";
   const fill = (s: string) =>
     s
+      .replaceAll("{etat}", etat)
       .replaceAll("{nombre}", String(params.nombre ?? 0))
       .replaceAll("{montant}", montantFr(params.montant ?? 0))
       .replaceAll("{categorie}", params.categorie ?? "");

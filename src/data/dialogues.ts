@@ -249,8 +249,92 @@ export const SEQUENCES_GAZETTE: Record<string, DialogueSequence> = {
   },
 };
 
+
+/**
+ * LE TENANCIER DU BAZAR — « Le Joueur du Vide-grenier ».
+ *
+ * C'est le même personnage que le commanditaire de quêtes du même nom : le
+ * joueur l'a déjà croisé dans son courrier, il tient maintenant boutique. Son
+ * portrait vient donc de `personas/commanditaires/`, et pas du dessin de la
+ * scène — celui-ci est coupé à la taille par le comptoir et ne ferait pas un
+ * portrait.
+ *
+ * Une réplique de comptoir tirée au hasard, puis TOUJOURS le calendrier. Les
+ * deux sont des séquences d'UNE ligne, assemblées à l'ouverture : la ligne du
+ * délai est ainsi écrite (et traduite) une seule fois pour les six répliques.
+ */
+export const SEQUENCES_TENANCIER_BAZAR: Record<string, DialogueSequence> = {
+  bazar_tenancier_1: {
+    id: "bazar_tenancier_1",
+    lignes: [
+      { humeur: "souriant", texte: "Entrez, entrez ! Chaque pièce ici a déjà vécu deux vies — la prochaine, c'est vous qui l'écrivez." },
+    ],
+  },
+  bazar_tenancier_2: {
+    id: "bazar_tenancier_2",
+    lignes: [
+      { humeur: "songeur", texte: "Vous tombez à pic : j'ai astiqué toute la vitrine ce matin. Ça brille, hein ?" },
+    ],
+  },
+  bazar_tenancier_3: {
+    id: "bazar_tenancier_3",
+    lignes: [
+      { humeur: "souriant", texte: "Prenez votre temps, surtout. Les belles pièces se laissent regarder avant de se laisser prendre." },
+    ],
+  },
+  bazar_tenancier_4: {
+    id: "bazar_tenancier_4",
+    lignes: [
+      { humeur: "rieur", texte: "On m'a proposé le double pour celle-là, l'autre jour. J'ai dit non — elle attendait quelqu'un." },
+    ],
+  },
+  bazar_tenancier_5: {
+    id: "bazar_tenancier_5",
+    lignes: [
+      { humeur: "songeur", texte: "Ici on paie en Bazarcoins, une vieille lubie de la maison. Croyez-moi, ça vaut mieux que des francs." },
+    ],
+  },
+  bazar_tenancier_6: {
+    id: "bazar_tenancier_6",
+    lignes: [
+      { humeur: "rieur", texte: "Trente ans que je tiens ce comptoir, et il me surprend encore. Regardez ce qui est arrivé cette semaine !" },
+    ],
+  },
+  /**
+   * Le mot de la fin, collé à la réplique tirée au sort DANS LA MÊME bulle :
+   * deux bulles pour deux phrases faisaient un dialogue là où il n'y a qu'une
+   * salutation (réglage de l'auteur, 2026-08-26). `{t}` porte le délai, écrit
+   * en toutes lettres, en gras et souligné.
+   */
+  bazar_tenancier_delai: {
+    id: "bazar_tenancier_delai",
+    lignes: [
+      { humeur: "souriant", texte: "Le prochain arrivage est prévu dans {t} — repassez me voir !" },
+    ],
+  },
+};
+
+/** Les six répliques de comptoir, dans l'ordre du tirage. */
+export const REPLIQUES_TENANCIER_BAZAR: DialogueSequence[] = [
+  SEQUENCES_TENANCIER_BAZAR.bazar_tenancier_1,
+  SEQUENCES_TENANCIER_BAZAR.bazar_tenancier_2,
+  SEQUENCES_TENANCIER_BAZAR.bazar_tenancier_3,
+  SEQUENCES_TENANCIER_BAZAR.bazar_tenancier_4,
+  SEQUENCES_TENANCIER_BAZAR.bazar_tenancier_5,
+  SEQUENCES_TENANCIER_BAZAR.bazar_tenancier_6,
+];
+
+/** Le portrait du tenancier, la même illustration quelle que soit l'humeur. */
+export const TENANCIER_BAZAR_PORTRAITS: Record<HumeurPnj, string> = {
+  souriant: "/personas/commanditaires/jeux-video.webp",
+  emu: "/personas/commanditaires/jeux-video.webp",
+  songeur: "/personas/commanditaires/jeux-video.webp",
+  rieur: "/personas/commanditaires/jeux-video.webp",
+};
+
 export const TOUTES_SEQUENCES: DialogueSequence[] = [
   ...Object.values(SEQUENCES_TUTORIEL),
   ...Object.values(SEQUENCES_ANNIVERSAIRE),
   ...Object.values(SEQUENCES_GAZETTE),
+  ...Object.values(SEQUENCES_TENANCIER_BAZAR),
 ];

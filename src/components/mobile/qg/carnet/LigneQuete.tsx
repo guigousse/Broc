@@ -157,7 +157,9 @@ const compteurStyle: CSSProperties = {
 const colonnePave: CSSProperties = {
   flex: "0 0 auto",
   display: "flex",
+  flexDirection: "column",
   alignItems: "center",
+  gap: 3,
 };
 const detailWrap: CSSProperties = {
   padding: "4px 14px 14px",
@@ -330,6 +332,13 @@ export function LigneQuete({
             verrouille={paveVerrouille}
             onLivrer={onLivrer}
           />
+          {p.primeVariable && (
+            <span style={{ fontSize: 11, opacity: 0.75, maxWidth: 92, textAlign: "center" }}>
+              {tr(d.carnet.primeVariableLegendaire, {
+                taux: Math.round(p.primeVariable.taux * 100),
+              })}
+            </span>
+          )}
         </div>
       </div>
 

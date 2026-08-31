@@ -16,6 +16,10 @@ interface BrocanteFrameProps {
   coord: FrameCoord;
   selected: boolean;
   debloquee: boolean;
+  /** Vente : bourse à thème incompatible avec le coffre actuel — même rendu
+   *  qu'une brocante verrouillée (toile grise + cadenas), toujours cliquable
+   *  pour que la carte explique « Musique uniquement ». */
+  horsTheme?: boolean;
   onSelect: (id: string) => void;
   /** Tutoriel : main pointeuse sur ce cadre (miroir — le cadre tuto est près du bord gauche). */
   tutoMain?: boolean;
@@ -34,13 +38,15 @@ const frameOuter = (coord: FrameCoord, selected: boolean): CSSProperties => ({
   top: coord.top,
   width: coord.width,
   height: coord.height,
+  // Cadre laiton épais : bord sombre extérieur, filet clair (arête éclairée),
+  // puis le relief est donné par l'ombre portée intérieure sur la toile.
   border: selected
-    ? "3px solid var(--brass-300)"
-    : "2px solid var(--brass-700)",
+    ? "4px solid var(--brass-300)"
+    : "4px solid var(--brass-700)",
   background: "var(--paper-200)",
   boxShadow: selected
-    ? "0 0 0 2px var(--brass-500), 0 0 18px 4px rgba(220,170,60,0.55), 0 6px 14px rgba(40,25,5,0.25)"
-    : "inset 0 0 0 2px var(--paper-100), 0 4px 10px rgba(40,25,5,0.25)",
+    ? "0 0 0 2px var(--brass-500), 0 0 18px 4px rgba(220,170,60,0.55), 7px 9px 14px rgba(40,25,5,0.45)"
+    : "0 0 0 1px var(--brass-900), 7px 9px 14px rgba(40,25,5,0.45)",
   // overflow:hidden pour cliper la peinture, mais on autorise le badge à
   // déborder en utilisant un wrapper interne + un badge en absolute hors clip.
   overflow: "visible",
@@ -52,6 +58,17 @@ const paintingWrap: CSSProperties = {
   position: "absolute",
   inset: 0,
   overflow: "hidden",
+};
+
+// Lumière venant du haut à gauche : le cadre porte son ombre sur la toile
+// dans l'angle supérieur gauche (ici), et sur le mur en bas à droite
+// (boxShadow de frameOuter). Posée au-dessus de l'image, sans capter les taps.
+const paintingReliefStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  pointerEvents: "none",
+  boxShadow:
+    "inset 0 0 0 1px var(--brass-300), inset 6px 7px 9px rgba(20,12,0,0.7), inset 0 0 6px 1px rgba(20,12,0,0.3)",
 };
 
 const fallbackStyle: CSSProperties = {
@@ -117,9 +134,11 @@ export function BrocanteFrame({
   coord,
   selected,
   debloquee,
+  horsTheme = false,
   onSelect,
   tutoMain = false,
 }: BrocanteFrameProps) {
+  const verrouillee = !debloquee || horsTheme;
   const imageUrl = getBrocanteImageUrl(brocante.id);
   const { d, locale } = useLangue();
   const { enabled: editing } = useBrocanteFramesEdit();
@@ -136,7 +155,7 @@ export function BrocanteFrame({
       onClick={onClickHandler}
       aria-label={ariaLabel}
       aria-pressed={selected}
-      aria-disabled={!debloquee}
+      aria-disabled={verrouillee}
       className={tutoMain ? "tuto-main tuto-main-droite" : undefined}
       style={{ ...frameOuter(coord, selected), pointerEvents }}
     >
@@ -152,15 +171,16 @@ export function BrocanteFrame({
             alt=""
             fill
             sizes="(max-width: 600px) 20vw, 200px"
-            style={zoomedImageStyle(debloquee)}
+            style={zoomedImageStyle(!verrouillee)}
           />
         ) : (
           <div style={fallbackStyle}>
             <Store size={32} strokeWidth={1.2} color="var(--brass-100)" />
           </div>
         )}
-        {!debloquee && (
-          <div style={lockOverlayStyle} aria-hidden>
+        <div style={paintingReliefStyle} aria-hidden />
+        {verrouillee && (
+          <div style={lockOverlayStyle} aria-hidden data-testid="cadre-cadenas">
             <div style={lockBubbleStyle}>
               <Lock size={20} strokeWidth={2.2} />
             </div>

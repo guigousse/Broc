@@ -216,11 +216,18 @@ export function BrocantePanorama({
       energieCourante(state, tempsConfiance() ?? Date.now()) >= 1
     : false;
   // Bourse à thème (vente) : le coffre ne doit contenir que des objets du
-  // thème — sinon Continuer est bloqué et la carte explique la règle.
-  const coffreHorsTheme =
-    destination === "vitrine" && selected
-      ? !coffreCompatibleTheme(state.vitrine?.objets ?? [], selected)
-      : false;
+  // thème — sinon le cadre est cadenassé dans la scène, Continuer est bloqué
+  // et la carte explique la règle.
+  const horsThemeIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (destination !== "vitrine") return ids;
+    const objets = state.vitrine?.objets ?? [];
+    for (const b of brocantes) {
+      if (b.specialisation && !coffreCompatibleTheme(objets, b)) ids.add(b.id);
+    }
+    return ids;
+  }, [destination, state.vitrine?.objets, brocantes]);
+  const coffreHorsTheme = !!selected && horsThemeIds.has(selected.id);
   const selectedConditions =
     selected && !selectedDebloquee
       ? listerConditionsAvecEtat(selected, state, d, parTier)
@@ -280,6 +287,7 @@ export function BrocantePanorama({
                 brocantesById={brocantesById}
                 selectedId={selectedId}
                 debloqueesIds={debloqueesIds}
+                horsThemeIds={horsThemeIds}
                 onSelect={setSelectedId}
                 tutoMainId={
                   // Tutoriel : une seule main à la fois — le cadre tant que
@@ -306,6 +314,7 @@ export function BrocantePanorama({
               conditions={selectedConditions}
               destination={destination}
               coffreHorsTheme={coffreHorsTheme}
+              collection={state.collection}
             />
           </div>
         )}

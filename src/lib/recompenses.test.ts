@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { appliquerRecompense, recompenseEffective } from "./recompenses";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
-import type { CourrierPayloadMission, MissionCategorie } from "@/types/game";
+import type { CourrierPayloadMission, MissionCategorie, SessionChinage } from "@/types/game";
 
 function mission(patch: Partial<CourrierPayloadMission> = {}): CourrierPayloadMission {
   return {
@@ -141,5 +141,62 @@ describe("jetons du Bazar", () => {
     expect(ecriture.recette).toBe(0);
     expect(ecriture.depense).toBe(0);
     expect(ecriture.params?.jetons).toBe(3);
+  });
+});
+
+describe("prime légendaire", () => {
+  const payload = {
+    type: "mission" as const, categorie: "quotidienne" as const,
+    expediteurId: "art", titre: "t", corps: [], cibles: [],
+    recompense: { argent: 110, jetons: 3 },
+    objectifs: [{ type: "objetLegendaire" as const, nombre: 1 }],
+    primeVariable: { type: "pourcentageLegendaire" as const, taux: 0.2 },
+  };
+  const reso = { courrierId: "x", statut: "active" as const, timestampAcceptation: 1000 };
+
+  /** Copie conforme du helper de `src/lib/quetes/objectifs.test.ts`. */
+  function chineSession(timestamp: number, templateIds: string[]): SessionChinage {
+    return {
+      id: `c${timestamp}`, type: "chinage", jour: 3, timestamp,
+      brocanteId: "b1", brocanteNom: "B", xpGagne: {} as SessionChinage["xpGagne"],
+      achats: templateIds.map((templateId) => ({
+        templateId, nom: "X", categorie: "Musique" as const,
+        etat: "Bon" as const, prixReferenceReel: 10, prixPaye: 5,
+      })),
+    };
+  }
+
+  function stateAvec(templateIds: string[]) {
+    return createMockGameState({ historique: [chineSession(1500, templateIds)] });
+  }
+
+  it("sans contexte, rend exactement la récompense figée", () => {
+    expect(recompenseEffective(payload).argent).toBe(110);
+  });
+
+  it("ajoute 20 % du prixRefBase de la pièce trouvée", () => {
+    // leg.mus.violon_de_maitre_cremonais_1715 : prixRefBase 4500 → +900
+    const state = stateAvec(["leg.mus.violon_de_maitre_cremonais_1715"]);
+    expect(recompenseEffective(payload, { state, reso, jourRecu: 3 }).argent).toBe(110 + 900);
+  });
+
+  it("retient la pièce la PLUS CHÈRE quand il y en a plusieurs", () => {
+    // gutenberg 6500 → +1300, violon 4500 → +900 : c'est 1300 qui compte.
+    const state = stateAvec([
+      "leg.mus.violon_de_maitre_cremonais_1715",
+      "leg.lv.gutenberg_feuillet",
+    ]);
+    expect(recompenseEffective(payload, { state, reso, jourRecu: 3 }).argent).toBe(110 + 1300);
+  });
+
+  it("aucune pièce trouvée : pas de prime", () => {
+    const state = stateAvec(["mus.test_pressing_des_trolling_sons"]);
+    expect(recompenseEffective(payload, { state, reso, jourRecu: 3 }).argent).toBe(110);
+  });
+
+  it("un payload SANS primeVariable ignore le contexte", () => {
+    const sansPrime = { ...payload, primeVariable: undefined };
+    const state = stateAvec(["leg.lv.gutenberg_feuillet"]);
+    expect(recompenseEffective(sansPrime, { state, reso, jourRecu: 3 }).argent).toBe(110);
   });
 });

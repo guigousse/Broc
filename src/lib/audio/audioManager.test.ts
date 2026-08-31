@@ -56,6 +56,23 @@ class FakeAudioContext {
   resume = vi.fn(async () => {
     this.state = "running";
   });
+  // Comme le vrai navigateur : suspend() notifie statechange, ce qui a fait
+  // croire au manager qu'iOS l'interrompait alors qu'il se taisait lui-même.
+  suspend = vi.fn(async () => {
+    this.state = "suspended";
+    this.onstatechange?.();
+  });
+  // WebKit ferme le contexte de son côté (reset du service média, pression
+  // mémoire) : le manager doit savoir en rebâtir un.
+  close = vi.fn(async () => {
+    this.state = "closed";
+  });
+  onstatechange: (() => void) | null = null;
+  /** Simule une transition subie : pose l'état PUIS notifie, comme le fait iOS. */
+  subirEtat(etat: AudioContextState): void {
+    this.state = etat;
+    this.onstatechange?.();
+  }
   destination = { connect: vi.fn(), disconnect: vi.fn() };
   gains: FakeGain[] = [];
   oscillators: FakeOscillator[] = [];
@@ -135,6 +152,7 @@ class FakeAudio {
   // il ne s'automatise pas, d'où l'échelonnage à la main côté manager.
   loop = false;
   playbackRate = 1;
+  currentTime = 0;
   private listeners = new Map<string, Set<() => void>>();
 
   constructor(src = "") {
@@ -400,6 +418,26 @@ describe("audioManager — effets et préférences", () => {
     expect(FakeAudioContext.instances).toHaveLength(0);
   });
 
+  // Le carillon qui remplace le son SYSTÈME d'une notification reçue en jouant
+  // (celui-ci prenait la session audio iOS et coupait tout le son du jeu).
+  it("playNotif joue les deux notes du carillon", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playNotif();
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.oscillators).toHaveLength(2);
+    expect(ctx.oscillators[0].start).toHaveBeenCalled();
+    expect(ctx.oscillators[1].start).toHaveBeenCalled();
+  });
+
+  // Il passe par le bus du jeu, donc par ses réglages — c'est précisément ce
+  // que le son système ignorait.
+  it("playNotif est muet quand la préférence effets est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    audioManager.playNotif();
+    expect(FakeAudioContext.instances[0]?.oscillators ?? []).toHaveLength(0);
+  });
+
   it("playApparition crée un oscillateur avec enveloppe quand effets est actif", async () => {
     const { audioManager } = await freshManager();
     audioManager.playApparition();
@@ -483,6 +521,57 @@ describe("audioManager — effets et préférences", () => {
     const { audioManager } = await freshManager();
     audioManager.setPref("effets", false);
     await audioManager.playLevelUp();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // La montée d'état d'un objet restauré (cérémonie de l'Atelier, 2026-08-28).
+  it("playUpgrade charge /sounds/upgrade.mp3 et lance la source", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playUpgrade();
+    expect(fetchMock).toHaveBeenCalledWith("/sounds/upgrade.mp3");
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(1);
+    expect(ctx.bufferSources[0].start).toHaveBeenCalled();
+  });
+
+  it("playUpgrade est muet quand la préférence effets est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    await audioManager.playUpgrade();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // La couche « magie » superposée quand un objet atteint le pristin.
+  it("playPristinMagie charge /sounds/pristin-magie.mp3 et lance la source", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playPristinMagie();
+    expect(fetchMock).toHaveBeenCalledWith("/sounds/pristin-magie.mp3");
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(1);
+    expect(ctx.bufferSources[0].start).toHaveBeenCalled();
+  });
+
+  it("playPristinMagie est muet quand la préférence effets est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    await audioManager.playPristinMagie();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // Le tintement des Bazarcoins qui tombent dans la caisse, au bout de leur vol
+  // depuis le carnet de quêtes (2026-08-26).
+  it("playJetonBazar charge /sounds/jeton-bazar.mp3 et lance la source", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playJetonBazar();
+    expect(fetchMock).toHaveBeenCalledWith("/sounds/jeton-bazar.mp3");
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources[0].start).toHaveBeenCalled();
+  });
+
+  it("playJetonBazar se tait quand les effets sont coupés", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    await audioManager.playJetonBazar();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -570,6 +659,56 @@ describe("audioManager — boucles d'ambiance", () => {
     await enCours;
     const ctx = FakeAudioContext.instances[0];
     expect(ctx.bufferSources).toHaveLength(0);
+  });
+
+  // F-05 : les boucles longues (~86 Mo de PCM à elles quatre) ne restent pas
+  // en cache une fois arrêtées. Observable par le re-fetch au redémarrage.
+  it("stopAmbience évince le tampon : un nouveau startAmbience re-télécharge", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startAmbience();
+    audioManager.stopAmbience();
+    await audioManager.startAmbience();
+    const urls = fetchMock.mock.calls.map((c) => c[0] as string);
+    expect(urls.filter((u) => u === "/sounds/ambience-qg.mp3")).toHaveLength(2);
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(2);
+  });
+
+  it("stopAmbience annulant un démarrage en vol évince aussi le tampon décodé", async () => {
+    const { audioManager } = await freshManager();
+    const enCours = audioManager.startAmbience();
+    audioManager.stopAmbience();
+    await enCours;
+    await audioManager.startAmbience();
+    const urls = fetchMock.mock.calls.map((c) => c[0] as string);
+    expect(urls.filter((u) => u === "/sounds/ambience-qg.mp3")).toHaveLength(2);
+    // Une seule boucle joue : celle du second start.
+    expect(FakeAudioContext.instances[0].bufferSources).toHaveLength(1);
+  });
+
+  it("stopCrowd / stopFireplace / stopNeedle évincent leur tampon", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startCrowd();
+    audioManager.stopCrowd();
+    await audioManager.startCrowd();
+    await audioManager.startFireplace(0.3);
+    audioManager.stopFireplace();
+    await audioManager.startFireplace(0.3);
+    await audioManager.startNeedle();
+    audioManager.stopNeedle();
+    await audioManager.startNeedle();
+    const urls = fetchMock.mock.calls.map((c) => c[0] as string);
+    for (const u of ["/sounds/crowd.mp3", "/sounds/fireplace.mp3", "/sounds/vinyl-noise-loop.mp3"]) {
+      expect(urls.filter((x) => x === u)).toHaveLength(2);
+    }
+  });
+
+  it("stopAmbience / stopFireplace / stopNeedle sans start ne jettent pas", async () => {
+    const { audioManager } = await freshManager();
+    expect(() => audioManager.stopAmbience()).not.toThrow();
+    expect(() => audioManager.stopFireplace()).not.toThrow();
+    expect(() => audioManager.stopNeedle()).not.toThrow();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("setFireplaceVolume clampe la cible dans [0, 1]", async () => {
@@ -1103,5 +1242,347 @@ describe("audioManager — setAmbienceDuck", () => {
       expect.closeTo(0.4, 5),
       expect.any(Number),
     );
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Auto-réparation du contexte (le son qui se coupe en pleine session)  */
+/* ------------------------------------------------------------------ */
+
+/*
+ * LE défaut que ferme cette suite : tout le jeu sonne à travers UN seul
+ * AudioContext, et le seul rattrapage était un `resume()` tiré au petit
+ * bonheur. Un contexte qu'iOS ferme (reset du service média, pression
+ * mémoire) ou qu'il laisse « interrupted » (pub récompensée, notification,
+ * appel) ne revient jamais de lui-même : le `return` anticipé d'ensureCtx
+ * garantissait qu'on retente éternellement sur un contexte mort. Symptôme
+ * côté joueur : tout se tait d'un coup, en pleine partie, jusqu'au
+ * redémarrage de l'app.
+ */
+describe("audioManager — un contexte mort est rebâti", () => {
+  beforeEach(stubBrowserGlobals);
+
+  it("un contexte fermé par iOS est rebâti au son suivant", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+
+    ctx1.state = "closed";
+    audioManager.playClick();
+
+    expect(FakeAudioContext.instances).toHaveLength(2);
+    // Le son demandé sort sur le NOUVEAU contexte, pas dans le vide.
+    expect(FakeAudioContext.instances[1].oscillators).toHaveLength(1);
+    // Un contexte déjà fermé n'est pas refermé — WebKit lève sur un second
+    // close(), et le graphe neuf partirait alors sur une exception.
+    expect(ctx1.close).not.toHaveBeenCalled();
+  });
+
+  it("un resume refusé (contexte mort) fait rebâtir le graphe", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+
+    ctx1.state = "suspended";
+    ctx1.resume.mockRejectedValueOnce(new Error("InvalidStateError"));
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    expect(FakeAudioContext.instances).toHaveLength(2);
+    // L'ancien, lui, est encore ouvert : il DOIT être relâché. WebKit
+    // plafonne le nombre d'AudioContext par page, en accumuler des morts
+    // finirait par tuer le son pour de bon.
+    expect(ctx1.close).toHaveBeenCalled();
+  });
+
+  // Non-régression : un contexte simplement endormi (le cas de tous les jours)
+  // se réveille par resume. Le rebâtir serait une coupure gratuite.
+  it("un contexte seulement suspendu est repris, pas rebâti", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+
+    ctx1.state = "suspended";
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    expect(ctx1.resume).toHaveBeenCalled();
+    expect(FakeAudioContext.instances).toHaveLength(1);
+  });
+
+  // Le cas WebKit : resume() tient sa promesse mais l'état ne bouge pas.
+  // Sans escalade, on retenterait la même chose pour l'éternité.
+  it("un « interrupted » que resume ne réveille pas finit par être rebâti", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+    ctx1.resume.mockImplementation(async () => {});
+    ctx1.state = "interrupted" as AudioContextState;
+
+    for (let i = 0; i < 4; i++) {
+      audioManager.playClick();
+      await flushMicrotasks();
+    }
+
+    expect(FakeAudioContext.instances).toHaveLength(2);
+  });
+
+  it("l'ambiance qui tournait repart sur le contexte rebâti", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startAmbience(0.4);
+    const ctx1 = FakeAudioContext.instances[0];
+    expect(ctx1.bufferSources).toHaveLength(1);
+
+    ctx1.state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    const ctx2 = FakeAudioContext.instances[1];
+    expect(ctx2.bufferSources).toHaveLength(1);
+    expect(ctx2.bufferSources[0].loop).toBe(true);
+  });
+
+  it("le disque reprend à la seconde où il s'est tu", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/aaa.m4a");
+    const disque1 = FakeAudio.instances[0];
+    disque1.currentTime = 42;
+
+    FakeAudioContext.instances[0].state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    const disque2 = FakeAudio.instances[FakeAudio.instances.length - 1];
+    expect(disque2).not.toBe(disque1);
+    expect(disque2.src).toBe("/sounds/vinyles/aaa.m4a");
+    expect(disque2.currentTime).toBe(42);
+    expect(disque2.paused).toBe(false);
+  });
+
+  // Un disque que le joueur a mis en pause doit RESTER en pause : une panne
+  // technique n'est pas une raison de rallumer la musique qu'il a coupée.
+  it("un disque mis en pause par le joueur ne redémarre pas tout seul", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/aaa.m4a");
+    audioManager.pauseVinyl();
+    const avant = FakeAudio.instances.length;
+
+    FakeAudioContext.instances[0].state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    expect(FakeAudio.instances).toHaveLength(avant);
+  });
+
+  // Sans ça, la reprise attend le prochain tap du joueur : dans un dialogue
+  // ou une cinématique, le silence dure.
+  it("une interruption subie déclenche la reprise sans attendre un tap", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+    ctx1.resume.mockClear();
+
+    ctx1.subirEtat("suspended");
+    await flushMicrotasks();
+
+    expect(ctx1.resume).toHaveBeenCalled();
+  });
+
+  // La panne n'est observable ni au simulateur ni au débogueur : elle n'arrive
+  // qu'en session longue sur l'appareil. Le journal est la seule pièce à
+  // conviction disponible si le rattrapage lui-même échoue.
+  it("le journal garde la trace des états subis", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+
+    ctx1.subirEtat("interrupted" as AudioContextState);
+    await flushMicrotasks();
+
+    const journal = audioManager.journalAudio();
+    expect(journal.length).toBeGreaterThan(0);
+    expect(journal.some((l) => l.etat === "interrupted")).toBe(true);
+  });
+
+  // Le contexte qui se réveille ne suffit pas : iOS met AUSSI en pause les
+  // éléments <audio>. Les boucles d'ambiance (des AudioBufferSource) repartent
+  // toutes seules, la musique du gramophone non — d'où « tout revient sauf la
+  // musique », qui n'aurait ressemblé à rien.
+  it("après une reprise, le disque qu'iOS avait mis en pause repart", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/aaa.m4a");
+    const disque = FakeAudio.instances[0];
+    disque.paused = true;
+
+    FakeAudioContext.instances[0].subirEtat("suspended");
+    await flushMicrotasks();
+
+    expect(disque.paused).toBe(false);
+  });
+
+  it("un disque en pause volontaire n'est pas relancé par la reprise", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/aaa.m4a");
+    const disque = FakeAudio.instances[0];
+    audioManager.pauseVinyl();
+
+    FakeAudioContext.instances[0].subirEtat("suspended");
+    await flushMicrotasks();
+
+    expect(disque.paused).toBe(true);
+  });
+
+  it("la borne éteinte ne se rallume pas sur le contexte rebâti", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playArcadeTrack("/sounds/arcade/jeu.m4a");
+    audioManager.stopArcade();
+    const avant = FakeAudio.instances.length;
+
+    FakeAudioContext.instances[0].state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    expect(FakeAudio.instances).toHaveLength(avant);
+  });
+
+  // Garde-fou : deux pannes coup sur coup ne doivent pas partir en fabrique à
+  // contextes. WebKit en plafonne le nombre par page.
+  it("deux pannes rapprochées ne rebâtissent qu'une fois", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+
+    FakeAudioContext.instances[0].state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+    expect(FakeAudioContext.instances).toHaveLength(2);
+
+    FakeAudioContext.instances[1].state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+    expect(FakeAudioContext.instances).toHaveLength(2);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Sortie et retour dans l'app                                          */
+/* ------------------------------------------------------------------ */
+
+describe("audioManager — sortie de l'app", () => {
+  let listeners: Record<string, Array<() => void>>;
+  let visibilityState: string;
+
+  beforeEach(() => {
+    stubBrowserGlobals();
+    listeners = {};
+    visibilityState = "visible";
+    const on = (ev: string, fn: () => void) => {
+      (listeners[ev] ??= []).push(fn);
+    };
+    vi.stubGlobal("window", {
+      AudioContext: FakeAudioContext,
+      localStorage: storage,
+      setTimeout: (fn: () => void, ms?: number) => globalThis.setTimeout(fn, ms),
+      clearTimeout: (t: number) => globalThis.clearTimeout(t),
+      addEventListener: on,
+    });
+    vi.stubGlobal("document", {
+      addEventListener: on,
+      get visibilityState() {
+        return visibilityState;
+      },
+    });
+  });
+
+  const cacher = () => {
+    visibilityState = "hidden";
+    listeners.visibilitychange?.forEach((fn) => fn());
+  };
+  const montrer = () => {
+    visibilityState = "visible";
+    listeners.visibilitychange?.forEach((fn) => fn());
+  };
+
+  // Sortie de l'app : la musique se tait comme si le joueur l'avait mise en
+  // pause, et le contexte est laissé à iOS. Un `suspend()` de notre main
+  // empêchait WebKit de rouvrir le contexte au retour sans geste — c'est le
+  // « son coupé au retour » de la build 165/166.
+  it("en arrière-plan : le disque se met en pause volontaire, le contexte n'est pas touché", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/test.mp3");
+    const audio = FakeAudio.instances[0];
+    const ctx = FakeAudioContext.instances[0];
+    expect(audio.paused).toBe(false);
+
+    cacher();
+    await flushMicrotasks();
+    expect(audio.paused).toBe(true);
+    expect(ctx.suspend).not.toHaveBeenCalled();
+    expect(ctx.resume).not.toHaveBeenCalled();
+    expect(audioManager.vinylEnLecture()).toBe(false);
+  });
+
+  it("au retour : les sons du jeu repartent, la musique reste en pause", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startCrowd();
+    await audioManager.playVinyl("/sounds/vinyles/test.mp3");
+    const audio = FakeAudio.instances[0];
+    const ctx = FakeAudioContext.instances[0];
+    ctx.resume.mockClear();
+
+    cacher();
+    // iOS interrompt le contexte en arrière-plan : on ne réagit pas.
+    ctx.subirEtat("interrupted" as AudioContextState);
+    await flushMicrotasks();
+    expect(ctx.resume).not.toHaveBeenCalled();
+
+    montrer();
+    await flushMicrotasks();
+    expect(ctx.resume).toHaveBeenCalled();
+    expect(ctx.state).toBe("running");
+    // La foule (boucle Web Audio) n'a jamais été arrêtée : elle suit le contexte.
+    expect(ctx.bufferSources[0].stop).not.toHaveBeenCalled();
+    expect(audio.paused).toBe(true);
+    expect(FakeAudioContext.instances).toHaveLength(1);
+  });
+
+  it("aucune reconstruction ne part tant que l'app est cachée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx = FakeAudioContext.instances[0];
+
+    cacher();
+    ctx.subirEtat("closed");
+    await flushMicrotasks();
+    expect(FakeAudioContext.instances).toHaveLength(1);
+
+    montrer();
+    await flushMicrotasks();
+    expect(FakeAudioContext.instances).toHaveLength(2);
+  });
+
+  it("un disque que le joueur avait mis en pause ne repart pas au retour", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/test.mp3");
+    const audio = FakeAudio.instances[0];
+    audioManager.pauseVinyl();
+
+    cacher();
+    montrer();
+    await flushMicrotasks();
+    expect(audio.paused).toBe(true);
+  });
+
+  it("la borne d'arcade se tait aussi et reste tue au retour", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playArcadeTrack("/sounds/arcade/jx.cartouche_bluebot_8_bit.m4a");
+    await flushMicrotasks();
+    const borne = FakeAudio.instances.at(-1)!;
+    expect(borne.paused).toBe(false);
+
+    cacher();
+    expect(borne.paused).toBe(true);
+    montrer();
+    await flushMicrotasks();
+    expect(borne.paused).toBe(true);
   });
 });

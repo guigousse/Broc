@@ -72,7 +72,7 @@ jx.lot_de_figurines_de_spountch;Lot de figurines de Spountch;Jeux & Loisirs;comm
 jx.cartouche_turbo_herisson_16_bit;Cartouche 'Turbo Hérisson' (16-bit);Jeux & Loisirs;commun;;2;9;18;30;42
 jx.manette_megadrive;Manette de console 16-bit;Jeux & Loisirs;commun;;2;11;21;35;49
 jx.jeu_le_manoir_du_mal_32_bit;Jeu 'Le Manoir du Mal' (32-bit);Jeux & Loisirs;commun;;2;11;21;35;49
-jx.lot_de_cartes_de_yo_hi_ah;Lot de cartes de Yo-Hi-ah;Jeux & Loisirs;commun;;2;11;21;35;49
+jx.jeu_de_l_oie_lithographie_1900;Jeu de l'oie lithographié (1900);Jeux & Loisirs;commun;;2;11;21;35;49
 jx.cartouche_street_castagne_ii_16_bit;Cartouche 'Street Castagne II' (16-bit);Jeux & Loisirs;commun;;2;11;23;38;53
 jx.jeu_foxy_crush_32_bit;Jeu 'Foxy Crush' (32-bit);Jeux & Loisirs;commun;;2;12;24;40;56
 jx.jeu_engrenage_de_metal_infiltration_32_bit;Jeu 'Engrenage de Métal' — infiltration (32-bit);Jeux & Loisirs;commun;;2;12;24;40;56
@@ -86,11 +86,11 @@ jx.petite_armee_plomb;Lot de soldats de plomb (10 pièces);Jeux & Loisirs;commun
 jx.cartouche_la_legende_de_solda_8_bit;Cartouche 'La Légende de Solda' (8-bit);Jeux & Loisirs;commun;;3;18;36;60;84
 jx.console_de_salon_128_bit_avec_jeux;Console de salon 128-bit avec jeux;Jeux & Loisirs;commun;;3;18;36;60;84
 jx.jeu_d_aventure_japonais_128_bit;Jeu d'aventure japonais (128-bit);Jeux & Loisirs;commun;;3;18;36;60;84
-jx.cartes_pocket_monster_set_jungle;Cartes 'Pocket Monster' — set Jungle;Jeux & Loisirs;commun;;3;18;36;60;84
+jx.boite_de_construction_metallique_no_3;Boîte de construction métallique n°3;Jeux & Loisirs;commun;;3;18;36;60;84
 jx.ours_en_peluche_mohair_recent;Ours en peluche mohair (récent);Jeux & Loisirs;commun;;3;20;39;65;91
 jx.console_128_bit_reve_complete;Console 128-bit 'Rêve' complète;Jeux & Loisirs;commun;;3;21;42;70;98
 jx.cartouche_le_plombier_sauteur_8_bit;Cartouche 'Le Plombier Sauteur' (8-bit);Jeux & Loisirs;commun;;3;24;48;80;112
-jx.lot_de_cartes_l_assemblee_des_mages;Lot de cartes 'L'Assemblée des Mages';Jeux & Loisirs;commun;;3;24;48;80;112
+jx.puzzle_en_bois_1000_pieces_paysage_alpin;Puzzle en bois 1000 pièces — paysage alpin;Jeux & Loisirs;commun;;3;24;48;80;112
 jx.console_de_salon_a_cartouches_annees_70;Console de salon à cartouches (années 70);Jeux & Loisirs;commun;;3;26;51;85;119
 jx.playbox_pocket;PlayBox Pocket;Jeux & Loisirs;commun;;3;27;54;90;126
 jx.super_console_16_bit_complete;Super Console 16-bit complète;Jeux & Loisirs;commun;;3;29;57;95;133
@@ -98,13 +98,12 @@ jx.console_familiale_8_bit_japonaise;Console familiale 8-bit japonaise;Jeux & Lo
 jx.figurine_de_guerre_galactique_1978;Figurine de Guerre galactique (1978);Jeux & Loisirs;rare;;1;33;66;110;154
 jx.figurine_du_capitaine_muscle_origines;Figurine du Capitaine Muscle (origines);Jeux & Loisirs;rare;;1;42;84;140;196
 jx.figurine_de_dark_father_1977;Figurine de Dark Father (1977);Jeux & Loisirs;rare;;1;54;108;180;252
-jx.grand_set_de_briques_pirates_complet;Grand set de briques 'Pirates' complet;Jeux & Loisirs;rare;;1;54;108;180;252
+jx.grand_set_de_briques_pirates_complet;Grand set de briques 'Pirates' complet;Jeux & Loisirs;rare;;2;54;108;180;252
 jx.cartouche_gachette_du_temps_rpg_16_bit;Cartouche 'Gâchette du Temps' (RPG 16-bit);Jeux & Loisirs;rare;;2;60;120;200;280
-jx.cartes_pocket_monster_1ere_edition;Cartes 'Pocket Monster' 1ère édition;Jeux & Loisirs;rare;;2;66;132;220;308
+jx.locomotive_a_vapeur_electrique_1950;Locomotive à vapeur électrique (1950);Jeux & Loisirs;rare;;2;66;132;220;308
 jx.borne_arcade_mini;Mini borne d'arcade — Envahisseurs de l'Espace;Jeux & Loisirs;rare;;2;84;168;280;392
-jx.ours_en_peluche_mohair_annees_1920;Ours en peluche mohair années 1920;Jeux & Loisirs;rare;;2;84;168;280;392
+jx.ours_en_peluche_mohair_annees_1920;Ours en peluche mohair années 1920;Jeux & Loisirs;rare;;3;84;168;280;392
 jx.train_electrique_ho_de_precision;Train électrique HO de précision;Jeux & Loisirs;rare;;3;96;192;320;448
-jx.cartes_pocket_monster_holographiques_japonaise;Cartes 'Pocket Monster' holographiques japonaises;Jeux & Loisirs;rare;;3;108;216;360;504
 jx.console_d_arcade_domestique_neo;Console d'arcade domestique 'Néo';Jeux & Loisirs;rare;;3;180;360;600;840
 jx.flipper_a_plateau_annees_60;Flipper à plateau années 60;Jeux & Loisirs;rare;;3;225;450;750;1050
 leg.jx.baby_foot_de_competition_minibon_homologue;Baby-foot de compétition MiniBon (homologué);Jeux & Loisirs;legendaire;;;660;1320;2200;3080

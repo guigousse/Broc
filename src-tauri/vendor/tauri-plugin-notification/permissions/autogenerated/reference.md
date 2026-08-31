@@ -25,6 +25,7 @@ It allows all notification related features.
 - `allow-delete-channel`
 - `allow-create-channel`
 - `allow-permission-state`
+- `allow-last-action`
 
 ## Permission Table
 
@@ -239,6 +240,32 @@ Enables the is_permission_granted command without any pre-configured scope.
 <td>
 
 Denies the is_permission_granted command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`notification:allow-last-action`
+
+</td>
+<td>
+
+Enables the last_action command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`notification:deny-last-action`
+
+</td>
+<td>
+
+Denies the last_action command without any pre-configured scope.
 
 </td>
 </tr>

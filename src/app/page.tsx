@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FolderOpen, Heart, Info, Play, Plus, Settings } from "lucide-react";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { CreditsModal } from "@/components/mobile/CreditsModal";
-import { SoutienSheet } from "@/components/mobile/SoutienSheet";
+import { SoutienModal } from "@/components/mobile/SoutienModal";
 import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
 import { IrisFermeture } from "@/components/mobile/IrisTransition";
@@ -30,6 +30,13 @@ import {
 } from "@/lib/storage/slots";
 
 /**
+ * Durée de l'éclosion du cœur dans le bouton « Soutenir », avant que la page
+ * ne s'ouvre. Calée un cheveu au-dessus de l'animation CSS
+ * (`.broc-coeur-jaillit`, 420 ms) pour qu'elle soit VUE finie, pas coupée.
+ */
+export const DUREE_COEUR_MS = 460;
+
+/**
  * Bouton du menu d'accueil : même habillage que les boutons Chiner/Étaler
  * du QG (FloatingActionButton primaire), avec l'icône de la fonction calée
  * à gauche et le libellé justifié à droite.
@@ -39,11 +46,18 @@ function BoutonMenu({
   label,
   onClick,
   disabled = false,
+  jaillissement,
 }: {
   icon: ReactNode;
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  /**
+   * Icône pleine qui jaillit par-dessus l'icône du bouton, le temps d'une
+   * animation. Superposée et non substituée : le contour reste en place,
+   * c'est bien « dedans » que ça éclot.
+   */
+  jaillissement?: ReactNode;
 }) {
   return (
     <button
@@ -72,7 +86,10 @@ function BoutonMenu({
         ...(disabled ? { opacity: 0.45, filter: "grayscale(0.6)" } : {}),
       }}
     >
-      {icon}
+      <span style={{ position: "relative", display: "grid", placeItems: "center" }}>
+        {icon}
+        {jaillissement}
+      </span>
       {/* Libellé centré dans l'espace restant à droite de l'icône. */}
       <span style={{ flex: 1, textAlign: "center" }}>{label}</span>
     </button>
@@ -165,16 +182,27 @@ function useTiltParallax(maxPx: number) {
 
 export default function TitleScreen() {
   const { nouvellePartie, state, isHydrated, reset, detacherPartie } = useGame();
-  const { playClick } = useSettings();
+  const { playClick, playPop } = useSettings();
   const { d } = useLangue();
   const [reglagesOuverts, setReglagesOuverts] = useState(false);
   const [creditsOuverts, setCreditsOuverts] = useState(false);
   const [soutienOuvert, setSoutienOuvert] = useState(false);
+  // Le cœur qui éclot dans le bouton « Soutenir ». La page ne s'ouvre qu'une
+  // fois l'éclosion finie : c'est un enchaînement, pas deux choses en même
+  // temps.
+  const [coeurJaillit, setCoeurJaillit] = useState(false);
+  const coeurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [partiesModal, setPartiesModal] = useState<
     "gestion" | "choisir-ecrasement" | null
   >(null);
   const [introEnCours, setIntroEnCours] = useState(false);
   const aSauvegarde = isHydrated && state !== null;
+
+  useEffect(() => {
+    return () => {
+      if (coeurTimerRef.current) clearTimeout(coeurTimerRef.current);
+    };
+  }, []);
   // Slot visé par le démarrage en cours, appliqué seulement à la fin de
   // l'intro (voir `onIntroFinie`) — jamais lu pendant l'intro elle-même.
   const slotCibleRef = useRef<NumeroSlot | null>(null);
@@ -213,8 +241,16 @@ export default function TitleScreen() {
       arreter = demarrerMusiqueTitre(audioManager);
     };
     window.addEventListener("pointerdown", relance, { once: true });
+    // Retour au premier plan : la sortie de l'app a mis le disque en pause
+    // volontaire (règle générale — la musique ne repart pas toute seule).
+    // Sur le titre, le jazz est l'ambiance de l'écran : il reprend.
+    const auRetour = () => {
+      if (document.visibilityState === "visible") audioManager.resumeVinyl();
+    };
+    document.addEventListener("visibilitychange", auRetour);
     return () => {
       window.removeEventListener("pointerdown", relance);
+      document.removeEventListener("visibilitychange", auRetour);
       arreter();
     };
   }, []);
@@ -300,8 +336,15 @@ export default function TitleScreen() {
   };
 
   const onSoutien = () => {
-    playClick();
-    setSoutienOuvert(true);
+    // Deuxième tap pendant l'éclosion : on ne relance rien, sinon le compte à
+    // rebours d'ouverture repart de zéro à chaque coup de doigt.
+    if (coeurJaillit) return;
+    playPop();
+    setCoeurJaillit(true);
+    coeurTimerRef.current = setTimeout(() => {
+      setCoeurJaillit(false);
+      setSoutienOuvert(true);
+    }, DUREE_COEUR_MS);
   };
 
   const onParties = () => {
@@ -446,6 +489,19 @@ export default function TitleScreen() {
             icon={<Heart size={17} strokeWidth={2} aria-hidden />}
             label={d.menu.soutenir}
             onClick={onSoutien}
+            jaillissement={
+              coeurJaillit ? (
+                <Heart
+                  size={17}
+                  strokeWidth={0}
+                  fill="var(--rouge-coeur)"
+                  aria-hidden
+                  data-testid="soutien-coeur"
+                  className="broc-coeur-jaillit"
+                  style={{ position: "absolute", inset: 0, margin: "auto" }}
+                />
+              ) : undefined
+            }
           />
         </div>
       </div>
@@ -458,7 +514,7 @@ export default function TitleScreen() {
         open={creditsOuverts}
         onClose={() => setCreditsOuverts(false)}
       />
-      <SoutienSheet
+      <SoutienModal
         open={soutienOuvert}
         onClose={() => setSoutienOuvert(false)}
       />

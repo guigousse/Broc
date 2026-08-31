@@ -238,25 +238,34 @@ function renderMission(
         </p>
       ))}
       <div style={cibleEncart}>
-        <div>
-          <strong>
-            {p.cibles.length > 1
-              ? d.sheets.objetsRecherches
-              : d.sheets.objetRecherche}
-          </strong>{" "}
-          {p.cibles
-            .map((cible) => {
-              const nom = nomTemplate(cible.templateId, locale);
-              const suffixe = cible.etatMin
-                ? ` ${tr(d.sheets.etatMinSuffixe, { etat: libelleEtat(cible.etatMin, d) })}`
-                : "";
-              return `${nom}${suffixe}`;
-            })
-            .join(", ")}
-        </div>
+        {p.cibles.length > 0 && (
+          <div>
+            <strong>
+              {p.cibles.length > 1
+                ? d.sheets.objetsRecherches
+                : d.sheets.objetRecherche}
+            </strong>{" "}
+            {p.cibles
+              .map((cible) => {
+                const nom = nomTemplate(cible.templateId, locale);
+                const suffixe = cible.etatMin
+                  ? ` ${tr(d.sheets.etatMinSuffixe, { etat: libelleEtat(cible.etatMin, d) })}`
+                  : "";
+                return `${nom}${suffixe}`;
+              })
+              .join(", ")}
+          </div>
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <strong>{d.sheets.recompenseLabel}</strong>
           <RecompenseJetons recompense={recompenseEffective(p)} variante="ligne" />
+          {p.primeVariable && (
+            <span style={{ fontSize: 12, opacity: 0.8 }}>
+              {tr(d.carnet.primeVariableLegendaire, {
+                taux: Math.round(p.primeVariable.taux * 100),
+              })}
+            </span>
+          )}
         </div>
         {p.jourLimite !== undefined && (
           <div>

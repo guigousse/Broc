@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { acheterArticle, acheterLotPieces } from "@/lib/bazar/achat";
-import { GAMMES_BAZAR, genererEtal, PRIX_JETON_EUROS } from "@/lib/bazar/etal";
+import { GAMMES_BAZAR, genererEtal, NB_LOTS_PIECES, PRIX_JETON_EUROS } from "@/lib/bazar/etal";
 import { createMockGameState, createMockObjet } from "@/lib/__test-fixtures__/gameState";
 import type { GameState } from "@/types/game";
 
@@ -22,7 +22,7 @@ describe("acheter un lot de pièces", () => {
 
   it("le lot reste à l'étal — stock illimité", () => {
     const r = acheterLotPieces(avecEtal(), 0);
-    expect(r.ok && r.state.bazar!.lotsPieces).toHaveLength(3);
+    expect(r.ok && r.state.bazar!.lotsPieces).toHaveLength(NB_LOTS_PIECES);
   });
 
   it("refuse sans effet de bord quand les jetons manquent", () => {
@@ -60,13 +60,37 @@ describe("acheter un article de l'étagère du haut", () => {
       expect(r.state.inventaireJoueur[0].prixAchat).toBe(prix * PRIX_JETON_EUROS);
     });
 
-    it(`gamme ${gamme} : vide SA case et laisse les deux autres en place`, () => {
-      const r = acheterArticle(avecEtal({ jetons: 100 }), index, Date.now());
+    /**
+     * L'article n'est plus EFFACÉ mais MARQUÉ (2026-08-26) : l'étagère le garde
+     * en noir et blanc, tamponné « Vendu », jusqu'au renouvellement du lundi.
+     * Effacé, il ne restait plus rien à montrer — c'est tout le sujet du
+     * changement.
+     */
+    it(`gamme ${gamme} : marque SA case vendue et laisse les deux autres en vente`, () => {
+      // L'étal est TIRÉ AU SORT à chaque appel : on garde l'état de départ
+      // sous la main, sinon la comparaison porterait sur deux étals différents.
+      const avant = avecEtal({ jetons: 100 });
+      const r = acheterArticle(avant, index, Date.now());
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.state.bazar!.articles[index]).toBeNull();
+      const vendu = r.state.bazar!.articles[index];
+      expect(vendu).not.toBeNull();
+      expect(vendu!.vendu).toBe(true);
+      // Le reste de la fiche article est intact : c'est lui qui permet de
+      // redessiner l'objet vendu.
+      expect(vendu!.templateId).toBe(avant.bazar!.articles[index]!.templateId);
       const autres = r.state.bazar!.articles.filter((_, i) => i !== index);
-      expect(autres.every((a) => a !== null)).toBe(true);
+      expect(autres.every((a) => a !== null && !a.vendu)).toBe(true);
+    });
+
+    it(`gamme ${gamme} : un article déjà vendu ne se rachète pas`, () => {
+      const premier = acheterArticle(avecEtal({ jetons: 100 }), index, Date.now());
+      expect(premier.ok).toBe(true);
+      if (!premier.ok) return;
+      expect(acheterArticle(premier.state, index, Date.now())).toEqual({
+        ok: false,
+        raison: "indisponible",
+      });
     });
   }
 

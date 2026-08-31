@@ -1,13 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   BONUS_SPECIALISATION,
+  BONUS_TIER_NATIF,
   CHANCE_EXCLUSIF_PAR_SESSION,
+  CHANCE_PIECE_PAR_SESSION,
   MIX_RARETE_PAR_TIER,
   SEUIL_COLERE_VENDEUR,
   SURCOTE_BONIMENTEUR,
   genererRemplacement,
   genererSession,
   genererSessionScriptee,
+  objetsTrouvables,
+  objetsDesTiersPrecedents,
   prixMinAvecMarchandage,
   uniquesExclusDuChinage,
 } from "./chine";
@@ -18,11 +22,13 @@ import {
   createMockSlot,
 } from "./__test-fixtures__/gameState";
 import { UNIQUES } from "@/data/uniques";
+import { poolPourTier, tierMinTemplate } from "@/data/objetTemplates";
 import { getBrocanteById } from "@/data/brocantes";
 import { vinylesCadeauxExclus, VINYLES_CADEAU_PAR_ANNEE } from "@/lib/anniversaire";
 import type { Brocante, CollectionSlot, Courrier, GameState } from "@/types/game";
 import { SESSION_TUTORIEL } from "@/data/tutorielScenario";
 import { calculerPrixMinAcceptDepuisPersona } from "./personas";
+import { estPiece } from "@/data/pieces";
 
 describe("constantes exportées", () => {
   it("SEUIL_COLERE_VENDEUR est dans (0, 1)", () => {
@@ -110,8 +116,11 @@ describe("genererSession — brocante spécialisée", () => {
       taillePool: 6,
       tier: 2,
     });
+    // rngPiece pinné pour ne jamais tirer de pièce d'album (hors thème par
+    // design, cf. describe("pièces d'album en session")) : ce test-ci vérifie
+    // le filtrage du pool générique, pas la pièce.
     for (let run = 0; run < 5; run++) {
-      const items = genererSession(6, [], broc);
+      const items = genererSession(6, [], broc, null, undefined, () => 0.99);
       expect(items.length).toBeGreaterThan(0);
       expect(items.every((i) => i.objet.categorie === "Musique")).toBe(true);
     }
@@ -126,7 +135,7 @@ describe("genererSession — brocante spécialisée", () => {
     });
     const celeb = { brocanteId: "broc-spe-celeb", nom: "La Comtesse", jourSemaine: 0 };
     for (let run = 0; run < 5; run++) {
-      const items = genererSession(6, [], broc, celeb);
+      const items = genererSession(6, [], broc, celeb, undefined, () => 0.99);
       expect(items.every((i) => i.objet.categorie === "Musique")).toBe(true);
     }
   });
@@ -672,5 +681,163 @@ describe("prixMinAvecMarchandage — Marchandage à l'ouverture de la négo", ()
   it("ne descend jamais sous 1 €", () => {
     // 20 × 0.12 = 2.4 → 2 ; 1 − 2 = −1 → clampé à 1.
     expect(prixMinAvecMarchandage(20, 1, 0.12)).toBe(1);
+  });
+});
+
+describe("genererSession — les objets natifs du tier dominent (2026-08-28)", () => {
+  it("BONUS_TIER_NATIF = 1,3 : « 30 % de chances en plus » sur son propre tier", () => {
+    expect(BONUS_TIER_NATIF).toBe(1.3);
+  });
+
+  /** Part observée des COMMUNS natifs du tier, sur n sessions génériques. */
+  function partNatifs(tier: 1 | 2 | 3 | 4, sessions: number): number {
+    const broc = createMockBrocante({ id: "broc-natif", tier, etoiles: tier, taillePool: 10 });
+    const natif = Math.min(tier, 3);
+    let natifs = 0;
+    let total = 0;
+    for (let s = 0; s < sessions; s++) {
+      // rngPiece pinné : la pièce d'album n'est pas un objet du pool par tier,
+      // hors sujet pour cette mesure du poids natif (et son tirage ajoute du
+      // bruit à une tolérance déjà serrée).
+      for (const it of genererSession(10, [], broc, null, undefined, () => 0.99)) {
+        if (it.objet.rarete !== "commun") continue;
+        total += 1;
+        if (tierMinTemplate(it.objet.templateId) === natif) natifs += 1;
+      }
+    }
+    return natifs / total;
+  }
+
+  /** Part attendue si chaque natif pèse BONUS_TIER_NATIF pour 1. */
+  function partAttendue(tier: 1 | 2 | 3 | 4): number {
+    const communs = poolPourTier(tier).filter((t) => t.rarete === "commun");
+    const natif = Math.min(tier, 3);
+    const n = communs.filter((t) => tierMinTemplate(t.templateId) === natif).length;
+    const autres = communs.length - n;
+    return (n * BONUS_TIER_NATIF) / (n * BONUS_TIER_NATIF + autres);
+  }
+
+  it("T2 : les natifs T2 sortent à ×1,3 de leur part uniforme (tolérance ±3 pts)", () => {
+    const obs = partNatifs(2, 400);
+    const att = partAttendue(2);
+    // Sans le bonus, la part serait n/(n+autres) ≈ 0,49 ; avec, ≈ 0,56.
+    expect(att).toBeGreaterThan(0.52);
+    expect(Math.abs(obs - att)).toBeLessThan(0.03);
+  });
+
+  it("T3 : le dernier tercile (natif T3) est favorisé (tolérance ±3 pts)", () => {
+    const obs = partNatifs(3, 400);
+    expect(Math.abs(obs - partAttendue(3))).toBeLessThan(0.03);
+  });
+
+  it("T4 : aucun tier natif 4 — ce sont les natifs T3 qui pèsent 1,3", () => {
+    const obs = partNatifs(4, 400);
+    expect(Math.abs(obs - partAttendue(4))).toBeLessThan(0.03);
+  });
+});
+
+describe("objetsTrouvables — ce que la loupe de la carte de brocante montre", () => {
+  it("brocante générale : les natifs du tier, rien d'en dessous", () => {
+    const broc = createMockBrocante({ id: "b2", tier: 2, etoiles: 2 });
+    const ids = objetsTrouvables(broc).map((t) => t.templateId);
+    expect(ids.length).toBeGreaterThan(50);
+    expect(ids.every((id) => tierMinTemplate(id) === 2)).toBe(true);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("brocante spécialisée : filtrée sur sa catégorie", () => {
+    const broc = createMockBrocante({ id: "b1m", tier: 1, etoiles: 1, specialisation: "Musique" });
+    const liste = objetsTrouvables(broc);
+    expect(liste.length).toBeGreaterThan(0);
+    expect(liste.every((t) => t.categorie === "Musique")).toBe(true);
+  });
+
+  it("T4 : natifs T3 + le poolExclusif, exclusifs en tête", () => {
+    const exclusif = UNIQUES[0].templateId;
+    const broc = createMockBrocante({ id: "b4", tier: 4, etoiles: 4, poolExclusif: [exclusif] });
+    const ids = objetsTrouvables(broc).map((t) => t.templateId);
+    expect(ids[0]).toBe(exclusif);
+    expect(ids.slice(1).every((id) => tierMinTemplate(id) === 3)).toBe(true);
+  });
+
+  it("poolExclusif hors thème d'une spécialisée : écarté, comme au tirage", () => {
+    const exclusif = UNIQUES.find((u) => u.categorie !== "Musique")!.templateId;
+    const broc = createMockBrocante({ id: "b3m", tier: 3, etoiles: 3, specialisation: "Musique", poolExclusif: [exclusif] });
+    expect(objetsTrouvables(broc).map((t) => t.templateId)).not.toContain(exclusif);
+  });
+});
+
+describe("objetsDesTiersPrecedents — ce que la loupe annonce en plus", () => {
+  it("brocante ★ : rien en dessous", () => {
+    expect(objetsDesTiersPrecedents(createMockBrocante({ id: "b1", tier: 1, etoiles: 1 }))).toBe(0);
+  });
+
+  it("brocante ★★ : les objets T1 du pool, jamais les natifs", () => {
+    const broc = createMockBrocante({ id: "b2", tier: 2, etoiles: 2 });
+    const attendu = poolPourTier(2).filter((t) => tierMinTemplate(t.templateId) < 2).length;
+    expect(attendu).toBeGreaterThan(0);
+    expect(objetsDesTiersPrecedents(broc)).toBe(attendu);
+  });
+
+  it("spécialisée : filtrée sur sa catégorie ; T4 : T1 + T2 cumulés, poolExclusif exclu", () => {
+    const spe = createMockBrocante({ id: "b3m", tier: 3, etoiles: 3, specialisation: "Musique" });
+    const attenduSpe = poolPourTier(3).filter(
+      (t) => t.categorie === "Musique" && tierMinTemplate(t.templateId) < 3,
+    ).length;
+    expect(objetsDesTiersPrecedents(spe)).toBe(attenduSpe);
+    const t4 = createMockBrocante({ id: "b4", tier: 4, etoiles: 4, poolExclusif: [UNIQUES[0].templateId] });
+    expect(objetsDesTiersPrecedents(t4)).toBe(
+      poolPourTier(4).filter((t) => tierMinTemplate(t.templateId) < 3).length,
+    );
+  });
+});
+
+describe("pièces d'album en session", () => {
+  const b = createMockBrocante({ tier: 2, taillePool: 8 });
+  it("au plus une pièce, à la place d'un objet, quand le tirage dit oui", () => {
+    const s = genererSession(8, [], b, null, undefined, () => 0.0); // 0 < chance → pièce
+    const pieces = s.filter((it) => estPiece(it.objet.templateId));
+    expect(pieces).toHaveLength(1);
+    expect(s).toHaveLength(8);
+    expect(pieces[0].objet.etat).toBe("Très bon");
+    expect(pieces[0].objet.categorie).toMatch(/Jeux & Loisirs|Livres & Papeterie/);
+  });
+  it("aucune pièce quand le tirage dit non", () => {
+    const s = genererSession(8, [], b, null, undefined, () => 0.99);
+    expect(s.some((it) => estPiece(it.objet.templateId))).toBe(false);
+  });
+  it("chances croissantes par tier", () => {
+    expect(CHANCE_PIECE_PAR_SESSION).toEqual({ 1: 0.35, 2: 0.45, 3: 0.55, 4: 0.65 });
+  });
+  it("la Fouille ne tire jamais de pièce", () => {
+    const s = genererSession(8, [], b, null, undefined, () => 0.0);
+    for (let i = 0; i < 40; i++) {
+      const r = genererRemplacement(s[0], s, [], b);
+      expect(estPiece(r.objet.templateId)).toBe(false);
+    }
+  });
+  it("une bourse à thème propose aussi la pièce", () => {
+    const s = genererSession(8, [], createMockBrocante({ tier: 2, taillePool: 8, specialisation: "Mode" }), null, undefined, () => 0.0);
+    expect(s.filter((it) => estPiece(it.objet.templateId))).toHaveLength(1);
+  });
+
+  // M1 revue finale 2026-08-30 : l'index tiré pour poser la pièce piochait
+  // dans TOUS les items, exclusif compris — la pièce pouvait effacer
+  // l'objet d'exception de la session (Math.random figé à 0 → exclusif
+  // garanti à l'unique emplacement, rngPiece figé à 0 → pièce garantie).
+  it("ne remplace jamais l'objet exclusif de la session, même seul sur l'étal", () => {
+    const exclusifId = UNIQUES[0].templateId;
+    const boss = createMockBrocante({
+      id: "boss-m1", tier: 4, etoiles: 4, taillePool: 1, poolExclusif: [exclusifId],
+    });
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      const s = genererSession(1, [], boss, null, undefined, () => 0);
+      expect(s).toHaveLength(1);
+      expect(s[0].objet.templateId).toBe(exclusifId);
+      expect(estPiece(s[0].objet.templateId)).toBe(false);
+    } finally {
+      randomSpy.mockRestore();
+    }
   });
 });

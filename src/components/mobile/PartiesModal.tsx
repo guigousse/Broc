@@ -6,13 +6,13 @@ import type { ReactNode } from "react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
+import { obtenirGameRepository } from "@/lib/storage/createGameRepository";
 import { partageDisponible, partagerFichier, quoiDuSlot } from "@/lib/storage/pontNatif";
 import {
   chargerIndex,
   renommerSlot,
   resumeSlot,
   slotActif,
-  supprimerSlot,
   type IndexSlots,
   type NumeroSlot,
 } from "@/lib/storage/slots";
@@ -35,7 +35,7 @@ interface PartiesModalProps {
   /** Nouvelle partie dans ce slot — la confirmation d'écrasement est DANS la modal. */
   onNouvellePartie: (slot: NumeroSlot) => void;
   /**
-   * Appelé SYNCHRONE juste avant `supprimerSlot(actif)` (uniquement quand le
+   * Appelé SYNCHRONE juste avant `clearSlot(actif)` (uniquement quand le
    * slot supprimé est l'actif). Sert à vider l'état en mémoire du
    * `GameContext` (voir `reset()`) AVANT le `reload()` : sans ça, le tick
    * d'auto-sauvegarde (settle énergie/quêtes, /60 s) peut se glisser entre
@@ -431,7 +431,7 @@ export function PartiesModal({
     if (e.key === "Enter") onCommitRenommage(n);
   };
 
-  const onSupprimerConfirme = (n: NumeroSlot) => {
+  const onSupprimerConfirme = async (n: NumeroSlot) => {
     if (suppressionEnCoursRef.current) return;
     suppressionEnCoursRef.current = true;
     // Lu depuis le storage (pas le state React `index`, qui peut être
@@ -441,7 +441,16 @@ export function PartiesModal({
     // doc de `onAvantSuppressionActive` sur la course avec le tick
     // d'auto-sauvegarde.
     if (etaitActif) onAvantSuppressionActive?.();
-    supprimerSlot(n);
+    // F-01 : via le repository, pas `supprimerSlot` seul — sous Tauri, ce
+    // dernier n'effaçait que le miroir localStorage et le fichier natif
+    // ressuscitait la partie au load() suivant (arbitrage par révision).
+    // ATTENDU avant tout reload : un reload pendant l'effacement relirait
+    // encore l'ancien fichier.
+    try {
+      await obtenirGameRepository().clearSlot(n);
+    } catch {
+      // Best-effort : le miroir est déjà vidé (première étape, synchrone).
+    }
     // Un slot supprimé ne doit pas rester « choisi » : le bouton Lancer
     // la partie pointerait sur un emplacement désormais vide.
     if (slotChoisi === n) setSlotChoisi(null);
@@ -672,7 +681,7 @@ export function PartiesModal({
         open={confirmSuppression !== null}
         onClose={() => setConfirmSuppression(null)}
         onConfirm={() => {
-          if (confirmSuppression !== null) onSupprimerConfirme(confirmSuppression);
+          if (confirmSuppression !== null) void onSupprimerConfirme(confirmSuppression);
         }}
         titre={tr(d.parties.confirmSupprimerTitre, {
           nom:

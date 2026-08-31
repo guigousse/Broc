@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  legendairesAcquis,
   missionLivrable,
   missionsLivrables,
   objectifsDeMission,
@@ -225,5 +226,53 @@ describe("ventesCategorie", () => {
       ],
     });
     expect(progressionObjectif(obj, state, reso, 1)).toEqual({ actuel: 2, cible: 3, atteint: false });
+  });
+});
+
+describe("objetLegendaire", () => {
+  const obj = { type: "objetLegendaire" as const, nombre: 1 };
+
+  it("compte les pièces légendaires chinées après l'acceptation", () => {
+    const state = createMockGameState({
+      historique: [chineSession(1500, ["leg.mus.violon_de_maitre_cremonais_1715"])],
+    });
+    expect(progressionObjectif(obj, state, reso, 1)).toEqual({ actuel: 1, cible: 1, atteint: true });
+  });
+
+  it("un objet rare ne vaut pas un légendaire", () => {
+    const state = createMockGameState({
+      historique: [chineSession(1500, ["mus.test_pressing_des_trolling_sons"])],
+    });
+    expect(progressionObjectif(obj, state, reso, 1)).toEqual({ actuel: 0, cible: 1, atteint: false });
+  });
+
+  it("ce qui précède l'acceptation ne compte pas", () => {
+    const state = createMockGameState({
+      historique: [chineSession(500, ["leg.mus.violon_de_maitre_cremonais_1715"])],
+    });
+    expect(progressionObjectif(obj, state, reso, 1)).toEqual({ actuel: 0, cible: 1, atteint: false });
+  });
+});
+
+describe("legendairesAcquis", () => {
+  it("rend les légendaires du plus cher au moins cher", () => {
+    const state = createMockGameState({
+      historique: [
+        chineSession(1500, [
+          "leg.mus.violon_de_maitre_cremonais_1715", // prixRefBase 4500
+          "leg.lv.gutenberg_feuillet",               // prixRefBase 6500
+          "mus.test_pressing_des_trolling_sons",     // rare, ignoré
+        ]),
+      ],
+    });
+    const noms = legendairesAcquis(state, reso, 1).map((t) => t.templateId);
+    expect(noms).toEqual([
+      "leg.lv.gutenberg_feuillet",
+      "leg.mus.violon_de_maitre_cremonais_1715",
+    ]);
+  });
+
+  it("rend une liste vide sans achat légendaire", () => {
+    expect(legendairesAcquis(createMockGameState(), reso, 1)).toEqual([]);
   });
 });

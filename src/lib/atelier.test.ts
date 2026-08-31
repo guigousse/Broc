@@ -1,6 +1,26 @@
-import { describe, expect, it } from "vitest";
+describe("une pièce unique reste restaurable", () => {
+  // Décision explicite : le verrou porte sur la VENTE et la CASSE, pas sur
+  // l'établi. Ce test existe pour qu'on ne referme pas l'atelier par erreur
+  // en durcissant la protection des uniques plus tard.
+  it("atelierStatusPourObjet ne refuse pas un unique pour son unicité", () => {
+    const o = createMockObjet({
+      templateId: "uniq.mus.violon_paganini",
+      categorie: "Musique",
+      etat: "Mauvais",
+    });
+    const state = withPieces(
+      withCompetences(createMockGameState({ inventaireJoueur: [o] }), [
+        "cat.Musique.reparer.1",
+      ]),
+      "Musique",
+      99,
+    );
+    expect(atelierStatusPourObjet(state, o, DICTIONNAIRES.fr).disponible).toBe(true);
+  });
+});import { describe, expect, it } from "vitest";
 import {
   appliquerRecuperation,
+  appliquerAccelerationRestauration,
   atelierAuneSlotLibre,
   atelierStatusPourObjet,
   collectionStatusPourObjet,
@@ -414,6 +434,69 @@ describe("peutDemanteler", () => {
     const state = createMockGameState({ inventaireJoueur: [o] });
     expect(peutDemanteler(state, o, DICTIONNAIRES.fr).disponible).toBe(true);
   });
+
+  it("refus sur une pièce unique, avec sa raison", () => {
+    // Une pièce unique n'existe qu'en un exemplaire par partie et ne
+    // réapparaît jamais en chinage : la démanteler serait irréversible.
+    const o = createMockObjet({ templateId: "uniq.art.toile_monet_inedite" });
+    const state = createMockGameState({ inventaireJoueur: [o] });
+    const statut = peutDemanteler(state, o, DICTIONNAIRES.fr);
+    expect(statut.disponible).toBe(false);
+    expect(statut.raison).toBe(DICTIONNAIRES.fr.raisons.pieceUniqueProtegee);
+  });
+
+  it("un légendaire NON unique se démantèle toujours", () => {
+    const o = createMockObjet({ templateId: "leg.lv.gutenberg_feuillet" });
+    const state = createMockGameState({ inventaireJoueur: [o] });
+    expect(peutDemanteler(state, o, DICTIONNAIRES.fr).disponible).toBe(true);
+  });
+});
+
+describe("une pièce unique reste restaurable", () => {
+  // Décision explicite : le verrou porte sur la VENTE et la CASSE, pas sur
+  // l'établi. Ce test existe pour qu'on ne referme pas l'atelier par erreur
+  // en durcissant la protection des uniques plus tard.
+  it("atelierStatusPourObjet ne refuse pas un unique pour son unicité", () => {
+    const o = createMockObjet({
+      templateId: "uniq.mus.violon_paganini",
+      categorie: "Musique",
+      etat: "Mauvais",
+    });
+    const state = withPieces(
+      withCompetences(createMockGameState({ inventaireJoueur: [o] }), [
+        "cat.Musique.reparer.1",
+      ]),
+      "Musique",
+      99,
+    );
+    expect(atelierStatusPourObjet(state, o, DICTIONNAIRES.fr).disponible).toBe(true);
+  });
+});
+
+describe("appliquerAccelerationRestauration", () => {
+  it("ramène l'échéance à maintenant : l'établi devient prêt, l'objet y reste", () => {
+    const o = createMockObjet({
+      id: "o1",
+      etat: "Bon",
+      enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 999999 },
+    });
+    const s = createMockGameState({ inventaireJoueur: [o] });
+    const next = appliquerAccelerationRestauration(s, "o1", 4242)!;
+    const apres = next.inventaireJoueur[0];
+    expect(apres.enRestauration?.finMs).toBe(4242);
+    // L'objet ne sort PAS de l'établi : la cérémonie de récupération reste à
+    // faire, c'est le tap du joueur sur « Récupérer » qui la déclenche.
+    expect(apres.enRestauration?.etatCible).toBe("Très bon");
+    expect(apres.etat).toBe("Bon");
+    expect(next.restaurations ?? []).toHaveLength(0);
+  });
+
+  it("retourne null si l'objet n'existe pas ou n'est pas en restauration", () => {
+    const o = createMockObjet({ id: "o1", etat: "Bon" });
+    const s = createMockGameState({ inventaireJoueur: [o] });
+    expect(appliquerAccelerationRestauration(s, "inconnu", 1)).toBeNull();
+    expect(appliquerAccelerationRestauration(s, "o1", 1)).toBeNull();
+  });
 });
 
 describe("appliquerRecuperation", () => {
@@ -482,18 +565,6 @@ describe("appliquerRecuperation", () => {
       timestamp: 999999,
       etatFinal: next!.inventaireJoueur.find((x) => x.id === "o1")!.etat,
     });
-  });
-
-  it("trace au timestamp réel fourni (fin immédiate via pub : finMs est dans le futur)", () => {
-    const o = createMockObjet({
-      id: "o1",
-      etat: "Bon",
-      enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 999999 },
-    });
-    const s = createMockGameState({ inventaireJoueur: [o], jourActuel: 5 });
-    // Complétion forcée avec now = finMs, mais tracée au moment réel (1234).
-    const next = appliquerRecuperation(s, "o1", 999999, 1234);
-    expect(next?.restaurations?.[0]?.timestamp).toBe(1234);
   });
 
   it("borne la trace des restaurations à 100 entrées", () => {

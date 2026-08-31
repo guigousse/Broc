@@ -1,11 +1,9 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { BookOpen, Plus, Trash2 } from "lucide-react";
-import { BrassCorners } from "@/components/ui/BrassCorners";
-import { ItemSticker } from "@/components/ui/ItemSticker";
+import { Album, ArrowUpRight, BookOpen, Plus } from "lucide-react";
+import { FicheObjet, ficheBackdrop } from "@/components/ui/FicheObjet";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { CollectionSlot } from "@/types/game";
 
@@ -31,16 +29,6 @@ interface CollectionDetailOverlayProps {
   retirerInerte?: boolean;
 }
 
-const backdrop: CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  zIndex: 105,
-  background: "rgba(15,31,24,0.82)",
-  display: "grid",
-  placeItems: "center",
-  padding: "20px",
-};
-
 /**
  * `TutorielCoach` (voile + découpe) est à z-index 100 — sous cet overlay en
  * temps normal (105). Pendant la leçon guidée qui montre le bouton retirer,
@@ -49,87 +37,63 @@ const backdrop: CSSProperties = {
  */
 const Z_BACKDROP_SOUS_COACH = 95;
 
-const card: CSSProperties = {
-  width: "min(300px, 88vw)",
-  maxWidth: "100%",
-  position: "relative",
-  display: "grid",
-  gap: 14,
-};
-
-/** Bandeau titre : fond vert, coins Art Déco laiton, police lisible de l'app. */
-const titleBar: CSSProperties = {
-  position: "relative",
-  background: "var(--forest-800)",
-  border: "1px solid var(--brass-500)",
-  padding: "12px 28px",
-  textAlign: "center",
-};
-
-const titleText: CSSProperties = {
-  fontFamily: "var(--font-display)",
-  fontSize: 16,
-  letterSpacing: "0.04em",
-  color: "var(--brass-300)",
-  lineHeight: 1.2,
-};
-
-/** Cadre de l'item : fond bois (comme la collection) + coins Art Déco laiton. */
-const itemFrame: CSSProperties = {
-  position: "relative",
-  width: "100%",
-  aspectRatio: "1 / 1",
-  background: "var(--wood-light)",
-  border: "1.5px solid var(--brass-500)",
-  boxShadow:
-    "0 10px 20px rgba(0,0,0,0.3), inset 0 0 22px rgba(40,25,5,0.18)",
-  display: "grid",
-  placeItems: "center",
-  padding: "16%",
-  boxSizing: "border-box",
-};
-
-const actionCard: CSSProperties = {
-  position: "relative",
-  background: "var(--paper-100)",
-  border: "1px solid var(--brass-500)",
-  boxShadow:
-    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-700), 0 10px 20px rgba(0,0,0,0.3)",
-  padding: "16px 22px",
-  display: "grid",
-  gap: 10,
-};
-
-const infoLine: CSSProperties = {
-  fontFamily: "var(--font-display)",
-  fontSize: 13,
-  letterSpacing: "0.06em",
-  color: "var(--forest-800)",
-  textAlign: "center",
-};
-
+/** Le bouton sous la fiche — le CTA d'achat du Bazar, à même le voile. */
 const btnBase: CSSProperties = {
   width: "100%",
-  padding: "14px 12px",
+  minHeight: 46,
+  marginTop: 14,
+  padding: "12px 12px",
   fontFamily: "var(--font-display)",
   fontSize: 12,
   letterSpacing: "0.16em",
   textTransform: "uppercase",
   border: "1px solid var(--brass-500)",
+  borderRadius: "var(--radius-btn)",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   gap: 10,
+  boxShadow: "0 6px 14px rgba(0,0,0,0.35)",
 };
 
 const noteText: CSSProperties = {
+  marginTop: 12,
   fontFamily: "var(--font-mono)",
   fontSize: 10,
   letterSpacing: "0.1em",
-  color: "var(--brass-700)",
+  color: "var(--brass-300)",
   textAlign: "center",
 };
+
+/**
+ * L'ICÔNE DU RETRAIT — l'album de l'onglet Collection, et une flèche qui en
+ * sort par le coin haut droit. Le pendant de « BookOpen + Plus » de l'ajout.
+ */
+function IconeRetirerCollection() {
+  return (
+    <span
+      aria-hidden
+      style={{
+        position: "relative",
+        display: "inline-flex",
+        width: 22,
+        height: 18,
+      }}
+    >
+      <Album
+        size={16}
+        strokeWidth={1.6}
+        style={{ position: "absolute", left: 0, bottom: 0 }}
+      />
+      <ArrowUpRight
+        size={11}
+        strokeWidth={2.4}
+        style={{ position: "absolute", right: 0, top: -2 }}
+      />
+    </span>
+  );
+}
 
 export function CollectionDetailOverlay({
   open,
@@ -151,117 +115,90 @@ export function CollectionDetailOverlay({
       aria-modal="true"
       aria-label={d.inventaire.detailPiece}
       style={
-        retirerInerte ? { ...backdrop, zIndex: Z_BACKDROP_SOUS_COACH } : backdrop
+        retirerInerte
+          ? { ...ficheBackdrop, zIndex: Z_BACKDROP_SOUS_COACH }
+          : ficheBackdrop
       }
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div style={card}>
-        {/* 1. Bandeau titre */}
-        <div style={titleBar}>
-          <BrassCorners inset={5} size={16} color="var(--brass-500)" />
-          <span style={titleText}>{nomObjet(slot, locale)}</span>
-        </div>
-
-        {/* 2. Cadre item (fond bois) — sticker grisé si non possédé */}
-        <div style={itemFrame}>
-          <BrassCorners inset={6} size={22} color="var(--brass-500)" />
-          <ItemSticker
-            templateId={slot.templateId}
-            categorie={slot.categorie}
-            etat={slot.donation?.etat}
-            fill
-            tilt={false}
-            variant={isDonne ? "normal" : "grise"}
-          />
-        </div>
-
-        {/* 3. Encadré info + action */}
-        <div style={actionCard}>
-          {isDonne ? (
-            <>
-              <div style={infoLine}>
-                {tr(d.chine.etatAriaLabel, {
-                  etat: slot.donation ? libelleEtat(slot.donation.etat, d) : "",
-                })}
-              </div>
-              <div style={infoLine}>
-                {tr(d.inventaire.valeurLigne, {
-                  n: Math.round(slot.donation?.valeur ?? 0),
-                })}
-              </div>
-              <button
-                type="button"
-                data-tuto-coach="collection-retirer"
-                onClick={
-                  retirerInerte || retirerDisabled ? undefined : onRetirer
-                }
-                disabled={retirerDisabled}
-                aria-disabled={retirerInerte ? true : undefined}
-                style={{
-                  ...btnBase,
-                  background: retirerDisabled
+      <FicheObjet
+        templateId={slot.templateId}
+        categorie={slot.categorie}
+        nom={nomObjet(slot, locale)}
+        rarete={slot.rarete}
+        unique={!!slot.unique}
+        etat={slot.donation?.etat}
+        grise={!isDonne}
+        prixMarche={
+          slot.donation ? `${Math.round(slot.donation.valeur)} €` : null
+        }
+        prixAchat={slot.donation ? slot.donation.prixAchat : null}
+        onClose={onClose}
+      >
+        {isDonne ? (
+          <button
+            type="button"
+            data-tuto-coach="collection-retirer"
+            onClick={retirerInerte || retirerDisabled ? undefined : onRetirer}
+            disabled={retirerDisabled}
+            aria-disabled={retirerInerte ? true : undefined}
+            style={{
+              ...btnBase,
+              background: retirerDisabled
+                ? "var(--paper-200)"
+                : "var(--forest-800)",
+              color: retirerDisabled ? "var(--ink-500)" : "var(--brass-300)",
+              cursor: retirerDisabled ? "not-allowed" : "pointer",
+              opacity: retirerDisabled ? 0.55 : 1,
+            }}
+          >
+            <IconeRetirerCollection />
+            {retirerDisabled
+              ? d.qg.stockagePlein
+              : d.inventaire.retirerDeCollection}
+          </button>
+        ) : (
+          <>
+            <div style={noteText}>
+              {candidatsCount === 0
+                ? d.inventaire.aucunCandidatPiece
+                : tr(
+                    candidatsCount > 1
+                      ? d.inventaire.candidatsPiecePluriel
+                      : d.inventaire.candidatsPieceUn,
+                    { n: candidatsCount },
+                  )}
+            </div>
+            <button
+              type="button"
+              onClick={candidatsCount === 0 ? undefined : onAjouter}
+              disabled={candidatsCount === 0}
+              style={{
+                ...btnBase,
+                marginTop: 10,
+                background:
+                  candidatsCount === 0
                     ? "var(--paper-200)"
-                    : "var(--paper-100)",
-                  color: retirerDisabled
-                    ? "var(--ink-500)"
-                    : "var(--vermillion-600)",
-                  borderColor: retirerDisabled
-                    ? "var(--brass-500)"
-                    : "var(--vermillion-600)",
-                  cursor: retirerDisabled ? "not-allowed" : "pointer",
-                  opacity: retirerDisabled ? 0.55 : 1,
-                }}
+                    : "var(--forest-800)",
+                color:
+                  candidatsCount === 0 ? "var(--ink-500)" : "var(--brass-300)",
+                cursor: candidatsCount === 0 ? "not-allowed" : "pointer",
+                opacity: candidatsCount === 0 ? 0.55 : 1,
+              }}
+            >
+              <span
+                style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
               >
-                <Trash2 size={16} strokeWidth={1.6} />
-                {retirerDisabled
-                  ? d.qg.stockagePlein
-                  : d.inventaire.retirerDeCollection}
-              </button>
-            </>
-          ) : (
-            <>
-              <div style={noteText}>
-                {candidatsCount === 0
-                  ? d.inventaire.aucunCandidatPiece
-                  : tr(
-                      candidatsCount > 1
-                        ? d.inventaire.candidatsPiecePluriel
-                        : d.inventaire.candidatsPieceUn,
-                      { n: candidatsCount },
-                    )}
-              </div>
-              <button
-                type="button"
-                onClick={candidatsCount === 0 ? undefined : onAjouter}
-                disabled={candidatsCount === 0}
-                style={{
-                  ...btnBase,
-                  background:
-                    candidatsCount === 0
-                      ? "var(--paper-200)"
-                      : "var(--forest-800)",
-                  color:
-                    candidatsCount === 0
-                      ? "var(--ink-500)"
-                      : "var(--brass-300)",
-                  cursor: candidatsCount === 0 ? "not-allowed" : "pointer",
-                  opacity: candidatsCount === 0 ? 0.55 : 1,
-                }}
-              >
-                <span
-                  style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-                >
-                  <BookOpen size={16} strokeWidth={1.6} />
-                  <Plus size={12} strokeWidth={2} />
-                </span>
-                {d.inventaire.ajouterALaCollection}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+                <BookOpen size={16} strokeWidth={1.6} />
+                <Plus size={12} strokeWidth={2} />
+              </span>
+              {d.inventaire.ajouterALaCollection}
+            </button>
+          </>
+        )}
+      </FicheObjet>
     </div>
   );
 }

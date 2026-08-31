@@ -7,7 +7,7 @@ afterEach(cleanup);
 
 // Régression : une sheet peut s'ouvrir par-dessus un parent qui écoute lui
 // aussi `Escape` sur `window` (ex. la borne d'arcade autour de
-// `SoutienSheet`). Sans consommation de l'événement, Échap fermait la sheet
+// la borne d'arcade). Sans consommation de l'événement, Échap fermait la sheet
 // ET ce parent d'un seul coup — le joueur retombait au panorama alors qu'il
 // voulait juste fermer le pop-up. C'est à la sheet, la plus intérieure, de
 // céder l'événement et de l'empêcher d'atteindre le parent.

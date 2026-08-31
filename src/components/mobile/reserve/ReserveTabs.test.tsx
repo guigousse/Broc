@@ -296,3 +296,15 @@ describe("ReserveTabs — le fond du bouton suit la courbe de la face", () => {
     expect(b.style.borderBottomRightRadius).toBe("");
   });
 });
+
+describe("ReserveTabs — cible du vol des objets récupérés", () => {
+  it("l'onglet Stockage porte la cible nommée du vol", () => {
+    // `flyToTab` saute l'animation en silence si le sélecteur ne résout
+    // rien : sans cette garde, l'objet restauré cesserait de voler sans
+    // qu'aucun test ne s'en aperçoive.
+    poser({ actif: "atelier" });
+    expect(bouton("Stockage").getAttribute("data-fly-target")).toBe(
+      "stockage-onglet",
+    );
+  });
+});

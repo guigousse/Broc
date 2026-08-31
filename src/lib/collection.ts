@@ -2,6 +2,7 @@ import type {
   CategorieObjet,
   CollectionSlot,
   EtatObjet,
+  GameState,
 } from "@/types/game";
 import { CATEGORIES } from "@/data/categories";
 import { OBJET_TEMPLATES, LEGENDAIRES } from "@/data/objetTemplates";
@@ -286,4 +287,19 @@ export function templateDonne(
   return Object.values(collection).some((slots) =>
     slots.some((s) => s.templateId === templateId && s.donation !== null),
   );
+}
+
+/**
+ * Ce que la pastille « collection ✓ » du chinage affiche : le joueur a
+ * ENCORE cet objet — donné à la collection, en stock, ou sur l'étal.
+ * Pas `dejaPossede` : un objet acheté puis revendu redevient à dénicher
+ * (le drapeau, lui, reste, pour le +10 XP de découverte et les uniques).
+ */
+export function templateEnMainOuDonne(
+  state: Pick<GameState, "collection" | "inventaireJoueur" | "vitrine">,
+  templateId: string,
+): boolean {
+  if (templateDonne(state.collection, templateId)) return true;
+  if (state.inventaireJoueur.some((o) => o.templateId === templateId)) return true;
+  return (state.vitrine?.objets ?? []).some((v) => v.objet.templateId === templateId);
 }

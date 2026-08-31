@@ -15,15 +15,15 @@ vi.mock("@/lib/audio/audioManager", () => ({
   },
 }));
 
-// `EcranArcade` monte désormais `SoutienSheet` en permanence (fermée par
+// `EcranArcade` monte désormais `SoutienBorneOverlay` en permanence (fermé par
 // défaut), qui tire `useSettings` — sans mock, tout rendu de cet écran
 // casserait avant même d'atteindre le composant sous test. Même mock que
-// `SoutienSheet.test.tsx`.
+// `SoutienBorneOverlay.test.tsx`.
 vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({
     playClick: vi.fn(),
   }),
-  // `SoutienSheet` (montée par `EcranArcade`) appelle désormais
+  // `SoutienBorneOverlay` (monté par `EcranArcade`) appelle désormais
   // `useSettingsSafe` : le mock du module doit fournir les deux exports, sous
   // peine de casser au rendu.
   useSettingsSafe: () => ({

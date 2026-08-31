@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BAZAR_LAYOUT, CLES_ARTICLES, CLES_LOTS, type BazarObjetKey } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_ARTICLES, type BazarObjetKey } from "./bazarLayout";
 import { qgPct, QG_LAYOUT } from "@/components/mobile/qg/layout";
 import { CHAT_BALADEUR_ORDER } from "@/lib/chatBaladeur";
 
@@ -46,7 +46,10 @@ describe("BAZAR_LAYOUT", () => {
   });
 
   it("désigne la planche du bas pour les lots et celle du haut pour les trois objets", () => {
-    expect(CLES_LOTS).toEqual(["case4", "case5", "case6"]);
+    // Les lots (case4-6) sont référencés par clé littérale dans `BazarScene`,
+    // pas via une constante exportée (voir M9 revue finale 2026-08-30) — la
+    // planche du bas reste vérifiée ici, en dur.
+    expect(["case4", "case5", "case6"].every((c) => c in BAZAR_LAYOUT.objets)).toBe(true);
     expect(CLES_ARTICLES).toEqual(["case1", "case2", "case3"]);
   });
 
@@ -88,6 +91,24 @@ describe("BAZAR_LAYOUT", () => {
     }
     // La planche du haut est plus haute (bottom décroît vers le bas).
     expect(o.case1.bottom).toBeGreaterThan(o.case4.bottom);
+  });
+
+  /**
+   * Le lot du MILIEU est à égale distance de ses deux voisins (réglage de
+   * l'auteur, 2026-08-26). Trois pièces posées sur une planche, ce n'est pas
+   * trois positions indépendantes : c'est un rythme, et l'œil voit le
+   * dixième d'écart que le glisser-déposer laisse derrière lui.
+   *
+   * La tolérance est de 0,1 unité — de quoi absorber l'arrondi d'un centre,
+   * pas un décalage voulu.
+   */
+  it("le lot du milieu est à égale distance de ses deux voisins", () => {
+    const centre = (cle: "case4" | "case5" | "case6") => {
+      const c = BAZAR_LAYOUT.objets[cle];
+      return c.left + c.width / 2;
+    };
+    const attendu = (centre("case4") + centre("case6")) / 2;
+    expect(Math.abs(centre("case5") - attendu)).toBeLessThanOrEqual(0.1);
   });
 
   it("garde CHAQUE emplacement entier dans une seule zone de swipe", () => {
@@ -199,7 +220,7 @@ describe("BAZAR_LAYOUT", () => {
   });
 
   it("les emplacements que la scène désigne existent bel et bien", () => {
-    for (const cle of [...CLES_LOTS, ...CLES_ARTICLES]) {
+    for (const cle of ["case4", "case5", "case6", ...CLES_ARTICLES] as BazarObjetKey[]) {
       expect(BAZAR_LAYOUT.objets[cle]).toBeDefined();
     }
   });

@@ -18,6 +18,9 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { ObjetEnVente } from "@/types/game";
+import { TamponEncreur } from "@/components/ui/TamponEncreur";
+import { estPiece, type AlbumId } from "@/data/pieces";
+import { PieceVisuel } from "@/components/pieces/PieceVisuel";
 
 // Agrandissement max du sticker au-delà de sa taille naturelle. Les images
 // objets sont en 470 px : la taille de base (≈224 px) × 2 reste sous la
@@ -92,7 +95,7 @@ export type ChineSlide =
       /** Le Flair v2 (cote déjà connue) : prix plancher du vendeur révélé —
        *  valeur EFFECTIVE, bonus Marchandage déjà appliqué. Absent sinon. */
       plancherRevele?: number;
-      /** Le template a déjà été possédé au moins une fois : badge collection ✓. */
+      /** Le joueur a encore cet objet (collection, stock ou étal) : badge collection ✓. */
       dejaPossede: boolean;
       /**
        * Le template n'avait jamais été croisé avant cette carte : rayons de
@@ -100,6 +103,11 @@ export type ChineSlide =
        * que la session ne soit marquée vue en bloc.
        */
       estNouveau: boolean;
+      /** Pièce (carte/timbre) dont l'album n'est pas encore acheté — verrou
+       *  individuel à la carte : ni Négocier, ni Acheter, quel que soit le
+       *  budget. Absent/null pour un objet ordinaire ou une pièce déjà
+       *  débloquée. */
+      albumManquant?: AlbumId | null;
     }
   | { kind: "mystere" };
 
@@ -145,6 +153,11 @@ export function ChineSlideVue({ slide, plein = false }: { slide: ChineSlide; ple
   const acquis = statut === "achete";
   const vendeurFache = !acquis && item.negociation?.statut === "fache";
   const rarity = getRarityColors(objet.rarete);
+  const piece = estPiece(objet.templateId);
+  // Une pièce ne tient pas de place dans le stockage (elle va à l'album) :
+  // « Stock plein » ne la concerne jamais.
+  const bloquePlein = plein && !piece;
+  const verrou = slide.albumManquant ?? null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -222,41 +235,49 @@ export function ChineSlideVue({ slide, plein = false }: { slide: ChineSlide; ple
             </div>
           </div>
 
-          {/* Sticker die-cut, comme la collection. */}
+          {/* Sticker die-cut, comme la collection — ou visuel de pièce
+              (carte/timbre) pour un objet destiné à l'album. */}
           <div style={stickerImg}>
-            <ItemSticker
-              templateId={objet.templateId}
-              categorie={objet.categorie}
-              etat={objet.etat}
-              fill
-              tilt={false}
-              variant={acquis || vendeurFache || plein ? "grise" : "normal"}
-              thumb
-              eager
-              outlinePx={3}
-            />
-            {/* Tampon encreur en diagonale : VENDU (vert), VENDEUR FÂCHÉ ou
-                STOCK PLEIN (rouge). Décoratif — le tiroir de négo porte
-                l'annonce pour les lecteurs d'écran.
+            {piece ? (
+              <PieceVisuel
+                id={objet.templateId}
+                grise={acquis || vendeurFache || !!verrou}
+              />
+            ) : (
+              <ItemSticker
+                templateId={objet.templateId}
+                categorie={objet.categorie}
+                etat={objet.etat}
+                fill
+                tilt={false}
+                variant={acquis || vendeurFache || bloquePlein ? "grise" : "normal"}
+                thumb
+                eager
+                outlinePx={3}
+              />
+            )}
+            {/* Tampon encreur en diagonale : VENDU (vert), VENDEUR FÂCHÉ,
+                CLASSEUR/ALBUM MANQUANT ou STOCK PLEIN (rouge). Décoratif — le
+                tiroir de négo porte l'annonce pour les lecteurs d'écran.
 
                 ⚠ Ordre de priorité, pas un simple `||` : acheter REMPLIT le
                 stockage, donc la carte que l'on vient d'acquérir serait
                 aussitôt « Stock plein » — elle annoncerait l'empêchement au
                 lieu de la réussite. `acquis` passe donc en premier. */}
-            {(acquis || vendeurFache || plein) && (
-              <div style={tamponBox} aria-hidden>
-                <span
-                  style={tampon(
-                    acquis ? "var(--forest-600)" : "var(--vermillion-500)",
-                  )}
-                >
-                  {acquis
-                    ? d.chine.tamponVendu
-                    : vendeurFache
-                    ? d.chine.vendeurFache
-                    : d.chine.tamponStockPlein}
-                </span>
-              </div>
+            {(acquis || vendeurFache || bloquePlein || verrou) && (
+              <TamponEncreur
+                encre={acquis ? "var(--forest-600)" : "var(--vermillion-500)"}
+              >
+                {acquis
+                  ? d.chine.tamponVendu
+                  : vendeurFache
+                  ? d.chine.vendeurFache
+                  : verrou
+                  ? verrou === "classeur"
+                    ? d.chine.tamponClasseurManquant
+                    : d.chine.tamponAlbumManquant
+                  : d.chine.tamponStockPlein}
+              </TamponEncreur>
             )}
           </div>
         </div>
@@ -277,34 +298,6 @@ const stickerImg: CSSProperties = {
   width: "min(224px, 60vw)",
   aspectRatio: "1 / 1",
 };
-
-/** Calque centrant le tampon sur le sticker, sans gêner les gestes. */
-const tamponBox: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  pointerEvents: "none",
-  zIndex: 2,
-};
-
-/** Tampon encreur : cadre + texte de la couleur d'encre, posé en diagonale. */
-const tampon = (encre: string): CSSProperties => ({
-  transform: "rotate(-18deg)",
-  border: `3px solid ${encre}`,
-  borderRadius: 8,
-  padding: "4px 14px",
-  fontFamily: "var(--font-display)",
-  fontWeight: 800,
-  fontSize: 20,
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  whiteSpace: "nowrap",
-  color: encre,
-  background: "rgba(250,243,224,0.62)",
-  boxShadow: "0 1px 6px rgba(0,0,0,0.35)",
-});
 
 const titre: CSSProperties = {
   position: "relative",
@@ -464,7 +457,7 @@ const etatLigne: CSSProperties = {
   gap: 8,
 };
 
-/** Badge collection : logo Album + ✓ en médaillon, l'objet est déjà possédé. */
+/** Badge collection : logo Album + ✓ en médaillon, le joueur a encore l'objet. */
 const badgeCollection: CSSProperties = {
   position: "relative",
   display: "inline-flex",

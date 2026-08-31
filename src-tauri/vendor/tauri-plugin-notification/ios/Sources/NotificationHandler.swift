@@ -39,9 +39,24 @@ public class NotificationHandler: NSObject, NotificationHandlerProtocol {
       }
     }
 
+    // PATCH BROC — pas de `.sound` au premier plan.
+    //
+    // `willPresent` n'est appelé QUE lorsque l'app est déjà à l'écran. Or le
+    // son d'une notification y prend la session audio iOS, ce qui interrompt
+    // le contexte Web Audio de la WebView : tout le son du jeu se taisait
+    // d'un coup en pleine partie. Le cas était nominal, pas limite — la notif
+    // « énergie pleine » se déclenche précisément quand le joueur assidu est
+    // encore en train de jouer.
+    //
+    // La bannière et la pastille restent : l'information garde sa valeur,
+    // c'est le son qui n'en a aucune quand le jeu est sous les yeux. En
+    // arrière-plan, la notif sonne normalement — ce chemin ne passe pas ici.
+    //
+    // (Le garde `silent` ci-dessus ne suffisait pas : il lit une map tenue en
+    // mémoire au moment de la programmation, vide pour toute notif posée lors
+    // d'un lancement précédent.)
     return [
       .badge,
-      .sound,
       .alert,
     ]
   }
@@ -66,24 +81,39 @@ public class NotificationHandler: NSObject, NotificationHandlerProtocol {
       inputValue = inputType.userText
     }
 
-    try? self.plugin?.trigger(
-      "actionPerformed",
-      data: ReceivedNotification(
-        actionId: actionIdValue,
-        inputValue: inputValue,
-        notification: toActiveNotification(originalNotificationRequest)
-      ))
+    let received = ReceivedNotification(
+      actionId: actionIdValue,
+      inputValue: inputValue,
+      notification: toActiveNotification(originalNotificationRequest)
+    )
+
+    // PATCH BROC — garder le tap en attente pour le JS.
+    //
+    // Au lancement à froid depuis une notif, ce `didReceive` tourne avant que
+    // la WebView n'ait chargé un seul script : `trigger` n'a aucun écouteur et
+    // l'événement part dans le vide. Le plugin garde donc le dernier tap ; le
+    // JS le relit via la commande `lastAction` dès qu'il s'est abonné.
+    (self.plugin as? NotificationPlugin)?.actionEnAttente = received
+
+    try? self.plugin?.trigger("actionPerformed", data: received)
   }
 
   func toActiveNotification(_ request: UNNotificationRequest) -> ActiveNotification {
-    let notificationRequest = notificationsMap[request.identifier]!
+    // PATCH BROC — plus de `!` sur la map.
+    //
+    // `notificationsMap` ne vit qu'en mémoire : elle est VIDE pour toute notif
+    // posée lors d'un lancement précédent — c'est-à-dire pour quasiment tout
+    // tap réel, la notif « objet restauré » partant des heures après la
+    // programmation. Le force-unwrap faisait planter l'app en plein
+    // lancement : écran noir puis retour au springboard.
+    let notificationRequest = notificationsMap[request.identifier]
     return ActiveNotification(
       id: Int(request.identifier) ?? -1,
       title: request.content.title,
       body: request.content.body,
-      sound: notificationRequest.sound ?? "",
+      sound: notificationRequest?.sound ?? "",
       actionTypeId: request.content.categoryIdentifier,
-      attachments: notificationRequest.attachments
+      attachments: notificationRequest?.attachments
     )
   }
 

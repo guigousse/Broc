@@ -12,7 +12,7 @@ import {
 import { ItemSwipeDeck } from "@/components/mobile/chine/ItemSwipeDeck";
 import type { ChineSlide } from "@/components/mobile/chine/ChineSlide";
 import { getTemplate } from "@/data/objetTemplates";
-import { templateDejaPossede, templateVu } from "@/lib/collection";
+import { templateDejaPossede, templateEnMainOuDonne, templateVu } from "@/lib/collection";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/components/ui/Toast";
@@ -44,6 +44,8 @@ import { relancerNegociation } from "@/lib/negociation";
 import { aConnaisseurChinage, bonusMarchandageCategorie } from "@/lib/competences";
 import { energieCourante } from "@/lib/energie";
 import { getCapaciteStockage, placeRestante, stockageEstPlein, totalEnStock } from "@/lib/stockage";
+import { albumDe, estPiece, type AlbumId } from "@/data/pieces";
+import { albumsDe, piecePossedee } from "@/lib/albums";
 import {
   insererSlideMystere,
   nbBoitesReclamees,
@@ -56,6 +58,7 @@ import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import { indexObjetScenario, scenarioDeLEtape, tutorielActif } from "@/lib/tutoriel";
 import { SESSION_TUTORIEL } from "@/data/tutorielScenario";
+import { lignesXpDuBilan } from "@/lib/bilan/ceremonie";
 import { BilanSession, type LigneXp } from "@/components/mobile/bilan/BilanSession";
 import { degelerXpAffichage, gelerXpAffichage } from "@/lib/affichageGele";
 import {
@@ -152,6 +155,11 @@ export default function SessionChinePage() {
    */
   const noterDecouverte = (it: ObjetEnVente) => {
     if (!state) return;
+    // Une pièce (carte/timbre) ne transite jamais par `collection` : `templateVu`
+    // y répondrait toujours faux et fêterait la même pièce à chaque rencontre.
+    // Sa nouveauté se lit directement sur son album, à l'affichage (voir la
+    // construction de `slides` ci-dessous).
+    if (estPiece(it.objet.templateId)) return;
     if (templatesFetesRef.current.has(it.objet.templateId)) return;
     if (templateVu(state.collection, it.objet.templateId)) return;
     templatesFetesRef.current.add(it.objet.templateId);
@@ -299,6 +307,15 @@ export default function SessionChinePage() {
     it.objet.rarete !== "commun" ||
     getTemplate(it.objet.templateId)?.unique === true;
 
+  /** Pièce (carte/timbre) dont l'album n'est pas encore acheté : verrou
+   *  individuel à la carte. `null` pour un objet ordinaire, une pièce déjà
+   *  débloquée, ou tant que la partie n'est pas hydratée. */
+  const verrouPour = (it: ObjetEnVente): AlbumId | null => {
+    const a = albumDe(it.objet.templateId);
+    if (!a || !state) return null;
+    return albumsDe(state)[a].achete ? null : a;
+  };
+
   const slides: ChineSlide[] = useMemo(() => {
     const liste: ChineSlide[] = [];
     for (const it of (items ?? []).filter((x) => x.statut !== "refuse")) {
@@ -315,8 +332,19 @@ export default function SessionChinePage() {
                 bonusMarchandageCategorie(state, it.objet.categorie),
               )
             : undefined,
-        dejaPossede: state ? templateDejaPossede(state.collection, it.objet.templateId) : false,
-        estNouveau: decouvertesRef.current.has(it.id),
+        // Une pièce (carte/timbre) est possédée/nouvelle au sens de son album
+        // (`albums.<id>.pieces`), pas de `collection` — voir `noterDecouverte`.
+        dejaPossede: state
+          ? estPiece(it.objet.templateId)
+            ? piecePossedee(albumsDe(state), it.objet.templateId)
+            : templateEnMainOuDonne(state, it.objet.templateId)
+          : false,
+        estNouveau: estPiece(it.objet.templateId)
+          ? state
+            ? !piecePossedee(albumsDe(state), it.objet.templateId)
+            : false
+          : decouvertesRef.current.has(it.id),
+        albumManquant: verrouPour(it),
       });
     }
     if (vendeurPosition !== null) {
@@ -435,12 +463,17 @@ export default function SessionChinePage() {
       toast(res.raison ?? d.chine.caisseRefuse, { type: "erreur" });
       return false;
     }
-    // Aligne l'accumulateur d'affichage sur le +10 de découverte crédité
-    // atomiquement par le GameContext (première possession du template).
-    const estDecouverte = !templateDejaPossede(state.collection, it.objet.templateId);
-    marquerDejaPossedeTemplate(it.objet.templateId);
-    if (estDecouverte) {
-      compterXp("decouvertes", XP_DECOUVERTE_COLLECTION);
+    // Une pièce (carte/timbre) va dans l'album, pas dans la collection : pas
+    // de « première possession » ni de +10 XP découverte à son sujet — la
+    // route est déjà réservée aux objets qui traversent la collection.
+    if (!estPiece(it.objet.templateId)) {
+      // Aligne l'accumulateur d'affichage sur le +10 de découverte crédité
+      // atomiquement par le GameContext (première possession du template).
+      const estDecouverte = !templateDejaPossede(state.collection, it.objet.templateId);
+      marquerDejaPossedeTemplate(it.objet.templateId);
+      if (estDecouverte) {
+        compterXp("decouvertes", XP_DECOUVERTE_COLLECTION);
+      }
     }
     gagnerXPLocal(
       "achats",
@@ -460,6 +493,7 @@ export default function SessionChinePage() {
         etat: it.objet.etat,
         prixReferenceReel: it.objet.prixReferenceReel,
         prixPaye: prix,
+        album: albumDe(it.objet.templateId) ?? undefined,
       },
     ]);
     // Débrief du grand-père après l'achat scripté (échec de négo mis à part,
@@ -509,11 +543,17 @@ export default function SessionChinePage() {
     router.push("/bureau");
   };
 
-  const lignesXpBilan: LigneXp[] = [
-    { cle: "achats", montant: xpSession.achats },
-    { cle: "decouvertes", montant: xpSession.decouvertes },
-    { cle: "negociations", montant: xpSession.negociations },
-  ];
+  /** Décompte d'XP du bilan — muet si la session s'est ouverte au niveau
+   *  maximum : l'XP y est toujours créditée mais ne produit plus rien, et une
+   *  pastille qui s'envole vers une barre déjà pleine ne promet que du vide. */
+  const lignesXpBilan: readonly LigneXp[] = lignesXpDuBilan(
+    [
+      { cle: "achats", montant: xpSession.achats },
+      { cle: "decouvertes", montant: xpSession.decouvertes },
+      { cle: "negociations", montant: xpSession.negociations },
+    ],
+    instantaneXpRef.current,
+  );
 
   /** Occupation du stockage AVANT les achats de la session : on retranche les
    *  achats du total courant, ce qui laisse en place l'objet éventuellement
@@ -667,6 +707,7 @@ export default function SessionChinePage() {
                 nom: a.nom,
                 categorie: a.categorie,
                 prix: a.prixPaye,
+                album: a.album,
               }))}
               xpLignes={lignesXpBilan}
               cibleVolItems='[data-fly-target="stockage-bilan"]'
@@ -691,6 +732,7 @@ export default function SessionChinePage() {
                   item={item}
                   budget={state.budget}
                   plein={plein}
+                  verrouAlbum={verrouPour(item)}
                   prixMinEffectif={prixMinAvecMarchandage(
                     item.prixVendeur,
                     item.prixMinAccept,

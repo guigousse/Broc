@@ -1,7 +1,7 @@
 import { ETATS_ORDRE } from "@/lib/etat";
 import { valeurTotale } from "@/lib/collection";
 import { estMissionLivrable, progressionMission } from "@/lib/missions";
-import { getTemplate } from "@/data/objetTemplates";
+import { getTemplate, type ObjetTemplate } from "@/data/objetTemplates";
 import type {
   CourrierPayloadMission,
   GameState,
@@ -52,6 +52,25 @@ function sessionsChinageComptees(
   });
 }
 
+/**
+ * Templates LÉGENDAIRES acquis après l'acceptation de la mission, triés du
+ * plus cher au moins cher. Exportée parce que deux consommateurs en ont
+ * besoin et doivent voir exactement la même liste : la mesure de l'objectif
+ * `objetLegendaire` (sa longueur) et la prime variable de `lib/recompenses`
+ * (son premier élément, cf. « c'est la plus chère qui compte »).
+ */
+export function legendairesAcquis(
+  state: Pick<GameState, "historique">,
+  reso: Pick<MissionResolution, "timestampAcceptation">,
+  jourRecu: number,
+): ObjetTemplate[] {
+  return sessionsChinageComptees(state, reso, jourRecu)
+    .flatMap((s) => s.achats)
+    .map((a) => getTemplate(a.templateId))
+    .filter((t): t is ObjetTemplate => !!t && t.rarete === "legendaire")
+    .sort((a, b) => b.prixRefBase - a.prixRefBase);
+}
+
 export function progressionObjectif(
   obj: ObjectifMission,
   state: GameState,
@@ -98,6 +117,10 @@ export function progressionObjectif(
       const n = sessionsChinageComptees(state, reso, jourRecu)
         .flatMap((s) => s.achats)
         .filter((a) => getTemplate(a.templateId)?.rarete === "rare").length;
+      return { actuel: n, cible: obj.nombre, atteint: n >= obj.nombre };
+    }
+    case "objetLegendaire": {
+      const n = legendairesAcquis(state, reso, jourRecu).length;
       return { actuel: n, cible: obj.nombre, atteint: n >= obj.nombre };
     }
     case "beneficeCumule": {

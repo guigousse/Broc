@@ -15,6 +15,7 @@ import {
 } from "@/lib/vitrinePrep";
 import { CATEGORIES } from "@/data/categories";
 import { aConnaisseurVitrine } from "@/lib/competences";
+import { stockChargeable } from "@/lib/vitrine";
 import { prixSuggere } from "@/lib/prixSuggere";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomExpediteur } from "@/lib/i18n/contenu";
@@ -160,13 +161,10 @@ export default function VitrinePrepPage() {
   const validerBloque = state
     ? !tracesToutesPosees(state.tutorielEtape, coffre)
     : false;
-  const stock = useMemo(() => {
-    if (!state) return [];
-    const ids = new Set(coffre.map((o) => o.objet.id));
-    return state.inventaireJoueur.filter(
-      (o) => !ids.has(o.id) && !o.enRestauration,
-    );
-  }, [state, coffre]);
+  const stock = useMemo(
+    () => (state ? stockChargeable(state.inventaireJoueur, coffre) : []),
+    [state, coffre],
+  );
 
   // Coffre Tetris (tutoriel v3) : ids des objets du préfill EFFECTIVEMENT
   // présents dans le coffre — verrouillés (drag/rotation/retrait inertes).

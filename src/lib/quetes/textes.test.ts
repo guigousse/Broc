@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { genererTexte, genererTexteChiffre, nombreVariantesChiffrees } from "./textes";
+import { gabaritsChiffres, genererTexte, genererTexteChiffre, nombreVariantesChiffrees } from "./textes";
 
 describe("genererTexte", () => {
   it("insère le nom de l'objet et renvoie titre + corps + gabaritId", () => {
@@ -63,5 +63,50 @@ describe("genererTexteChiffre", () => {
     // sort alors du tableau et le repli `?? gabarits[0]` doit s'activer.
     const t = genererTexteChiffre("benefice", { montant: 100 }, () => 1);
     expect(t.gabaritId).toBe("benefice#0");
+  });
+});
+
+describe("gabarits quotidiens", () => {
+  const NOUVELLES = ["beneficeJour", "chiffreJour", "margeJour", "categorieJour", "restauration", "legendaire"];
+
+  test("chaque nouvelle famille a deux variantes", () => {
+    for (const cle of NOUVELLES) {
+      expect(nombreVariantesChiffrees(cle), cle).toBe(2);
+    }
+  });
+
+  test("aucune famille du jour ne parle de la semaine", () => {
+    // Seules `benefice` et `chiffre` nomment une période côté hebdomadaire
+    // (« cette semaine », « avant dimanche ») ; `marge` et `categorie` n'en
+    // ont jamais nommé, d'où l'asymétrie assumée des deux boucles.
+    for (const cle of ["benefice", "chiffre"]) {
+      const texte = gabaritsChiffres(cle).flatMap((g) => g.corps).join(" ");
+      expect(texte, cle).toMatch(/semaine|dimanche/i);
+    }
+    for (const cle of ["beneficeJour", "chiffreJour", "margeJour", "categorieJour"]) {
+      const texte = gabaritsChiffres(cle).flatMap((g) => g.corps).join(" ");
+      expect(texte, cle).not.toMatch(/semaine|dimanche/i);
+    }
+  });
+
+  test("la restauration interpole l'état minimum", () => {
+    const t = genererTexteChiffre("restauration", { etatMin: "Très bon" }, () => 0);
+    expect(t.corps.join(" ")).toContain("Très bon");
+    expect(t.corps.join(" ")).not.toContain("{etat}");
+    expect(t.gabaritId).toBe("restauration#0");
+  });
+
+  test("le légendaire ne porte aucune marque à interpoler", () => {
+    const t = genererTexteChiffre("legendaire", {}, () => 0);
+    expect(t.corps.join(" ")).not.toMatch(/\{[a-z]+\}/);
+    expect(t.gabaritId).toBe("legendaire#0");
+  });
+
+  test("aucun titre de gabarit ne porte de marque", () => {
+    for (const cle of NOUVELLES) {
+      for (const g of gabaritsChiffres(cle)) {
+        expect(g.titre, `${cle} : ${g.titre}`).not.toMatch(/\{[a-z]+\}/);
+      }
+    }
   });
 });

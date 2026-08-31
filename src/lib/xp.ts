@@ -1,5 +1,5 @@
-import type { BrocanteurState, Rarete } from "@/types/game";
-import { COUT_TOTAL_COMPETENCES } from "@/data/competences";
+import type { BrocanteurState, GameState, Rarete } from "@/types/game";
+import { COUT_TOTAL_COMPETENCES, pointsDepensesCompetences } from "@/data/competences";
 
 export type { BrocanteurState };
 
@@ -74,10 +74,34 @@ export function xpRequisPourNiveauBrocanteur(niveau: number): number {
   return SEUILS_CUMULES[n];
 }
 
-/** Points de compétence gagnés par niveau de Brocanteur. */
+/**
+ * Points de compétence gagnés par niveau de Brocanteur — et c'est la SEULE
+ * source du jeu depuis le 2026-08-28 : exactement un point par niveau, ni
+ * plus ni moins. Toute autre distribution (l'ancien bonus de chapitre) rendait
+ * fausse la promesse « +1 point de compétence » de la fiche de célébration,
+ * seul endroit où le joueur voit passer ses points.
+ */
 export const POINTS_PAR_NIVEAU = 1;
-/** Points bonus à la livraison d'un chapitre de mission principale (D4). */
+/**
+ * LEGACY — ancien bonus de points à la livraison d'un chapitre de la trame
+ * (D4), supprimé du jeu vivant le 2026-08-28. La constante survit pour la
+ * seule migration des saves < v9 (`lib/migrations.ts`), qui RECALCULE leur
+ * pool à chaque chargement (`niveau + bonus × chapitres − dépenses`) : la
+ * retirer de ce calcul retirerait rétroactivement des points déjà acquis,
+ * ce que la décision « sans reprise » exclut.
+ */
 export const POINTS_BONUS_CHAPITRE = 2;
+
+/**
+ * Le brocanteur est-il au plafond de niveau ? Au-delà, l'XP gagnée continue
+ * de s'accumuler dans la save mais ne produit plus rien : ni niveau, ni point.
+ * Les cérémonies qui la mettent en scène (décompte du bilan de session) s'en
+ * servent pour se taire — une animation qui n'a aucun effet ne fait
+ * qu'égarer le joueur.
+ */
+export function auPlafondNiveau(b: Pick<BrocanteurState, "niveau">): boolean {
+  return b.niveau >= NIVEAU_BROCANTEUR_MAX;
+}
 
 /**
  * Points encore octroyables avant le plafond « à vie » : la somme
@@ -115,6 +139,39 @@ export function appliquerGainXPBrocanteur(
     );
   }
   return { xp: nouveauXP, niveau, pointsDisponibles };
+}
+
+/**
+ * Ce que le niveau 100 rapporte : des Bazarcoins, pas un point de compétence
+ * (l'arbre est payé depuis N96). Décidé le 2026-08-28 à la place d'une
+ * tapisserie rouge et or du bureau, jugée peu convaincante à l'image.
+ */
+export const JETONS_NIVEAU_MAX = 50;
+
+/**
+ * Le SEUL robinet d'XP de la partie : verse l'XP au brocanteur (niveaux et
+ * points) et, si le niveau 100 vient d'être franchi, ses Bazarcoins. Les
+ * appelants (vente, restauration, découverte, mission) ne touchent plus à
+ * `brocanteur` directement — sinon le franchissement du plafond se jouerait
+ * à quatre endroits et l'un d'eux finirait par l'oublier.
+ */
+export function crediterXPBrocanteur<
+  S extends Pick<GameState, "brocanteur" | "jetons" | "competencesDebloquees">,
+>(state: S, gain: number): S {
+  if (gain <= 0) return state;
+  const brocanteur = appliquerGainXPBrocanteur(
+    state.brocanteur,
+    gain,
+    pointsDepensesCompetences(state.competencesDebloquees),
+  );
+  const franchitPlafond =
+    state.brocanteur.niveau < NIVEAU_BROCANTEUR_MAX &&
+    brocanteur.niveau >= NIVEAU_BROCANTEUR_MAX;
+  return {
+    ...state,
+    brocanteur,
+    jetons: franchitPlafond ? state.jetons + JETONS_NIVEAU_MAX : state.jetons,
+  };
 }
 
 /** Progression vers le prochain niveau de Brocanteur (0..1). */

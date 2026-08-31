@@ -1,23 +1,43 @@
 import { describe, it, test, expect } from "vitest";
 import { genererLot } from "./periodiques";
-import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
+import { createMockGameState, createMockSlot } from "@/lib/__test-fixtures__/gameState";
 import { FAMILLE, type FormeQuete } from "./formes";
 import { objetsAtteignables } from "./atteignables";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
-import type { Courrier, CourrierPayloadMission } from "@/types/game";
+import type {
+  Courrier,
+  CourrierPayloadMission,
+  CompetenceId,
+  CategorieObjet,
+  CollectionSlot,
+} from "@/types/game";
 import { emptyBrocanteur } from "@/lib/xp";
+import { CATEGORIES } from "@/data/categories";
+import { catTreeId } from "@/data/competences";
+import { chapitreParOrdre } from "@/data/quetesPrincipales";
 
 function rngSeq(vals: number[]): () => number {
   let i = 0;
   return () => vals[i++ % vals.length];
 }
 
-/** Générateur pseudo-aléatoire déterministe, pour rejouer une graine. */
+/**
+ * Générateur pseudo-aléatoire déterministe, pour rejouer une graine.
+ *
+ * mulberry32 et non un LCG brut : mesuré, un LCG congruentiel seedé par des
+ * entiers consécutifs et lu immédiatement rend `floor(r * 5) === 1` pour TOUTES
+ * les graines de ces tests. Le premier échange de Fisher-Yates devient alors
+ * déterministe, épingle une forme en dernière position — que le mélange ne
+ * revisite jamais — et la rend intirable. Les tests de variété passaient à
+ * côté de leur objet.
+ */
 function rngGraine(graine: number): () => number {
-  let s = graine >>> 0;
+  let s = (graine + 0x6d2b79f5) >>> 0;
   return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
 
@@ -27,6 +47,8 @@ function formeDe(c: Courrier): FormeQuete {
   const o = c.payload.objectifs?.[0];
   switch (o?.type) {
     case "objetsRares": return "objetsRares";
+    case "objetLegendaire": return "objetLegendaire";
+    case "restauration": return "restauration";
     case "beneficeCumule": return "beneficeCumule";
     case "ventesCumulees": return "chiffreAffaires";
     case "profitVente": return "profitVente";
@@ -74,13 +96,150 @@ describe("genererLot", () => {
 });
 
 describe("composition des lots", () => {
-  test("quotidienne : deux quêtes d'objet et une de rares", () => {
-    for (let g = 1; g <= 30; g++) {
+  test("quotidienne : une seule quête d'objet, deux formes tirées distinctes", () => {
+    for (let g = 1; g <= 60; g++) {
       const lot = genererLot(createMockGameState(), "quotidienne", `c${g}`, rngGraine(g));
       expect(lot).toHaveLength(3);
-      const formes = lot.map(formeDe).sort();
-      expect(formes).toEqual(["objet", "objet", "objetsRares"].sort());
+      const formes = lot.map(formeDe);
+      expect(formes.filter((f) => f === "objet")).toHaveLength(1);
+      const tirees = formes.filter((f) => f !== "objet");
+      expect(new Set(tirees).size).toBe(2);
     }
+  });
+
+  test("quotidienne : au plus une forme de vente quand le garde-fou est actif (≥2 hors-vente éligibles)", () => {
+    // Sur partie neuve, seule `objetsRares` est hors-vente éligible : le
+    // garde-fou est désactivé (cf. `formesDuLot`) et ce test ne l'exercerait
+    // pas. Réparer débloqué ajoute `restauration` au pool hors-vente : deux
+    // formes hors-vente, donc un vrai choix, donc le garde-fou s'applique.
+    const state = createMockGameState({
+      competencesDebloquees: [`${catTreeId(CATEGORIES[0])}.reparer.1`] as CompetenceId[],
+    });
+    for (let g = 1; g <= 60; g++) {
+      const lot = genererLot(state, "quotidienne", `c${g}`, rngGraine(g));
+      const tirees = lot.map(formeDe).filter((f) => f !== "objet");
+      expect(tirees.filter((f) => FAMILLE[f] === "vente").length).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test("quotidienne : sur partie neuve, le garde-fou de vente se désactive et objetsRares cesse d'être systématique", () => {
+    // Régression du défaut mesuré en revue : sur partie neuve, seule
+    // `objetsRares` est hors-vente éligible (`objetLegendaire` et
+    // `restauration` verrouillées) — imposer « au plus une vente » forçait
+    // alors `objetsRares` dans 500 lots sur 500 (4 compositions distinctes
+    // seulement). Le garde-fou conditionnel doit casser ce déterminisme.
+    const state = createMockGameState();
+    let avecRares = 0;
+    const compositions = new Set<string>();
+    for (let g = 1; g <= 200; g++) {
+      const lot = genererLot(state, "quotidienne", `c${g}`, rngGraine(g));
+      const formes = lot.map(formeDe);
+      if (formes.includes("objetsRares")) avecRares++;
+      compositions.add(formes.slice().sort().join("|"));
+    }
+    expect(avecRares).toBeLessThan(200);
+    expect(compositions.size).toBeGreaterThan(4);
+  });
+
+  test("quotidienne : la position de la quête d'objet varie", () => {
+    // L'invariant qui interdit le retour du lot scripté : avant ce chantier,
+    // les deux quêtes d'objet occupaient TOUJOURS les slots 0 et 1.
+    const positions = new Set<number>();
+    for (let g = 1; g <= 60; g++) {
+      const lot = genererLot(createMockGameState(), "quotidienne", `c${g}`, rngGraine(g));
+      positions.add(lot.findIndex((c) => formeDe(c) === "objet"));
+    }
+    expect(positions.size).toBeGreaterThan(1);
+  });
+
+  test("quotidienne : la composition varie d'une graine à l'autre", () => {
+    const vues = new Set<string>();
+    for (let g = 1; g <= 60; g++) {
+      const lot = genererLot(createMockGameState(), "quotidienne", `c${g}`, rngGraine(g));
+      vues.add(lot.map(formeDe).sort().join("|"));
+    }
+    expect(vues.size).toBeGreaterThan(3);
+  });
+
+  test("quotidienne : sans verrou ouvert, ni légendaire ni restauration", () => {
+    // `createMockGameState()` = partie neuve : pas de tier 4, pas de Réparer.
+    for (let g = 1; g <= 80; g++) {
+      const lot = genererLot(createMockGameState(), "quotidienne", `c${g}`, rngGraine(g));
+      const formes = lot.map(formeDe);
+      expect(formes).not.toContain("objetLegendaire");
+      expect(formes).not.toContain("restauration");
+    }
+  });
+
+  test("quotidienne : Réparer débloqué fait apparaître la restauration", () => {
+    const state = createMockGameState({
+      competencesDebloquees: [`${catTreeId(CATEGORIES[0])}.reparer.1`] as CompetenceId[],
+    });
+    let vue = false;
+    for (let g = 1; g <= 80 && !vue; g++) {
+      vue = genererLot(state, "quotidienne", `c${g}`, rngGraine(g))
+        .map(formeDe)
+        .includes("restauration");
+    }
+    expect(vue).toBe(true);
+  });
+
+  test("quotidienne : une brocante tier 4 ouverte fait apparaître la pièce légendaire", () => {
+    // Recette reprise telle quelle de eligibilite.test.ts (« quand une
+    // brocante de tier 4 [...] s'ouvre, la pièce légendaire est éligible ») :
+    // trois chapitres livrés + seuils de valeur par catégorie, pour ouvrir le
+    // Salon des Antiquaires (tier 4) sans dépendre de la Grande Braderie.
+    const ch4 = chapitreParOrdre(4)!;
+    const ch8 = chapitreParOrdre(8)!;
+    const ch13 = chapitreParOrdre(13)!;
+
+    const slotMaison = createMockSlot({
+      categorie: "Maison",
+      donation: { etat: "Pristin état", valeur: 1500 },
+    });
+    const slotMusique = createMockSlot({
+      categorie: "Musique",
+      donation: { etat: "Pristin état", valeur: 1300 },
+    });
+    const slotMode = createMockSlot({
+      categorie: "Mode",
+      donation: { etat: "Pristin état", valeur: 1000 },
+    });
+    const slotArt = createMockSlot({
+      categorie: "Objets d'art",
+      donation: { etat: "Pristin état", valeur: 800 },
+    });
+    const slotBrico = createMockSlot({
+      categorie: "Bricolage",
+      donation: { etat: "Pristin état", valeur: 500 },
+    });
+
+    const collection: Record<CategorieObjet, CollectionSlot[]> = {
+      Maison: [slotMaison],
+      Musique: [slotMusique],
+      Mode: [slotMode],
+      "Objets d'art": [slotArt],
+      Bricolage: [slotBrico],
+      "Jeux & Loisirs": [],
+      "Livres & Papeterie": [],
+    };
+
+    const state = createMockGameState({
+      missions: [
+        { courrierId: ch4.id, statut: "livree" },
+        { courrierId: ch8.id, statut: "livree" },
+        { courrierId: ch13.id, statut: "livree" },
+      ],
+      collection,
+    });
+
+    let vue = false;
+    for (let g = 1; g <= 80 && !vue; g++) {
+      vue = genererLot(state, "quotidienne", `c${g}`, rngGraine(g))
+        .map(formeDe)
+        .includes("objetLegendaire");
+    }
+    expect(vue).toBe(true);
   });
 
   test("hebdomadaire : trois formes distinctes, dont au moins une de vente", () => {
@@ -145,13 +304,18 @@ describe("composition des lots", () => {
   });
 
   test("les quêtes chiffrées portent un gabaritId et un texte sans marque", () => {
-    for (let g = 1; g <= 30; g++) {
-      const lot = genererLot(createMockGameState(), "hebdomadaire", `c${g}`, rngGraine(g));
-      for (const c of lot) {
-        if (c.payload.type !== "mission") continue;
-        if (c.payload.cibles.length > 0) continue; // quête d'objet : autre voie
-        expect(c.payload.gabaritId).toBeDefined();
-        expect([c.payload.titre, ...c.payload.corps].join(" ")).not.toMatch(/\{[a-z]+\}/);
+    // Bouclé sur les DEUX périodes : la quotidienne a ses propres gabarits
+    // (six neufs depuis ce chantier — clés "...Jour" dans textes.ts) que
+    // l'hebdomadaire seule n'exerce jamais.
+    for (const type of ["quotidienne", "hebdomadaire"] as const) {
+      for (let g = 1; g <= 30; g++) {
+        const lot = genererLot(createMockGameState(), type, `c${g}`, rngGraine(g));
+        for (const c of lot) {
+          if (c.payload.type !== "mission") continue;
+          if (c.payload.cibles.length > 0) continue; // quête d'objet : autre voie
+          expect(c.payload.gabaritId).toBeDefined();
+          expect([c.payload.titre, ...c.payload.corps].join(" ")).not.toMatch(/\{[a-z]+\}/);
+        }
       }
     }
   });

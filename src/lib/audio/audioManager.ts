@@ -81,6 +81,58 @@ export const PIC_EXPLOSION_S = 0.035;
  */
 const DUREE_RAMPE_BUS_MS = 400;
 
+/**
+ * Nombre de `resume()` restés sans effet avant de rebâtir le contexte.
+ *
+ * WebKit connaît un état « interrupted » hors spec d'où `resume()` sort en
+ * tenant sa promesse — sans rien réveiller. Sans escalade, on retenterait la
+ * même chose à chaque tap jusqu'à la fin de la session. Trois, parce qu'un
+ * `resume()` hors geste utilisateur échoue légitimement une fois ou deux
+ * avant que le joueur touche l'écran.
+ */
+const REPRISES_AVANT_RECONSTRUCTION = 3;
+
+/**
+ * Délai minimal entre deux reconstructions.
+ *
+ * WebKit plafonne le nombre d'AudioContext vivants par page : une boucle de
+ * reconstruction tuerait le son bien plus sûrement que la panne qu'elle
+ * prétend réparer.
+ */
+const DELAI_MIN_RECONSTRUCTION_MS = 3_000;
+
+/** Longueur du journal d'états. Assez pour une session, assez court pour être lu. */
+const TAILLE_JOURNAL_AUDIO = 24;
+
+/** Une transition d'état du contexte audio, horodatée. */
+export interface LigneJournalAudio {
+  /** Epoch ms — c'est l'ÉCART entre deux lignes qui renseigne, pas l'heure. */
+  ms: number;
+  /** État du contexte, ou nom de l'incident ("reprise refusée", "reconstruction"). */
+  etat: string;
+}
+
+/**
+ * Ce qui devrait sonner en ce moment.
+ *
+ * Le graphe audio ne se répare pas : il se rebâtit. Reconstruire un contexte
+ * vivant mais MUET ne vaudrait pas mieux que la panne — il faut donc savoir
+ * ce qu'on doit relancer derrière. D'où ce relevé, tenu par les start/stop
+ * eux-mêmes.
+ */
+interface EtatSonore {
+  foule: boolean;
+  ronron: boolean;
+  /** Volume de zone de l'ambiance de rue, ou `undefined` si elle ne tourne pas. */
+  ambiance?: number;
+  cheminee?: number;
+  aiguille: boolean;
+  vinyle?: { url: string; onEnded?: () => void };
+  arcade?: string;
+}
+
+const ETAT_SONORE_VIDE: EtatSonore = { foule: false, ronron: false, aiguille: false };
+
 type WindowAudio = typeof window & { webkitAudioContext?: typeof AudioContext };
 
 class AudioManager {
@@ -144,6 +196,25 @@ class AudioManager {
   private ambienceBase = VOLUME_AMBIANCE_QG;
   private ambienceDuck = 1;
   private buffers: Map<string, AudioBuffer> = new Map();
+  // ── Survie du contexte ─────────────────────────────────────────────
+  /** Ce qui doit sonner : relevé de reprise après reconstruction. */
+  private enCours: EtatSonore = { ...ETAT_SONORE_VIDE };
+  /** Le joueur a mis le disque en pause : une panne ne doit pas le rallumer. */
+  private vinylePause = false;
+  private journal: LigneJournalAudio[] = [];
+  private repriseEnCours = false;
+  private echecsReprise = 0;
+  /**
+   * L'app est cachée : c'est NOUS qui avons suspendu le contexte. Sans ce
+   * drapeau, `suspend()` déclenche `statechange`, que `surChangementEtat`
+   * prenait pour une interruption iOS — d'où un `resume()` et un `play()`
+   * lancés dans la même volée que la mise en pause : sifflement à la sortie
+   * de l'app, contexte laissé « interrupted » au retour.
+   */
+  private enArrierePlan = false;
+  /** La borne a été tue par la sortie de l'app : on ne la relance pas au retour. */
+  private arcadeCoupeeParSortie = false;
+  private derniereReconstruction = 0;
   prefs: AudioPrefs = { ...DEFAULT_AUDIO_PREFS };
 
   hydrate(prefs: Partial<AudioPrefs>): void {
@@ -160,24 +231,253 @@ class AudioManager {
   ensureCtx(): void {
     if (typeof window === "undefined") return;
     if (this.ctx) {
-      // iOS (Safari / WKWebView) : le contexte peut rester/repasser "suspended",
-      // ou "interrupted" (état WebKit non standard, hors du type TS) après un
-      // passage en arrière-plan pendant une lecture. Tout état ≠ "running"
-      // mérite un resume.
-      if (this.ctx.state !== "running") void this.ctx.resume();
+      // iOS (Safari / WKWebView) : le contexte peut rester/repasser
+      // "suspended", ou "interrupted" (état WebKit non standard, hors du type
+      // TS) après une interruption — pub récompensée, notification, appel,
+      // reset du service média. Tout état ≠ "running" mérite un rattrapage.
+      const etat = this.ctx.state as string;
+      if (etat === "running") return;
+      // "closed" est TERMINAL : `resume()` y échoue toujours. Se contenter
+      // d'un resume ici, c'est le silence garanti jusqu'au redémarrage de
+      // l'app — le défaut qui coupait tout le son en pleine session.
+      if (etat === "closed") this.reconstruireContexte();
+      else this.tenterReprise();
       return;
     }
     const Ctx =
       window.AudioContext ?? (window as WindowAudio).webkitAudioContext;
     if (!Ctx) return;
-    this.ctx = new Ctx();
-    this.master = this.ctx.createGain();
+    const ctx = new Ctx();
+    this.ctx = ctx;
+    // Écouter le contexte plutôt que d'attendre le prochain son : dans un
+    // dialogue ou une cinématique, le prochain appel peut être loin.
+    // La comparaison d'identité fait taire les événements d'un contexte
+    // remplacé — dont le "closed" que déclenche notre propre fermeture.
+    ctx.onstatechange = () => {
+      if (this.ctx === ctx) this.surChangementEtat();
+    };
+    this.master = ctx.createGain();
     this.master.gain.value = this.prefs.volume / 100;
-    this.master.connect(this.ctx.destination);
+    this.master.connect(ctx.destination);
     // iOS : un AudioContext démarre "suspended" ; on tente un resume immédiat
     // (efficace si on est dans un geste) + des écouteurs de déblocage globaux.
-    if (this.ctx.state === "suspended") void this.ctx.resume();
+    if (ctx.state === "suspended") void ctx.resume();
     this.installUnlockHandlers();
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Survie du contexte audio                                          */
+  /* ---------------------------------------------------------------- */
+
+  /**
+   * Journal des états subis par le contexte.
+   *
+   * La panne ne se reproduit ni au simulateur ni au débogueur : elle demande
+   * une longue session sur l'appareil. Si le rattrapage ci-dessous échoue
+   * malgré tout, ce relevé est la seule pièce à conviction disponible.
+   */
+  journalAudio(): LigneJournalAudio[] {
+    return [...this.journal];
+  }
+
+  private noterEtat(etat: string): void {
+    this.journal.push({ ms: Date.now(), etat });
+    if (this.journal.length > TAILLE_JOURNAL_AUDIO) this.journal.shift();
+  }
+
+  /** Le contexte a changé d'état tout seul : iOS vient de nous interrompre. */
+  private surChangementEtat(): void {
+    const etat = this.ctx?.state as string | undefined;
+    if (!etat) return;
+    this.noterEtat(etat);
+    // Caché, on ne réveille rien : la reprise attend le retour au premier
+    // plan, qui passe par `unlock` → `ensureCtx`.
+    if (this.enArrierePlan) return;
+    if (etat === "running") {
+      this.echecsReprise = 0;
+      this.reprendreLesElements();
+      return;
+    }
+    if (etat === "closed") this.reconstruireContexte();
+    else this.tenterReprise();
+  }
+
+  /**
+   * Tente de réveiller le contexte, et escalade vers la reconstruction quand
+   * le réveil ne prend pas.
+   *
+   * Le `void ctx.resume()` d'origine avalait l'échec : le rejet partait en
+   * promesse non capturée et personne n'était prévenu. Ici, les deux formes
+   * d'échec sont traitées — le rejet (contexte mort, on rebâtit tout de
+   * suite) et la réussite sans effet (WebKit "interrupted", on compte).
+   */
+  private tenterReprise(): void {
+    const ctx = this.ctx;
+    if (!ctx || this.repriseEnCours) return;
+    this.repriseEnCours = true;
+    void Promise.resolve(ctx.resume()).then(
+      () => {
+        this.repriseEnCours = false;
+        // Le graphe a pu être rebâti pendant le vol : ce verdict est périmé.
+        if (this.ctx !== ctx) return;
+        if ((ctx.state as string) === "running") {
+          this.echecsReprise = 0;
+          this.reprendreLesElements();
+          return;
+        }
+        this.noterEtat(`reprise sans effet (${ctx.state})`);
+        if (++this.echecsReprise >= REPRISES_AVANT_RECONSTRUCTION) {
+          this.reconstruireContexte();
+        }
+      },
+      () => {
+        this.repriseEnCours = false;
+        if (this.ctx !== ctx) return;
+        this.noterEtat("reprise refusée");
+        this.reconstruireContexte();
+      },
+    );
+  }
+
+  /**
+   * Relance les éléments `<audio>` qu'iOS a mis en pause en nous interrompant.
+   *
+   * Un contexte qui se réveille ne suffit pas : les boucles d'ambiance sont
+   * des `AudioBufferSource` et repartent d'elles-mêmes, mais le disque et la
+   * borne sont des éléments média, qu'iOS met en pause pour son compte et ne
+   * relance jamais. Sans ce geste, tout revient SAUF la musique.
+   */
+  private reprendreLesElements(): void {
+    if (!this.prefs.musique) return;
+    if (this.vinylAudio?.paused && !this.vinylePause) {
+      void this.vinylAudio.play().catch(() => {
+        /* refusée hors geste : le prochain tap repassera par ici */
+      });
+    }
+    if (this.arcadeAudio?.paused && !this.arcadeCoupeeParSortie) {
+      void this.arcadeAudio.play().catch(() => {
+        /* idem */
+      });
+    }
+  }
+
+  /**
+   * Jette le graphe audio mort et en rebâtit un, puis relance ce qui sonnait.
+   *
+   * C'est le geste de dernier recours : un contexte qu'iOS a fermé ou laissé
+   * interrompu ne revient par aucun autre moyen.
+   */
+  private reconstruireContexte(): void {
+    if (typeof window === "undefined") return;
+    // Un AudioContext créé hors geste et app cachée ne démarrera jamais :
+    // on attend le retour au premier plan (surChangementEtat/unlock).
+    if (this.enArrierePlan) return;
+    const maintenant = Date.now();
+    if (maintenant - this.derniereReconstruction < DELAI_MIN_RECONSTRUCTION_MS) {
+      return;
+    }
+    this.derniereReconstruction = maintenant;
+    this.noterEtat("reconstruction");
+    // Le relevé est pris AVANT le démontage, qui l'efface au passage.
+    const repere = { ...this.enCours };
+    const positionDisque = this.vinylAudio?.currentTime ?? 0;
+    const disquePause = this.vinylePause;
+    this.demonterGraphe();
+    this.echecsReprise = 0;
+    this.ensureCtx();
+    if (!this.ctx) return;
+    this.relancer(repere, positionDisque, disquePause);
+  }
+
+  /** Relâche tout ce qui pendait au contexte mort, contexte compris. */
+  private demonterGraphe(): void {
+    const ancien = this.ctx;
+    // Les timers d'abord : un fondu programmé rallumerait un gain du graphe
+    // mort, ou effacerait celui qu'on est en train de rebâtir.
+    this.gramoTimers.forEach((t) => window.clearTimeout(t));
+    this.gramoTimers = [];
+    this.arcadeTimers.forEach((t) => window.clearTimeout(t));
+    this.arcadeTimers = [];
+    if (this.fadeOutTimer !== undefined) window.clearTimeout(this.fadeOutTimer);
+    this.fadeOutTimer = undefined;
+    // Jetons de démarrage : un décodage encore en vol ne doit pas atterrir
+    // sur le graphe neuf en croyant être chez lui.
+    this.ambienceGen++;
+    this.ambienceStarting = false;
+    this.arcadeGen++;
+
+    if (this.vinylAudio && this.vinylEndedHandler) {
+      this.vinylAudio.removeEventListener("ended", this.vinylEndedHandler);
+    }
+    for (const audio of [this.vinylAudio, this.arcadeAudio]) {
+      if (!audio) continue;
+      try {
+        audio.pause();
+        audio.src = "";
+      } catch {
+        /* élément déjà relâché */
+      }
+    }
+    this.crowdSource = undefined;
+    this.crowdGain = undefined;
+    this.catPurrSource = undefined;
+    this.catPurrGain = undefined;
+    this.ambienceSource = undefined;
+    this.ambienceGain = undefined;
+    this.fireplaceSource = undefined;
+    this.fireplaceGain = undefined;
+    this.needleSource = undefined;
+    this.needleGain = undefined;
+    this.vinylAudio = undefined;
+    this.vinylSource = undefined;
+    this.vinylGain = undefined;
+    this.vinylEndedHandler = undefined;
+    this.vinylAmbianceGain = undefined;
+    this.vinylAmbianceLowpass = undefined;
+    this.arcadeAudio = undefined;
+    this.arcadeSource = undefined;
+    this.arcadeGain = undefined;
+    this.enCours = { ...ETAT_SONORE_VIDE };
+    // Les tampons décodés appartenaient au contexte mort. Les vider rend au
+    // passage les dizaines de Mo de PCM que le cache retenait à vie (audit H3).
+    this.buffers.clear();
+    this.master = undefined;
+    this.ctx = undefined;
+    if (ancien) {
+      ancien.onstatechange = null;
+      if ((ancien.state as string) !== "closed") {
+        try {
+          void Promise.resolve(ancien.close()).catch(() => {
+            /* déjà parti */
+          });
+        } catch {
+          /* implémentation sans close() */
+        }
+      }
+    }
+  }
+
+  /** Remet en route, sur le graphe neuf, ce que le relevé dit devoir sonner. */
+  private relancer(
+    repere: EtatSonore,
+    positionDisque: number,
+    disquePause: boolean,
+  ): void {
+    if (repere.foule) void this.startCrowd();
+    if (repere.ronron) void this.startCatPurr();
+    if (repere.ambiance !== undefined) void this.startAmbience(repere.ambiance);
+    if (repere.cheminee !== undefined) void this.startFireplace(repere.cheminee);
+    if (repere.aiguille) void this.startNeedle();
+    // Une panne technique n'est pas une raison de rallumer une musique que le
+    // joueur avait coupée.
+    if (repere.vinyle && !disquePause) {
+      void this.playVinyl(
+        repere.vinyle.url,
+        repere.vinyle.onEnded,
+        positionDisque,
+      );
+    }
+    if (repere.arcade) void this.playArcadeTrack(repere.arcade);
   }
 
   private unlockInstalled = false;
@@ -188,9 +488,13 @@ class AudioManager {
     if (typeof window.addEventListener !== "function") return;
     this.unlockInstalled = true;
     const unlock = () => {
+      if (!this.ctx) return;
       // ≠ "running" : couvre "suspended" ET "interrupted" (WebKit, après
       // passage en arrière-plan — sinon plus aucun son jusqu'au redémarrage).
-      if (this.ctx && this.ctx.state !== "running") void this.ctx.resume();
+      // `ensureCtx` porte tout le rattrapage, reconstruction comprise : un
+      // simple `resume()` ici laissait un contexte mort mort pour de bon.
+      if ((this.ctx.state as string) !== "running") this.ensureCtx();
+      else this.reprendreLesElements();
     };
     for (const ev of ["pointerdown", "touchend", "keydown"] as const) {
       window.addEventListener(ev, unlock, { passive: true });
@@ -199,8 +503,40 @@ class AudioManager {
     // "running" tout seul après une interruption — on retente sans attendre
     // le prochain geste utilisateur.
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") unlock();
+      if (document.visibilityState === "visible") {
+        this.enArrierePlan = false;
+        // Les échecs comptés pendant l'interruption ne disent rien du
+        // contexte : on repart de zéro, sinon trois retours en arrière-plan
+        // suffiraient à déclencher une reconstruction inutile.
+        this.echecsReprise = 0;
+        unlock();
+      } else {
+        this.mettreEnArrierePlan();
+      }
     });
+  }
+
+  /**
+   * Sortie de l'app : la musique se tait, le contexte est laissé à iOS.
+   *
+   * Le disque est mis en pause VOLONTAIRE (`vinylePause`) : au retour, les
+   * sons du jeu repartent mais pas la musique — c'est le joueur qui la
+   * relance. La borne est mise en pause de même et n'est pas relancée.
+   *
+   * On ne touche PAS au contexte. Une première version le suspendait pour
+   * taire les boucles d'un coup ; or WebKit gère l'arrière-plan lui-même
+   * (« interrupted », puis retour à « running » au premier plan) et, quand la
+   * page a suspendu de sa propre main, il exige un geste pour rouvrir — c'est
+   * le « son coupé au retour » de la 1.4.1. Les boucles d'ambiance suivent le
+   * contexte : iOS les tait en arrière-plan et elles repartent avec lui.
+   */
+  mettreEnArrierePlan(): void {
+    this.enArrierePlan = true;
+    if (this.vinylAudio && !this.vinylAudio.paused) this.pauseVinyl();
+    if (this.arcadeAudio && !this.arcadeAudio.paused) {
+      this.arcadeAudio.pause();
+      this.arcadeCoupeeParSortie = true;
+    }
   }
 
   setVolume(v: number): void {
@@ -265,6 +601,67 @@ class AudioManager {
     gain.connect(this.master);
     osc.start(now);
     osc.stop(now + 0.05);
+  }
+
+  /**
+   * Carillon d'une notification reçue pendant qu'on joue.
+   *
+   * Il REMPLACE le son système de la notification, que le plugin vendoré ne
+   * joue plus au premier plan : ce son-là prenait la session audio iOS et
+   * interrompait tout l'audio du jeu (cf. NotificationHandler.swift). Le ping
+   * passe désormais par le bus du jeu, donc par son volume et sa préférence
+   * « effets » — ce que le son système ignorait.
+   *
+   * Deux notes de cloche en quarte montante, brèves et basses : c'est un
+   * signal posé par-dessus une musique qui continue, pas une fanfare.
+   */
+  playNotif(): void {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    const ctx = this.ctx;
+    const master = this.master;
+    if (!ctx || !master) return;
+    const now = ctx.currentTime;
+    for (const [hz, depart] of [
+      [784, 0],
+      [1046.5, 0.12],
+    ] as const) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(hz, now + depart);
+      gain.gain.setValueAtTime(0, now + depart);
+      gain.gain.linearRampToValueAtTime(0.22, now + depart + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + depart + 0.5);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(now + depart);
+      osc.stop(now + depart + 0.55);
+    }
+  }
+
+  /**
+   * Le « pop » d'une bulle qui éclate : une sinusoïde qui monte vite en
+   * fréquence et s'éteint aussitôt. C'est la MONTÉE qui fait le pop — à
+   * fréquence fixe, on n'entend qu'un clic de plus.
+   */
+  playPop(): void {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(260, now);
+    osc.frequency.exponentialRampToValueAtTime(1180, now + 0.055);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.42, now + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+    osc.connect(gain);
+    gain.connect(this.master);
+    osc.start(now);
+    osc.stop(now + 0.13);
   }
 
   /**
@@ -476,6 +873,40 @@ class AudioManager {
     src.start();
   }
 
+  /**
+   * Montée d'état d'un objet restauré (cérémonie de l'Atelier). Distinct du
+   * level-up du brocanteur : c'est l'OBJET qui gagne son étoile, pas le
+   * joueur son niveau.
+   */
+  async playUpgrade(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/upgrade.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
+  /**
+   * Couche « magie » superposée au son de montée quand l'objet atteint le
+   * PRISTIN — le sommet de l'échelle doit s'entendre autrement qu'une
+   * montée ordinaire.
+   */
+  async playPristinMagie(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/pristin-magie.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   /** Vendeur mystère : deux notes feutrées à intervalle intrigant, longue traîne. */
   playMystere(): void {
     if (!this.prefs.effets) return;
@@ -501,6 +932,27 @@ class AudioManager {
       osc.start(t0);
       osc.stop(t0 + dur + 0.05);
     });
+  }
+
+  /**
+   * Le tintement d'une pièce qui tombe dans la caisse — les Bazarcoins d'une
+   * quête, au bout de leur vol depuis le carnet (2026-08-26).
+   *
+   * Un fichier et non une synthèse : le son est choisi par l'auteur, et sa
+   * couleur 8 bits ne se retrouverait pas à l'oscillateur. Il passe par le
+   * cache de tampons comme `cash.mp3` — une quête peut en verser plusieurs à
+   * la suite, et retélécharger 33 ko à chaque pièce serait absurde.
+   */
+  async playJetonBazar(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/jeton-bazar.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
   }
 
   /** Apparition d'une célébrité : arpège cristallin ascendant façon carillon,
@@ -822,6 +1274,7 @@ class AudioManager {
     src.start();
     this.crowdSource = src;
     this.crowdGain = gain;
+    this.enCours.foule = true;
   }
 
   stopCrowd(): void {
@@ -835,6 +1288,22 @@ class AudioManager {
     src.stop(now + 0.31);
     this.crowdSource = undefined;
     this.crowdGain = undefined;
+    this.enCours.foule = false;
+    this.evincerBoucle("/sounds/crowd.mp3");
+  }
+
+  /**
+   * Éviction du PCM décodé d'une boucle longue à son arrêt (F-05). Les quatre
+   * boucles (ambiance QG, foule, cheminée, crépitement vinyle) pèsent ~86 Mo
+   * décodées : gardées à vie dans `buffers`, elles exposaient la WKWebView au
+   * jetsam iOS. La source en fondu conserve sa propre référence au tampon, le
+   * fade-out n'est donc pas affecté ; le prochain start re-télécharge et
+   * re-décode. Un start encore en vol n'est pas gêné : son `loadBuffer`
+   * remettra le tampon en cache au retour du décodage, puis posera sa source
+   * dans le même tour synchrone (aucune double lecture possible).
+   */
+  private evincerBoucle(url: string): void {
+    this.buffers.delete(url);
   }
 
   /** Ronronnement du chat en boucle (volume réduit). */
@@ -857,6 +1326,7 @@ class AudioManager {
     src.start();
     this.catPurrSource = src;
     this.catPurrGain = gain;
+    this.enCours.ronron = true;
   }
 
   stopCatPurr(): void {
@@ -870,6 +1340,7 @@ class AudioManager {
     src.stop(now + 0.21);
     this.catPurrSource = undefined;
     this.catPurrGain = undefined;
+    this.enCours.ronron = false;
   }
 
   /**
@@ -888,8 +1359,13 @@ class AudioManager {
     const buf = await this.loadBuffer("/sounds/ambience-qg.mp3");
     this.ambienceStarting = false;
     // `gen` périmé = un stopAmbience est passé pendant le décodage : l'écran
-    // est déjà quitté, la boucle n'a plus lieu d'être.
-    if (!buf || gen !== this.ambienceGen) return;
+    // est déjà quitté, la boucle n'a plus lieu d'être — et son tampon, que
+    // le stop n'a pas pu évincer (il n'était pas encore en cache), non plus.
+    if (!buf) return;
+    if (gen !== this.ambienceGen) {
+      this.evincerBoucle("/sounds/ambience-qg.mp3");
+      return;
+    }
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.loop = true;
@@ -906,6 +1382,7 @@ class AudioManager {
     src.start();
     this.ambienceSource = src;
     this.ambienceGain = gain;
+    this.enCours.ambiance = this.ambienceBase;
   }
 
   /**
@@ -917,6 +1394,9 @@ class AudioManager {
    */
   setAmbienceVolume(volume: number): void {
     this.ambienceBase = Math.max(0, Math.min(1, volume));
+    if (this.enCours.ambiance !== undefined) {
+      this.enCours.ambiance = this.ambienceBase;
+    }
     this.appliquerAmbience(0.12);
   }
 
@@ -969,6 +1449,8 @@ class AudioManager {
     src.stop(now + 0.31);
     this.ambienceSource = undefined;
     this.ambienceGain = undefined;
+    this.enCours.ambiance = undefined;
+    this.evincerBoucle("/sounds/ambience-qg.mp3");
   }
 
   /** Cheminée en boucle. Volume géré dynamiquement par setFireplaceVolume(). */
@@ -994,12 +1476,14 @@ class AudioManager {
     src.start();
     this.fireplaceSource = src;
     this.fireplaceGain = gain;
+    this.enCours.cheminee = Math.max(0, Math.min(1, initialVolume));
   }
 
   /** Ajuste le volume de la cheminée en douceur (0..1). */
   setFireplaceVolume(volume: number): void {
     if (!this.ctx || !this.fireplaceGain) return;
     const v = Math.max(0, Math.min(1, volume));
+    this.enCours.cheminee = v;
     const now = this.ctx.currentTime;
     this.fireplaceGain.gain.cancelScheduledValues(now);
     this.fireplaceGain.gain.setValueAtTime(this.fireplaceGain.gain.value, now);
@@ -1017,6 +1501,8 @@ class AudioManager {
     src.stop(now + 0.31);
     this.fireplaceSource = undefined;
     this.fireplaceGain = undefined;
+    this.enCours.cheminee = undefined;
+    this.evincerBoucle("/sounds/fireplace.mp3");
   }
 
   /* ---------------------------------------------------------------- */
@@ -1089,8 +1575,16 @@ class AudioManager {
    * (typiquement via `vinylAudioUrl(templateId)` qui regarde la table
    * `VINYLE_AUDIO_URLS` puis fallback `/sounds/vinyles/{templateId}.m4a`).
    * Si absent, lecture silencieuse mais `onEnded` jamais appelé.
+   *
+   * `depuisSeconde` sert à la reprise après reconstruction du contexte :
+   * remettre un disque de trois minutes à son début parce qu'iOS a hoqueté
+   * s'entend autant que le silence qu'on répare.
    */
-  async playVinyl(url: string, onEnded?: () => void): Promise<void> {
+  async playVinyl(
+    url: string,
+    onEnded?: () => void,
+    depuisSeconde = 0,
+  ): Promise<void> {
     if (!this.prefs.musique) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
@@ -1099,6 +1593,15 @@ class AudioManager {
     const audio = new Audio(url);
     audio.crossOrigin = "anonymous";
     audio.preload = "auto";
+    if (depuisSeconde > 0) {
+      // Avant les métadonnées, la spec en fait la position de départ par
+      // défaut — c'est exactement ce qu'on veut, et ça ne lève pas.
+      try {
+        audio.currentTime = depuisSeconde;
+      } catch {
+        /* la lecture repartira du début, ce n'est pas une panne */
+      }
+    }
     let source: MediaElementAudioSourceNode;
     try {
       source = this.ctx.createMediaElementSource(audio);
@@ -1120,6 +1623,8 @@ class AudioManager {
     this.vinylSource = source;
     this.vinylGain = gain;
     this.vinylEndedHandler = handler;
+    this.enCours.vinyle = { url, onEnded };
+    this.vinylePause = false;
     try {
       await audio.play();
     } catch {
@@ -1131,11 +1636,13 @@ class AudioManager {
   pauseVinyl(): void {
     if (!this.vinylAudio) return;
     this.vinylAudio.pause();
+    this.vinylePause = true;
   }
 
   resumeVinyl(): void {
     if (!this.prefs.musique) return;
     if (!this.vinylAudio) return;
+    this.vinylePause = false;
     void this.vinylAudio.play().catch(() => {
       /* ignore */
     });
@@ -1167,6 +1674,8 @@ class AudioManager {
     this.vinylSource = undefined;
     this.vinylGain = undefined;
     this.vinylEndedHandler = undefined;
+    this.enCours.vinyle = undefined;
+    this.vinylePause = false;
   }
 
   /** Ramp doux (~300 ms) vers le volume cible (0..1) pour le vinyle. */
@@ -1206,6 +1715,7 @@ class AudioManager {
     src.start();
     this.needleSource = src;
     this.needleGain = gain;
+    this.enCours.aiguille = true;
   }
 
   stopNeedle(): void {
@@ -1219,6 +1729,8 @@ class AudioManager {
     src.stop(now + 0.31);
     this.needleSource = undefined;
     this.needleGain = undefined;
+    this.enCours.aiguille = false;
+    this.evincerBoucle("/sounds/vinyl-noise-loop.mp3");
   }
 
   /** One-shot fire-and-forget (Vinyl 1 / Vinyl 2). */
@@ -1312,6 +1824,7 @@ class AudioManager {
    * drapeau tenu par l'appelant se serait trompé sur au moins l'un des trois.
    */
   async playArcadeTrack(url: string): Promise<void> {
+    this.arcadeCoupeeParSortie = false;
     if (!this.prefs.musique) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
@@ -1353,6 +1866,7 @@ class AudioManager {
     this.arcadeAudio = audio;
     this.arcadeSource = source;
     this.arcadeGain = gain;
+    this.enCours.arcade = url;
 
     // Le meuble qui prend le courant monte de plus loin, et plus longtemps,
     // qu'une cartouche qu'on enfonce.
@@ -1372,6 +1886,7 @@ class AudioManager {
 
   /** Éteint la borne : fondu court, timers annulés, élément relâché. */
   stopArcade(): void {
+    this.arcadeCoupeeParSortie = false;
     this.couperArcade(0.06);
   }
 
@@ -1393,6 +1908,7 @@ class AudioManager {
     this.arcadeAudio = undefined;
     this.arcadeSource = undefined;
     this.arcadeGain = undefined;
+    this.enCours.arcade = undefined;
     if (!audio) return;
     if (this.ctx && gain) {
       const now = this.ctx.currentTime;

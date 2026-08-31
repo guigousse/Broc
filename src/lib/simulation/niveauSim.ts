@@ -83,6 +83,7 @@ import { NIVEAU_ACTIVES, quotaActives, type ActiveId } from "@/lib/actives";
 import { ouvrirNegociation, proposerOffre } from "@/lib/negociation";
 import { donnerObjet, initCollection, valeurTotale } from "@/lib/collection";
 import { tirerMeteo } from "@/lib/meteo";
+import { estPiece } from "@/data/pieces";
 
 /* === RNG seedé (mulberry32) ============================================ */
 
@@ -414,7 +415,9 @@ function joueJourChine(
     courriers: [] as GameState["courriers"],
     missions: [] as GameState["missions"],
   });
-  const session = genererSession(TAILLE_SESSION_CHINE, [], brocante, undefined, exclus);
+  const session = genererSession(TAILLE_SESSION_CHINE, [], brocante, undefined, exclus).filter(
+    (it) => !estPiece(it.objet.templateId),
+  );
 
   let gainXP = 0;
   for (const item of session) {
@@ -750,7 +753,9 @@ export function runFouilleMicroSim(trials = 1000): FouilleMicroSimResult {
   let raresBase = 0;
   let raresApres = 0;
   for (let i = 0; i < trials; i++) {
-    const session = genererSession(TAILLE_SESSION_CHINE, [], brocanteT3);
+    const session = genererSession(TAILLE_SESSION_CHINE, [], brocanteT3).filter(
+      (it) => !estPiece(it.objet.templateId),
+    );
     raresBase += session.filter((it) => it.objet.rarete !== "commun").length;
 
     let stand = [...session];

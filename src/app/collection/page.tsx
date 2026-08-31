@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { Album, BookOpen } from "lucide-react";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
 import { CategoriePicker } from "@/components/mobile/CategoriePicker";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
-import { CollectionGrid } from "@/components/CollectionGrid";
+import { CollectionGrid, type CaseSpeciale } from "@/components/CollectionGrid";
 import { CollectionDetailOverlay } from "@/components/mobile/CollectionDetailOverlay";
 import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -15,6 +16,8 @@ import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { useToast } from "@/components/ui/Toast";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
+import { CATEGORIE_ALBUM, piecesDe, type AlbumId } from "@/data/pieces";
+import { albumsDe, nbPossedees } from "@/lib/albums";
 import { stockageEstPlein } from "@/lib/stockage";
 import { valeurDonation } from "@/lib/collection";
 import { aConnaisseurVitrine } from "@/lib/competences";
@@ -26,6 +29,9 @@ import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { SEQUENCES_TUTORIEL, GRAND_PERE_PORTRAITS } from "@/data/dialogues";
 import { PELUCHE_TEMPLATE_ID } from "@/data/tutorielScenario";
 import { setCoachOuvert } from "@/lib/coachActif";
+import { TuileAlbum } from "@/components/albums/TuileAlbum";
+import { ClasseurOverlay } from "@/components/albums/ClasseurOverlay";
+import { AlbumTimbresOverlay } from "@/components/albums/AlbumTimbresOverlay";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 /**
@@ -61,6 +67,7 @@ export default function CollectionPage() {
   const [pickerOuvert, setPickerOuvert] = useState(false);
   const [objetADonner, setObjetADonner] = useState<Objet | null>(null);
   const [phaseLecon, setPhaseLecon] = useState<PhaseLecon>("coach");
+  const [albumOuvert, setAlbumOuvert] = useState<AlbumId | null>(null);
   const etape = state?.tutorielEtape;
   const enLecon = etape === "collection-lecon";
 
@@ -137,6 +144,49 @@ export default function CollectionPage() {
     for (const c of CATEGORIES) if (aConnaisseurVitrine(state, c)) s.add(c);
     return s;
   }, [state]);
+
+  // Tuiles Classeur de cartes / Album de timbres (Tâche 13) : injectées en
+  // tête de leur catégorie (`CATEGORIE_ALBUM`, source unique de vérité —
+  // aussi celle qu'utilisent `acheterPiece`/`ClasseurOverlay`), seulement
+  // visibles sous le filtre courant. Mémoïsé sur `state.albums` (pas tout
+  // `state`, qui bouge à chaque mutation du jeu) : sinon deux nouveaux
+  // éléments React (`CaseSpeciale`) sont recréés à chaque rendu, quoi qu'il
+  // arrive (M3 revue finale 2026-08-30).
+  const casesSpeciales: CaseSpeciale[] = useMemo(() => {
+    if (!state) return [];
+    const albums = albumsDe(state);
+    const iconesAlbum: Record<AlbumId, ReactNode> = {
+      classeur: <Album size={28} strokeWidth={1.75} />,
+      timbres: <BookOpen size={28} strokeWidth={1.75} />,
+    };
+    const titresAlbum: Record<AlbumId, string> = {
+      classeur: d.albums.classeurTitre,
+      timbres: d.albums.albumTitre,
+    };
+    return (["classeur", "timbres"] as const).flatMap((albumId): CaseSpeciale[] => {
+      const categorie = CATEGORIE_ALBUM[albumId];
+      if (filtre !== null && filtre !== categorie) return [];
+      const album = albums[albumId];
+      return [
+        {
+          key: `album-${albumId}`,
+          categorie,
+          element: (
+            <TuileAlbum
+              titre={titresAlbum[albumId]}
+              icon={iconesAlbum[albumId]}
+              achete={album.achete}
+              possedees={nbPossedees(album)}
+              total={piecesDe(albumId).length}
+              nouveau={album.nouvelles.length > 0}
+              onTap={() => setAlbumOuvert(albumId)}
+            />
+          ),
+        },
+      ];
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.albums, filtre, d, locale]);
 
   if (!isHydrated || !state) {
     return <SkeletonScreen label={d.inventaire.consultationCollection} />;
@@ -233,6 +283,7 @@ export default function CollectionPage() {
       >
         <CollectionGrid
           slots={slotsFiltres}
+          casesSpeciales={casesSpeciales}
           enStockIds={enStockIds}
           onTap={(s) => {
             if (enLecon) {
@@ -290,6 +341,14 @@ export default function CollectionPage() {
         onFini={() => avancerTutoriel("ouvrir-colis")}
       />
     )}
+    <ClasseurOverlay
+      open={albumOuvert === "classeur"}
+      onClose={() => setAlbumOuvert(null)}
+    />
+    <AlbumTimbresOverlay
+      open={albumOuvert === "timbres"}
+      onClose={() => setAlbumOuvert(null)}
+    />
     <CollectionDetailOverlay
       open={slotActif !== null && !pickerOuvert}
       onClose={() => setSlotActif(null)}

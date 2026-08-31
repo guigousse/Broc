@@ -11,6 +11,8 @@ import {
   CLIENT_INTERVALLE_MIN_SEC,
   DEFAULT_MODIFIERS,
   ajouterAuPanier,
+  estVendable,
+  stockChargeable,
   appliquerBoniment,
   bourseDe,
   coffreCompatibleTheme,
@@ -26,6 +28,7 @@ import {
   BRADERIE_INTERVALLE_MULT,
   sommePrixAchatPanier,
 } from "./vitrine";
+import { createMockObjet } from "@/lib/__test-fixtures__/gameState";
 import { estGrandeBraderie } from "./evenements";
 import { ouvrirNegociation } from "./negociation";
 import { SESSION_VENTE_TUTORIEL, personnageScenario } from "@/data/tutorielScenario";
@@ -851,5 +854,48 @@ describe("genererClientEventScripte", () => {
   it("null si l'objet ciblé n'est plus en vitrine", () => {
     const sansCarafe = { ...vitrineData, objets: [vitrineData.objets[0]] } as never;
     expect(genererClientEventScripte(SESSION_VENTE_TUTORIEL[0], sansCarafe)).toBeNull();
+  });
+});
+
+/* === Uniques : ni coffre, ni étal ====================================== */
+
+describe("estVendable", () => {
+  it("un objet ordinaire est vendable", () => {
+    expect(estVendable(createMockObjet({ templateId: "ma.lampe_petrole_ancienne" }))).toBe(true);
+  });
+
+  it("une pièce unique ne l'est pas", () => {
+    expect(estVendable(createMockObjet({ templateId: "uniq.art.toile_monet_inedite" }))).toBe(false);
+  });
+
+  it("un légendaire NON unique reste vendable", () => {
+    // La règle porte sur `unique`, pas sur la rareté : les légendaires du
+    // catalogue restent une marchandise, seule la pièce irremplaçable sort.
+    expect(estVendable(createMockObjet({ templateId: "leg.lv.gutenberg_feuillet" }))).toBe(true);
+  });
+
+  it("un templateId inconnu reste vendable (fail-open)", () => {
+    // Un template retiré du catalogue ne doit pas bloquer le stock d'une
+    // vieille sauvegarde : sans template, on ne peut pas affirmer l'unicité.
+    expect(estVendable(createMockObjet({ templateId: "template.disparu" }))).toBe(true);
+  });
+});
+
+describe("stockChargeable", () => {
+  const lampe = createMockObjet({ id: "a", templateId: "ma.lampe_petrole_ancienne" });
+  const monet = createMockObjet({ id: "b", templateId: "uniq.art.toile_monet_inedite" });
+  const enResto = createMockObjet({ id: "c", templateId: "ma.lampe_petrole_ancienne", enRestauration: { etatCible: "Bon" as const, debutMs: 0, finMs: 1 } });
+  const dejaCharge = createMockObjet({ id: "d", templateId: "ma.lampe_petrole_ancienne" });
+
+  it("ne propose ni les uniques, ni les objets en restauration, ni ceux déjà dans le coffre", () => {
+    const stock = stockChargeable(
+      [lampe, monet, enResto, dejaCharge],
+      [{ objet: dejaCharge, prixVente: 10 }],
+    );
+    expect(stock.map((o) => o.id)).toEqual(["a"]);
+  });
+
+  it("un coffre vide laisse passer tout le stock vendable", () => {
+    expect(stockChargeable([lampe, monet], []).map((o) => o.id)).toEqual(["a"]);
   });
 });

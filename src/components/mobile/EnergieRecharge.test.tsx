@@ -35,8 +35,10 @@ vi.mock("@/lib/audio/audioManager", () => ({
     playEclair: vi.fn().mockResolvedValue(undefined),
   },
 }));
+const iapMock = vi.hoisted(() => ({ disponible: true }));
 vi.mock("@/lib/iap/iapProvider", () => ({
   getIapProvider: () => ({
+    disponible: () => iapMock.disponible,
     obtenirPrix: async () => "3,99 €",
     acheter: async () => "achete",
   }),
@@ -266,6 +268,24 @@ describe("EnergieRecharge — achat énergie infinie", () => {
     expect(
       await screen.findByRole("button", { name: /Énergie infinie — 3,99 €/ }),
     ).toBeTruthy();
+  });
+
+  it("boutique indisponible (prod hors iOS) : aucun bouton d'achat", async () => {
+    iapMock.disponible = false;
+    try {
+      mockState = {
+        energie: 2,
+        energieDerniereMaj: Date.now(),
+        brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+      };
+      render(<EnergieRecharge onClose={() => {}} />);
+      // Le prix arrive de façon asynchrone : on attend qu'il soit résolu avant
+      // d'affirmer l'absence du bouton.
+      await act(async () => {});
+      expect(screen.queryByRole("button", { name: /Énergie infinie/ })).toBeNull();
+    } finally {
+      iapMock.disponible = true;
+    }
   });
 
   it("l'achat pose le drapeau et bascule la machine en ∞", async () => {

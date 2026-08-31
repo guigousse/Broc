@@ -30,6 +30,19 @@ function courrierChiffre(objectif: ObjectifMission): Courrier {
   };
 }
 
+function courrierLegendaire(taux = 0.2): Courrier {
+  return {
+    id: "q3", type: "mission", jourRecu: 1, lu: true,
+    payload: {
+      type: "mission", categorie: "quotidienne", expediteurId: "art",
+      titre: "La pièce d'une vie", corps: ["Cher confrère,", "Ne la laisse pas filer."],
+      cibles: [], objectifs: [{ type: "objetLegendaire", nombre: 1 }],
+      recompense: { argent: 110, jetons: 3 },
+      primeVariable: { type: "pourcentageLegendaire", taux },
+    },
+  };
+}
+
 const props = { ouvert: false, onToggle: () => {}, onLivrer: () => {} };
 
 describe("LigneQuete", () => {
@@ -225,5 +238,25 @@ describe("LigneQuete", () => {
     render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
     expect(document.querySelector('[data-jeton="xp"]')).toBeNull();
     expect(document.querySelector('[data-jeton="argent"]')).toBeTruthy();
+  });
+
+  it("annonce la prime variable d'une quête légendaire", () => {
+    const c = courrierLegendaire();
+    render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
+    expect(screen.getByText(/20\s*%/)).toBeTruthy();
+  });
+
+  it("le pourcentage annoncé vient du payload, pas d'une valeur codée en dur", () => {
+    // Un « 20 » écrit en dur dans le composant ferait passer le test
+    // précédent à l'identique — seul un second taux ferme ce trou.
+    const c = courrierLegendaire(0.35);
+    render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
+    expect(screen.getByText(/35\s*%/)).toBeTruthy();
+  });
+
+  it("une quête chiffrée ordinaire n'annonce aucune prime", () => {
+    const c = courrierChiffre({ type: "objetsRares", nombre: 2 });
+    render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
+    expect(screen.queryByText(/%/)).toBeNull();
   });
 });

@@ -18,6 +18,9 @@ interface BottomSheetProps {
   children: ReactNode;
   /** Hauteur max en % du viewport. Défaut 88. */
   maxHeightPct?: number;
+  /** Plafond en pixels (prime sur `maxHeightPct`) — pour rester sous un
+   *  élément de l'écran mesuré par l'appelant. */
+  maxHeightPx?: number;
   /**
    * Décoration positionnée absolu au-dessus du bord supérieur de la sheet.
    * Utile pour qu'un personnage / avatar "sorte" du cadre vers le haut.
@@ -41,7 +44,11 @@ const scrimStyle: CSSProperties = {
   animation: "broc-fade-in 160ms ease",
 };
 
-const sheetWrap = (maxHeightPct: number, bottomOffset?: string): CSSProperties => ({
+const sheetWrap = (
+  maxHeightPct: number,
+  bottomOffset?: string,
+  maxHeightPx?: number,
+): CSSProperties => ({
   position: "fixed",
   left: 0,
   right: 0,
@@ -51,7 +58,7 @@ const sheetWrap = (maxHeightPct: number, bottomOffset?: string): CSSProperties =
   borderTop: "2px solid var(--forest-800)",
   borderRadius: "14px 14px 0 0",
   boxShadow: "0 -6px 18px rgba(40,25,5,0.20)",
-  maxHeight: `${maxHeightPct}%`,
+  maxHeight: maxHeightPx !== undefined ? maxHeightPx : `${maxHeightPct}%`,
   display: "flex",
   flexDirection: "column",
   paddingBottom: bottomOffset ? 16 : "calc(16px + var(--safe-bottom))",
@@ -87,6 +94,7 @@ export function BottomSheet({
   title,
   children,
   maxHeightPct = 88,
+  maxHeightPx,
   topDecoration,
   bottomOffset,
 }: BottomSheetProps) {
@@ -182,7 +190,7 @@ export function BottomSheet({
       <div style={scrimStyle} onClick={onClose} aria-hidden />
       <div
         ref={sheetRef}
-        style={{ ...sheetWrap(maxHeightPct, bottomOffset), ...dragStyle }}
+        style={{ ...sheetWrap(maxHeightPct, bottomOffset, maxHeightPx), ...dragStyle }}
         role="dialog"
         aria-modal="true"
       >

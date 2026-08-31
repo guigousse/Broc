@@ -1,6 +1,13 @@
 import { describe, expect, test } from "vitest";
-import { FAMILLE, FORMES_HEBDOMADAIRES, ICONE_FORME, contenuFormeChiffree, formeDepuisObjectif } from "./formes";
+import {
+  FAMILLE,
+  FORMES_HEBDOMADAIRES,
+  ICONE_FORME,
+  contenuFormeChiffree,
+  formeDepuisObjectif,
+} from "./formes";
 import { ciblesPourNiveau } from "./echelle";
+import { JETONS_LEGENDAIRE, TAUX_PRIME_LEGENDAIRE } from "@/lib/recompenses";
 
 const rngFixe = () => 0;
 
@@ -39,7 +46,6 @@ describe("formeDepuisObjectif", () => {
 
   test("les types hors périmètre périodique n'ont pas de forme", () => {
     expect(formeDepuisObjectif("objet")).toBeNull();
-    expect(formeDepuisObjectif("restauration")).toBeNull();
     expect(formeDepuisObjectif("valeurCollection")).toBeNull();
     expect(formeDepuisObjectif("niveau")).toBeNull();
   });
@@ -121,5 +127,87 @@ describe("ICONE_FORME", () => {
     for (const [forme, nom] of Object.entries(ICONE_FORME)) {
       expect(nom === null).toBe(forme === "objet");
     }
+  });
+});
+
+describe("catalogue élargi", () => {
+  test("les deux nouvelles formes ont une famille et une icône", () => {
+    expect(FAMILLE.objetLegendaire).toBe("chine");
+    expect(FAMILLE.restauration).toBe("atelier");
+    expect(ICONE_FORME.objetLegendaire).toBe("Crown");
+    expect(ICONE_FORME.restauration).toBe("Hammer");
+  });
+
+  test("formeDepuisObjectif reconnaît les deux nouveaux types", () => {
+    expect(formeDepuisObjectif("objetLegendaire")).toBe("objetLegendaire");
+    expect(formeDepuisObjectif("restauration")).toBe("restauration");
+  });
+
+  test("les formes hebdomadaires restent les six d'origine", () => {
+    expect(FORMES_HEBDOMADAIRES).toEqual([
+      "objet", "objetsRares", "beneficeCumule",
+      "chiffreAffaires", "profitVente", "ventesCategorie",
+    ]);
+  });
+});
+
+describe("contenuFormeChiffree — versions quotidiennes", () => {
+  const rng = () => 0.5;
+  const cats = ["Maison"] as const;
+
+  test("les formes d'argent lisent le barème du jour et changent de gabarit", () => {
+    const c = ciblesPourNiveau(20);
+    const cas = [
+      ["beneficeCumule", "beneficeJour", "benefice", c.beneficeJour, c.beneficeSemaine],
+      ["chiffreAffaires", "chiffreJour", "chiffre", c.chiffreAffairesJour, c.chiffreAffairesSemaine],
+      ["profitVente", "margeJour", "marge", c.profitVenteJour, c.profitVenteUnique],
+    ] as const;
+    for (const [forme, cleJour, cleSemaine, montantJour, montantSemaine] of cas) {
+      const q = contenuFormeChiffree(forme, "quotidienne", 20, [...cats], rng);
+      const h = contenuFormeChiffree(forme, "hebdomadaire", 20, [...cats], rng);
+      expect(q?.gabaritCle).toBe(cleJour);
+      expect(h?.gabaritCle).toBe(cleSemaine);
+      expect(q?.gabaritParams.montant).toBe(montantJour);
+      expect(h?.gabaritParams.montant).toBe(montantSemaine);
+    }
+  });
+
+  test("ventesCategorie : moins d'objets au quotidien, gabarit dédié", () => {
+    const c = ciblesPourNiveau(20);
+    const q = contenuFormeChiffree("ventesCategorie", "quotidienne", 20, [...cats], rng);
+    expect(q?.gabaritCle).toBe("categorieJour");
+    expect(q?.gabaritParams.nombre).toBe(c.ventesCategorieJour);
+    const h = contenuFormeChiffree("ventesCategorie", "hebdomadaire", 20, [...cats], rng);
+    expect(h?.gabaritCle).toBe("categorie");
+    expect(h?.gabaritParams.nombre).toBe(c.ventesCategorie);
+  });
+
+  test("restauration : l'état minimum vient du palier et voyage en paramètre", () => {
+    const q = contenuFormeChiffree("restauration", "quotidienne", 20, [...cats], rng);
+    expect(q?.objectifs).toEqual([{ type: "restauration", etatMin: "Très bon" }]);
+    expect(q?.gabaritCle).toBe("restauration");
+    expect(q?.gabaritParams.etatMin).toBe("Très bon");
+  });
+
+  test("objetLegendaire : une pièce, 3 jetons, prime en pourcentage", () => {
+    const q = contenuFormeChiffree("objetLegendaire", "quotidienne", 40, [...cats], rng);
+    expect(q?.objectifs).toEqual([{ type: "objetLegendaire", nombre: 1 }]);
+    expect(q?.gabaritCle).toBe("legendaire");
+    expect(q?.jetons).toBe(JETONS_LEGENDAIRE);
+    expect(q?.primeVariable).toEqual({
+      type: "pourcentageLegendaire",
+      taux: TAUX_PRIME_LEGENDAIRE,
+    });
+    // La part FIXE reste celle d'une quotidienne ordinaire — c'est la décision
+    // de design : la prime ne remplace pas le tarif, elle s'y ajoute.
+    expect(q?.recompenseArgent).toBe(ciblesPourNiveau(40).recompenseQuotidienne);
+  });
+
+  test("objetsRares reste inchangé sur les deux périodes", () => {
+    const c = ciblesPourNiveau(20);
+    expect(contenuFormeChiffree("objetsRares", "quotidienne", 20, [...cats], rng)?.gabaritParams.nombre)
+      .toBe(c.objetsRaresQuotidien);
+    expect(contenuFormeChiffree("objetsRares", "hebdomadaire", 20, [...cats], rng)?.gabaritParams.nombre)
+      .toBe(c.objetsRaresHebdo);
   });
 });

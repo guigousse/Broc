@@ -8,6 +8,7 @@ import { getBrocanteById, fraisEntree } from "@/data/brocantes";
 import { CoffreChargement } from "@/components/vente/CoffreChargement";
 import { CoffrePricing } from "@/components/vente/CoffrePricing";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
+import { stockChargeable } from "@/lib/vitrine";
 import { vitrineEstEnPrep } from "@/lib/vitrinePrep";
 import { energieCourante } from "@/lib/energie";
 import { CATEGORIES } from "@/data/categories";
@@ -78,11 +79,10 @@ export default function VitrineBrocantePage() {
   }, [isHydrated, state, brocante, router, ouvrirVitrine]);
 
   const coffre: ObjetEnVitrine[] = state?.vitrine?.objets ?? [];
-  const stock = useMemo(() => {
-    if (!state) return [];
-    const ids = new Set(coffre.map((o) => o.objet.id));
-    return state.inventaireJoueur.filter((o) => !ids.has(o.id) && !o.enRestauration);
-  }, [state, coffre]);
+  const stock = useMemo(
+    () => (state ? stockChargeable(state.inventaireJoueur, coffre) : []),
+    [state, coffre],
+  );
 
   const categoriesConnuesVitrine = useMemo(() => {
     const s = new Set<CategorieObjet>();

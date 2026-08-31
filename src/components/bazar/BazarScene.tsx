@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Album, BookOpen, Mail, Package } from "lucide-react";
 import { UnifiedPanorama, type PanoramaZone } from "@/components/mobile/panorama/UnifiedPanorama";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
 import { ItemSticker } from "@/components/ui/ItemSticker";
@@ -10,10 +11,13 @@ import { libelleCategorie } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
-import type { AchatBazar } from "@/lib/bazar/achat";
+import { ETAT_ARTICLE_BAZAR, type AchatBazar } from "@/lib/bazar/achat";
+import { PRIX_ALBUM, PRIX_PAQUET } from "@/lib/bazar/albums";
 import type { JeuArcade } from "@/lib/bazar/arcade";
-import type { EtalBazar } from "@/types/game";
+import type { AlbumsState, EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
+import { RondArticle } from "./RondArticle";
+import { TenancierBazar } from "./TenancierBazar";
 import { BorneArcade } from "./BorneArcade";
 import { BorneArcadeEcran } from "./BorneArcadeEcran";
 import {
@@ -22,7 +26,7 @@ import {
   type ResultatAchatBazar,
 } from "./ArticleDetailBazar";
 import { PLAQUE_ETIQUETTE } from "./etiquette";
-import { BAZAR_LAYOUT, CLES_BAZAR, CLES_ARTICLES, CLES_LOTS } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_BAZAR, CLES_ARTICLES } from "./bazarLayout";
 
 /** Les trois zones du Bazar : le coin arcade, le comptoir, les antiquités. */
 export const ZONES_BAZAR: PanoramaZone[] = [
@@ -32,8 +36,16 @@ export const ZONES_BAZAR: PanoramaZone[] = [
 ];
 
 interface BazarSceneProps {
+  /** L'horloge du jeu, pour ce que le tenancier a à dire du calendrier. */
+  horloge?: () => number;
   etal: EtalBazar;
   jetons: number;
+  /**
+   * L'état du classeur de cartes et de l'album de timbres : les deux cases
+   * restantes de la planche du bas en dérivent leur libellé (album tant qu'il
+   * n'est pas acheté, sinon un paquet de 3 pièces) et leur icône.
+   */
+  albums: AlbumsState;
   /**
    * L'état des onze jeux, déjà calculé. La scène reste une vue pure : elle ne
    * touche jamais à la collection, `src/app/bazar/page.tsx` la lui dérive.
@@ -65,7 +77,9 @@ interface BazarSceneProps {
 export function BazarScene({
   etal,
   jetons,
+  albums,
   jeuxArcade,
+  horloge,
   onAcheter,
   onSortir,
   onZoneIndex,
@@ -73,21 +87,12 @@ export function BazarScene({
   const { d, tr, locale } = useLangue();
   // Coordonnées lues par le hook, PAS dans le dictionnaire en direct : c'est
   // ce qui fait suivre l'objet quand on tire son cadre en mode calage
-  // (`?qgedit=1`). Appels INCONDITIONNELS, en tête de composant : un par case
-  // de l'étagère du haut, plus la sortie.
-  //
-  // L'étiquette « Vendu » se serre désormais sur SA case. Elle occupait toute
-  // la planche tant qu'il n'y avait qu'un objet au milieu, parce qu'elle
-  // portait une phrase entière (« Vendu — de retour lundi ») qu'une case de 22
-  // unités ne tenait pas dans les 4 langues. Avec trois articles, cette
-  // étiquette pleine rangée recouvrirait les deux cases encore en vente : le
-  // libellé a été raccourci à « Vendu » pour tenir chez lui.
-  const coordCase1 = useQgObjet(CLES_ARTICLES[0]);
-  const coordCase2 = useQgObjet(CLES_ARTICLES[1]);
-  const coordCase3 = useQgObjet(CLES_ARTICLES[2]);
-  const coordsArticles = [coordCase1, coordCase2, coordCase3];
+  // (`?qgedit=1`).
+  // La sortie seule reste ici : les articles lisent leur coordonnée chacun
+  // dans son `ArticleBazar`, et le tenancier dans le sien depuis qu'il parle
+  // (2026-08-26). L'étiquette « Vendu » qui vivait à ce niveau a disparu avec
+  // le marquage des ventes — l'article vendu reste en place, tamponné.
   const coordSortie = useQgObjet("sortie");
-  const coordVendeur = useQgObjet("vendeur");
 
   // L'article dont la fiche est ouverte, avec l'achat qu'il déclenchera. Le
   // couple est tenu en ÉTAT plutôt que redérivé au rendu : la fiche garde
@@ -123,38 +128,79 @@ export function BazarScene({
             marchandise. */}
         <BorneArcade onOuvrir={() => setBorneOuverte(true)} />
 
-        {etal.lotsPieces.map((lot, index) => {
-          const libelle = tr(d.bazar.lotPieces, {
-            n: lot.quantite,
-            categorie: libelleCategorie(lot.categorie, d),
-          });
+        {etal.lotsPieces[0] &&
+          (() => {
+            const lot = etal.lotsPieces[0];
+            const libelle = tr(d.bazar.lotPieces, {
+              n: lot.quantite,
+              categorie: libelleCategorie(lot.categorie, d),
+            });
+            return (
+              <ArticleBazar
+                key={lot.categorie}
+                cle="case4"
+                // SANS `count` : l'engrenage nu. Le badge de quantité vivait sous
+                // l'engrenage (`bottom: -3`), c'est-à-dire exactement là où la
+                // plaque de prix est venue mordre sur l'arête basse de la case —
+                // elle le recouvrait. L'auteur a tranché à la recette du
+                // 2026-08-20 : sur l'étagère, un lot montre son engrenage et son
+                // prix, rien d'autre. La quantité se lit dans la fiche, à un tap.
+                // Elle reste dans le NOM ACCESSIBLE de l'article ci-dessous : un
+                // joueur non-voyant n'a pas de badge à perdre, et c'est ce texte
+                // qu'il entend à la place.
+                visuel={<PieceIcon categorie={lot.categorie} size={48} />}
+                libelle={libelle}
+                onOuvrir={() =>
+                  setSelection({
+                    detail: {
+                      genre: "pieces",
+                      categorie: lot.categorie,
+                      quantite: lot.quantite,
+                      libelle,
+                      prix: lot.prix,
+                    },
+                    achat: { type: "pieces", index: 0 },
+                  })
+                }
+              />
+            );
+          })()}
+
+        {/* Le classeur de cartes et l'album de timbres, sur les deux cases
+            restantes de la planche du bas. Tant que l'album n'est pas acheté,
+            la case le PROPOSE (visuel + libellé de l'album) ; une fois
+            acheté, elle propose un paquet/une pochette de 3 pièces, en stock
+            illimité — comme le lot de pièces de restauration voisin. Icônes
+            lucide en PLACEHOLDER : `public/bazar/albums/*.webp` n'existe pas
+            encore dans ce chantier. */}
+        {(["classeur", "timbres"] as const).map((album, i) => {
+          const achete = albums[album].achete;
+          const libelle =
+            album === "classeur"
+              ? achete
+                ? d.bazar.paquetCartes
+                : d.bazar.classeur
+              : achete
+                ? d.bazar.pochetteTimbres
+                : d.bazar.albumTimbres;
+          const prix = achete ? PRIX_PAQUET : PRIX_ALBUM;
+          const Icone = album === "classeur" ? (achete ? Package : Album) : achete ? Mail : BookOpen;
           return (
             <ArticleBazar
-              key={lot.categorie}
-              cle={CLES_LOTS[index]}
-              // SANS `count` : l'engrenage nu. Le badge de quantité vivait sous
-            // l'engrenage (`bottom: -3`), c'est-à-dire exactement là où la
-            // plaque de prix est venue mordre sur l'arête basse de la case —
-            // elle le recouvrait. L'auteur a tranché à la recette du
-            // 2026-08-20 : sur l'étagère, un lot montre son engrenage et son
-            // prix, rien d'autre. La quantité se lit dans la fiche, à un tap.
-            // Elle reste dans le NOM ACCESSIBLE de l'article ci-dessous : un
-            // joueur non-voyant n'a pas de badge à perdre, et c'est ce texte
-            // qu'il entend à la place.
-            visuel={<PieceIcon categorie={lot.categorie} size={48} />}
+              key={album}
+              cle={i === 0 ? "case5" : "case6"}
+              visuel={
+                <RondArticle>
+                  <Icone size={28} />
+                </RondArticle>
+              }
               libelle={libelle}
-              prix={lot.prix}
-              jetons={jetons}
               onOuvrir={() =>
                 setSelection({
-                  detail: {
-                    genre: "pieces",
-                    categorie: lot.categorie,
-                    quantite: lot.quantite,
-                    libelle,
-                    prix: lot.prix,
-                  },
-                  achat: { type: "pieces", index },
+                  detail: achete
+                    ? { genre: "paquet", album, libelle, prix }
+                    : { genre: "album", album, libelle, prix },
+                  achat: achete ? { type: "paquet", album } : { type: "album", album },
                 })
               }
             />
@@ -169,24 +215,11 @@ export function BazarScene({
             annoncerait « Vendu » sur un objet pourtant en vente. */}
         {etal.articles.map((article, index) => {
           const cle = CLES_ARTICLES[index];
-          if (!article) {
-            const coord = coordsArticles[index];
-            return (
-              <span
-                key={cle}
-                data-testid={`etiquette-vendu-${index}`}
-                style={{
-                  position: "absolute",
-                  left: `${qgPct(coord.left)}%`,
-                  bottom: `${coord.bottom}%`,
-                  width: `${qgPct(coord.width)}%`,
-                  textAlign: "center",
-                }}
-              >
-                <span style={PLAQUE_ETIQUETTE}>{d.bazar.vendu}</span>
-              </span>
-            );
-          }
+          // `null` : une partie d'AVANT le marquage des ventes (2026-08-26),
+          // où l'article acheté était effacé. Il n'y a rien à montrer, et la
+          // case reste vide jusqu'au renouvellement du lundi — l'étal se
+          // renouvelle de lui-même, aucune migration à écrire pour ça.
+          if (!article) return null;
           const template = getTemplate(article.templateId);
           const libelle = template
             ? nomObjet({ templateId: template.templateId, nom: template.nom }, locale)
@@ -221,6 +254,13 @@ export function BazarScene({
                       // de son carré aux coins, elle y tient exactement.
                       tilt={false}
                       outlinePx={2}
+                      // L'éclat du pristin (cf. `ItemSticker`) : ce que le
+                      // Bazar vend est impeccable, et ça se voit de loin sur
+                      // l'étagère comme dans la collection. Un article VENDU,
+                      // lui, passe au gris de la chine (« vu, plus à prendre »)
+                      // et perd son halo avec sa couleur.
+                      variant={article.vendu ? "grise" : "normal"}
+                      etat={article.vendu ? undefined : ETAT_ARTICLE_BAZAR}
                       // Le BAS de l'objet sur l'arête basse du carré. `contain`
                       // letterboxe les objets larges et bas (une ménagère, une
                       // pile de vinyles) : sans cet ancrage, le vide laissé par
@@ -234,16 +274,26 @@ export function BazarScene({
                 </span>
               }
               libelle={libelle}
-              prix={article.prix}
-              jetons={jetons}
+              vendu={article.vendu === true}
+              // Le pied de la case dit l'ÉTAT, plus le prix (2026-08-26). Pas
+              // de template, pas d'étoiles : sans lui il n'y a ni rareté pour
+              // les teinter ni objet dont promettre l'état — la case montre ce
+              // qu'elle sait, et rien de plus.
+              objet={
+                template && !article.vendu
+                  ? { etat: ETAT_ARTICLE_BAZAR, rarete: template.rarete }
+                  : undefined
+              }
               onOuvrir={() =>
                 setSelection({
                   detail: {
                     genre: "objet",
                     templateId: article.templateId,
                     // `null` quand le template a quitté le catalogue : la fiche
-                    // n'a alors aucun visuel à montrer, comme l'étagère.
+                    // n'a alors ni visuel à montrer ni teinte d'étoiles, comme
+                    // l'étagère.
                     categorie: template?.categorie ?? null,
+                    rarete: template?.rarete ?? null,
                     libelle,
                     prix: article.prix,
                   },
@@ -254,34 +304,11 @@ export function BazarScene({
           );
         })}
 
-        {/* Le tenancier. DÉCOR, pas commande : il n'a encore ni nom ni
-            réplique, et en faire un bouton promettrait une interaction qui
-            n'existe pas — un lecteur d'écran annoncerait une commande morte.
-            D'où `aria-hidden` et `pointerEvents: none`, qui rendent aussi les
-            taps à ce qu'il y a dessous.
-
-            Hauteur en `auto` : la largeur commande, le buste garde ses
-            proportions. Son bas se confond avec l'arête arrière du plateau
-            (cf. `BAZAR_LAYOUT.objets.vendeur`), ce qui le place DERRIÈRE le
-            comptoir plutôt que posé dessus. */}
-        <span
-          data-testid="tenancier-bazar"
-          aria-hidden
-          style={{
-            position: "absolute",
-            left: `${qgPct(coordVendeur.left)}%`,
-            bottom: `${coordVendeur.bottom}%`,
-            width: `${qgPct(coordVendeur.width)}%`,
-            pointerEvents: "none",
-          }}
-        >
-          <img
-            src="/bazar/vendeur-bazar.webp"
-            alt=""
-            draggable={false}
-            style={{ width: "100%", height: "auto", display: "block" }}
-          />
-        </span>
+        {/* Le tenancier, qui répond enfin quand on lui parle : il porte le
+            nom et le visage du Joueur du Vide-grenier, l'un des commanditaires
+            du courrier. Il tient son propre état (sa bulle) — la scène n'a pas
+            à savoir ce qu'il raconte. */}
+        <TenancierBazar horloge={horloge} />
 
         <button
           type="button"

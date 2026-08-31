@@ -25,5 +25,11 @@ export function createMemoryGameRepository(
     async clear() {
       state = null;
     },
+    async clearSlot() {
+      state = null;
+    },
+    invaliderEcrituresEnVol() {
+      // Écritures synchrones : rien n'est jamais en vol.
+    },
   };
 }

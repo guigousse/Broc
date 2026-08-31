@@ -190,4 +190,21 @@ export const OLD_TO_NEW_TEMPLATE_ID: Record<string, string> = {
   // disponible). L'entrée historique mus.vinyle_beatles_dedicace ci-dessus
   // pointe directement vers le nouvel id (le remap n'est pas chaîné).
   "mus.vinyle_des_scarabees_dedicace_album_solo": "mus.vinyle_collector_de_vagabond_horizon_celeste",
+
+  // 2026-08-30 : les lots de cartes à collectionner sont devenus le classeur.
+  "jx.lot_de_cartes_l_assemblee_des_mages": "jx.puzzle_en_bois_1000_pieces_paysage_alpin",
+  "jx.lot_de_cartes_de_yo_hi_ah": "jx.jeu_de_l_oie_lithographie_1900",
+  "jx.cartes_pocket_monster_set_jungle": "jx.boite_de_construction_metallique_no_3",
+  // Fusion 2→1 : les deux « Pocket Monster » (1ère édition ET holographiques
+  // japonaises) pointent vers le MÊME nouvel id (locomotive). `remapTemplateIds`
+  // (src/lib/migrations.ts) ne fait que réécrire des templateId en place, sans
+  // fusionner/dédupliquer les slots : une save qui avait DONNÉ (collection,
+  // avec donation) les deux anciens objets se retrouve avec deux slots
+  // "locomotive_a_vapeur_electrique_1950" séparés après migration — inoffensif
+  // en soi, mais si un mécanisme aval suppose au plus un slot donné par
+  // templateId, l'une des deux donations est perdue (écrasée par l'autre).
+  // Accepté sciemment (cas rare, pas de joueur connu dans cette situation) ;
+  // à corriger le jour où un test le prouve en pratique.
+  "jx.cartes_pocket_monster_1ere_edition": "jx.locomotive_a_vapeur_electrique_1950",
+  "jx.cartes_pocket_monster_holographiques_japonaise": "jx.locomotive_a_vapeur_electrique_1950",
 };

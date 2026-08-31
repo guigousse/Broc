@@ -6,10 +6,13 @@ import { MAX_HISTORIQUE } from "./sessions";
 import { COUT_TOTAL_COMPETENCES, pointsDepensesCompetences } from "@/data/competences";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
+import { initCollection } from "./collection";
 import { emptyBrocanteur, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
 import { chapitrePret, courrierDeChapitre } from "@/lib/quetes/principales";
 import { chapitreParId } from "@/data/quetesPrincipales";
 import * as courrierModule from "@/lib/courrier";
+import { initAlbums, ajouterPiece } from "@/lib/albums";
+import { getTemplate } from "@/data/objetTemplates";
 
 describe("migrerEtat", () => {
   it("conserve les états valides", () => {
@@ -158,6 +161,28 @@ describe("migrerSauvegarde — résilience aux structures corrompues", () => {
     } as unknown as GameState;
     const m = migrerSauvegarde(corrupt);
     expect(Array.isArray(m.historique)).toBe(true);
+  });
+
+  it("conserve valeurBase et prixAchat d'une donation au chargement", () => {
+    // Sans eux, retirer la pièce après un rechargement recréait l'objet sans
+    // son prix payé — et la fiche écrivait « cadeau » pour une pièce achetée.
+    const templateId = "ma.statuette_africaine_bois";
+    const loaded = {
+      ...createMockGameState(),
+      collection: {
+        Maison: [
+          {
+            templateId,
+            vu: true,
+            dejaPossede: true,
+            donation: { etat: "Bon", valeur: 34, valeurBase: 25, prixAchat: 10 },
+          },
+        ],
+      },
+    } as unknown as GameState;
+    const m = migrerSauvegarde(loaded);
+    const migre = m.collection.Maison.find((s) => s.templateId === templateId);
+    expect(migre?.donation).toEqual({ etat: "Bon", valeur: 34, valeurBase: 25, prixAchat: 10 });
   });
 
   it("renvoie une collection cohérente même sans collection persistée", () => {
@@ -1170,8 +1195,8 @@ function saveV17(patch: Partial<GameState> = {}): GameState {
 }
 
 describe("v18 — la branche thématique « Œil aiguisé » devient Marchandage", () => {
-  it("SAVE_VERSION incrémenté à 21 (v18 Marchandage + v19 tutoriel v2 + v20 jetons du Bazar + v21 étal à trois articles)", () => {
-    expect(SAVE_VERSION).toBe(21);
+  it("SAVE_VERSION incrémenté à 22 (v18 Marchandage + v19 tutoriel v2 + v20 jetons du Bazar + v21 étal à trois articles + v22 albums)", () => {
+    expect(SAVE_VERSION).toBe(22);
   });
 
   it("retire les ids legacy, rembourse 1 pt chacun, SANS reset des autres compétences (save v17)", () => {
@@ -1363,5 +1388,33 @@ describe("migration v21 — l'étal du Bazar à trois articles", () => {
     const save = { ...createMockGameState(), version: 19 };
     delete (save as { bazar?: unknown }).bazar;
     expect(migrerSauvegarde(save as unknown as GameState).bazar).toBeUndefined();
+  });
+});
+
+describe("v22 — albums et lots de cartes remplacés", () => {
+  it("renseigne `albums` vide sur une save sans le champ", () => {
+    const out = migrerSauvegarde(createMockGameState({ version: 21 } as Partial<GameState>));
+    expect(out.version).toBe(22);
+    expect(out.albums).toEqual(initAlbums());
+    expect(out.albums!.classeur.achete).toBe(false);
+  });
+
+  it("conserve un `albums` existant", () => {
+    const a = ajouterPiece(initAlbums(), "timbre.renard_roux");
+    const out = migrerSauvegarde(createMockGameState({ version: 21, albums: a } as Partial<GameState>));
+    expect(out.albums).toEqual(a);
+  });
+
+  it("renomme les 4 lots de cartes dans l'inventaire et rebascule les holographiques sur la locomotive", () => {
+    const inv = [
+      createMockObjet({ id: "a", templateId: "jx.lot_de_cartes_l_assemblee_des_mages" }),
+      createMockObjet({ id: "b", templateId: "jx.cartes_pocket_monster_holographiques_japonaise" }),
+    ];
+    const out = migrerSauvegarde(createMockGameState({ version: 21, inventaireJoueur: inv } as Partial<GameState>));
+    expect(out.inventaireJoueur.map((o) => o.templateId)).toEqual([
+      "jx.puzzle_en_bois_1000_pieces_paysage_alpin",
+      "jx.locomotive_a_vapeur_electrique_1950",
+    ]);
+    expect(getTemplate("jx.cartes_pocket_monster_holographiques_japonaise")).toBeUndefined();
   });
 });

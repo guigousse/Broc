@@ -41,6 +41,20 @@ describe("BrocanteFrame", () => {
     expect(screen.getByRole("button").getAttribute("aria-pressed")).toBe("true");
   });
 
+  it("horsTheme : grisée et cadenassée comme une verrouillée, mais reste cliquable", () => {
+    const onSelect = vi.fn();
+    render(
+      <BrocanteFrame {...baseProps} selected={false} debloquee horsTheme onSelect={onSelect} />,
+    );
+    const btn = screen.getByRole("button");
+    expect(btn.getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByTestId("cadre-cadenas")).toBeTruthy();
+    const toile = document.querySelector("img") as HTMLElement | null;
+    if (toile) expect(toile.style.filter).toContain("grayscale");
+    fireEvent.click(btn);
+    expect(onSelect).toHaveBeenCalledWith("vide-grenier-quartier");
+  });
+
   it("ajoute aria-disabled quand verrouillée mais reste cliquable", () => {
     const onSelect = vi.fn();
     render(

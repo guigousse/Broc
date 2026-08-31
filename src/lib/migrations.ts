@@ -55,6 +55,7 @@ import {
 } from "@/data/brocantes";
 import { chapitreParOrdre } from "@/data/quetesPrincipales";
 import { courrierDeChapitre } from "@/lib/quetes/principales";
+import { initAlbums } from "@/lib/albums";
 
 /**
  * Remappe en profondeur tout ancien templateId (avant l'harmonisation des noms
@@ -62,6 +63,13 @@ import { courrierDeChapitre } from "@/lib/quetes/principales";
  * (inventaire, vitrine, collection, missions, grand livre…). Indispensable pour
  * ne pas perdre les objets des parties créées avant le renommage. Idempotent :
  * un id déjà à jour n'est pas dans la table et reste inchangé.
+ *
+ * ⚠ Réécrit des templateId EN PLACE — ne fusionne/déduplique jamais des slots.
+ * Deux anciens ids qui pointent vers le MÊME nouvel id (fusion 2→1, voir les
+ * entrées « Pocket Monster » → locomotive dans `OLD_TO_NEW_TEMPLATE_ID`) donnent
+ * donc deux slots séparés partageant le même templateId après migration —
+ * la donation de l'un des deux peut être perdue si un mécanisme aval suppose
+ * au plus un slot donné par templateId.
  */
 function remapTemplateIds<T>(value: T): T {
   if (typeof value === "string") {
@@ -107,7 +115,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -391,7 +399,7 @@ function appliquerMigrations(loaded: GameState): GameState {
       {
         vu?: boolean;
         dejaPossede?: boolean;
-        donation?: { etat: string; valeur: number } | null;
+        donation?: { etat: string; valeur: number; valeurBase?: number; prixAchat?: number } | null;
       }
     >();
     for (const cat of Object.keys(loadedCollection as Record<string, unknown>)) {
@@ -408,7 +416,12 @@ function appliquerMigrations(loaded: GameState): GameState {
             s as {
               vu?: boolean;
               dejaPossede?: boolean;
-              donation?: { etat: string; valeur: number } | null;
+              donation?: {
+                etat: string;
+                valeur: number;
+                valeurBase?: number;
+                prixAchat?: number;
+              } | null;
             },
           );
         }
@@ -435,6 +448,14 @@ function appliquerMigrations(loaded: GameState): GameState {
                     ? T
                     : never,
                   valeur: persiste.donation.valeur,
+                  // Sans eux, retirer la pièce après rechargement recréait
+                  // l'objet sans prix payé (fiche « cadeau » à tort).
+                  ...(persiste.donation.valeurBase != null
+                    ? { valeurBase: persiste.donation.valeurBase }
+                    : {}),
+                  ...(persiste.donation.prixAchat != null
+                    ? { prixAchat: persiste.donation.prixAchat }
+                    : {}),
                 }
               : slot.donation,
         };
@@ -821,6 +842,13 @@ function appliquerMigrations(loaded: GameState): GameState {
     jetons: typeof (loaded as Partial<GameState>).jetons === "number"
       ? (loaded as Partial<GameState>).jetons!
       : 0,
+    // v22 — classeur de cartes et album de timbres (cf. `src/lib/albums.ts`).
+    // Une save antérieure n'a pas le champ : on lui en pose un neuf, vide.
+    albums: (() => {
+      const a = (loaded as Partial<GameState>).albums;
+      // Une save avec le champ le garde tel quel ; sans lui, albums neufs.
+      return a && typeof a === "object" && a.classeur && a.timbres ? a : initAlbums();
+    })(),
     chatSurFauteuil: (loaded as Partial<GameState>).chatSurFauteuil ?? false,
     passagesSansChat: (() => {
       const v = (loaded as Partial<GameState>).passagesSansChat;
