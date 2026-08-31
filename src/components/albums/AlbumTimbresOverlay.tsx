@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -61,6 +62,8 @@ import type { DictionnaireUI } from "@/lib/i18n/ui";
    sans geste de glisser peut suivre en entier). */
 
 const SEUIL_TAP_PX = 6;
+/** Durée du glissé d'arrivée : du doigt à la place aimantée, puis commit. */
+const DUREE_POSE_MS = 150;
 /** Largeur du calque mobile si la page n'est pas mesurable (tests). */
 const CALQUE_TAILLE_DEFAUT_PX = 60;
 /** Seuil vertical (px) au-delà duquel un geste démarré dans le bac est
@@ -133,7 +136,6 @@ function timbrePoseStyle(
   x: number,
   ligne: Ligne,
   z: number,
-  sansTransition: boolean,
   enMain: boolean,
 ): CSSProperties {
   return {
@@ -147,9 +149,10 @@ function timbrePoseStyle(
     zIndex: z,
     cursor: "grab",
     touchAction: "none",
-    // L'original s'efface pendant que son calque suit le doigt.
+    // L'original s'efface pendant que son calque suit le doigt. Aucune
+    // transition de position ici : c'est le calque qui porte le mouvement
+    // jusqu'à la place aimantée, le timbre posé apparaît directement dessous.
     opacity: enMain ? 0 : undefined,
-    transition: sansTransition ? undefined : "left 0.15s ease, top 0.15s ease",
   };
 }
 
@@ -376,6 +379,19 @@ export function AlbumTimbresOverlay({
   const bacRef = useRef<HTMLDivElement | null>(null);
   const calqueRef = useRef<HTMLDivElement | null>(null);
   const bandesRef = useRef<(HTMLDivElement | null)[]>([]);
+  /** Pose en attente pendant le glissé d'arrivée du calque : `commit` la
+   *  termine (appelée par le timer, par un nouveau geste, ou au démontage). */
+  const poseEnCoursRef = useRef<{
+    timer: ReturnType<typeof setTimeout>;
+    commit: () => void;
+  } | null>(null);
+  const flushPoseEnCours = () => {
+    const pose = poseEnCoursRef.current;
+    if (!pose) return;
+    clearTimeout(pose.timer);
+    pose.commit();
+  };
+  useEffect(() => flushPoseEnCours, []);
 
   if (!open || !state) return null;
 
@@ -449,6 +465,7 @@ export function AlbumTimbresOverlay({
     (id: string, origine: OrigineGeste) =>
     (e: ReactPointerEvent<HTMLButtonElement>) => {
       e.stopPropagation();
+      flushPoseEnCours();
       e.currentTarget.setPointerCapture?.(e.pointerId);
       // Un item posé démarre son glisser immédiatement ; un item du bac
       // attend le franchissement du seuil vertical, pour ne pas voler le
@@ -476,22 +493,51 @@ export function AlbumTimbresOverlay({
     e.stopPropagation();
     const start = startRef.current;
     startRef.current = null;
-    setDrag(null);
     eteindreBandeaux();
-    if (!start) return;
+    if (!start) {
+      setDrag(null);
+      return;
+    }
     const distance = Math.hypot(e.clientX - start.x, e.clientY - start.y);
     if (distance < SEUIL_TAP_PX) {
+      setDrag(null);
       ouvrirFiche(start.id);
       return;
     }
     const rectPage = pageRef.current?.getBoundingClientRect();
     const placePage = rectPage
-      ? positionDepuisPointeur(rectPage, e.clientX, e.clientY)
+      ? positionDepuisPointeur(
+          rectPage,
+          e.clientX,
+          e.clientY,
+          tailleCalquePx() / 2,
+        )
       : null;
-    if (placePage) {
-      poserTimbre(start.id, page, placePage.ligne, placePage.x);
+    if (placePage && rectPage) {
+      const id = start.id;
+      const commit = () => {
+        poseEnCoursRef.current = null;
+        poserTimbre(id, page, placePage.ligne, placePage.x);
+        setDrag(null);
+      };
+      const calque = calqueRef.current;
+      if (!calque || sansTransition) {
+        commit();
+        return;
+      }
+      // Le calque glisse du doigt à sa place aimantée, puis la pose est
+      // commitée : le timbre posé apparaît exactement dessous, sans saut.
+      const cibleX = rectPage.left + placePage.x * rectPage.width;
+      const cibleY = rectPage.top + yDeLigne(placePage.ligne) * rectPage.height;
+      calque.style.transition = `transform ${DUREE_POSE_MS}ms ease`;
+      calque.style.transform = transformCalque(cibleX, cibleY);
+      poseEnCoursRef.current = {
+        timer: setTimeout(commit, DUREE_POSE_MS),
+        commit,
+      };
       return;
     }
+    setDrag(null);
     const rectBac = bacRef.current?.getBoundingClientRect();
     const dansLeBac = rectBac
       ? positionDepuisPointeur(rectBac, e.clientX, e.clientY)
@@ -509,6 +555,9 @@ export function AlbumTimbresOverlay({
   // on efface l'état SANS jamais appeler `poserTimbre`/`rendreTimbreAuBac` :
   // le timbre reste où il était, le fantôme disparaît.
   const onPointerAbandonneTimbre = () => {
+    // Un `lostpointercapture` suit aussi un lâcher réussi : ne pas effacer
+    // le calque qui glisse vers sa place (la pose en cours le fera).
+    if (poseEnCoursRef.current) return;
     startRef.current = null;
     setDrag(null);
     eteindreBandeaux();
@@ -589,7 +638,6 @@ export function AlbumTimbresOverlay({
                 placement.x,
                 placement.ligne,
                 z,
-                sansTransition,
                 drag?.id === id,
               )}
               onPointerDown={onPointerDownTimbre(id, "page")}

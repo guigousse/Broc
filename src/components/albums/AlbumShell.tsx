@@ -8,7 +8,8 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 
 /* ── LE CHÂSSIS PARTAGÉ DES DEUX ALBUMS ──────────────────────────────────
    Classeur de cartes et album de timbres partagent la même coquille : un
-   PANNEAU FIXE calé ENTRE l'en-tête du haut et la TabBar (mêmes bornes que
+   CALQUE FIXE, bureau flouté visible derrière, calé ENTRE l'en-tête du haut et
+   la TabBar (mêmes bornes que
    `CarnetOverlay` / `FloatingRoomOverlay`, pour que les deux restent
    accessibles — retour de Guillaume 2026-08-31), pas une carte bordée qui
    défile. Dedans : le titre gravé au laiton seul sur sa ligne, centré,
@@ -43,7 +44,11 @@ const panneau: CSSProperties = {
   zIndex: 35,
   display: "flex",
   flexDirection: "column",
-  background: "var(--forest-900)",
+  // Un calque SUR le bureau, comme les menus : le bureau reste visible,
+  // flouté (même voile que FloatingRoomOverlay) — pas une page opaque.
+  background: "rgba(15,31,24,0.35)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
   padding: "10px 12px 12px",
   overflow: "hidden",
 };

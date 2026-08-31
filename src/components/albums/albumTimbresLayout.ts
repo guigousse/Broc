@@ -29,14 +29,15 @@ export function yDeLigne(ligne: Ligne): number {
   return (ligne + 0.5) / 5;
 }
 
-/** Le bandeau translucide d'une ligne (vrai album à bandes) : commence un
- *  peu au-dessus du centre du timbre et descend sous son bord bas, sans
- *  mordre la ligne suivante — le timbre paraît glissé dans la bande, le
- *  plastique par-dessus sa moitié basse. Fractions de la hauteur de page. */
-export const BANDE_DECALAGE = 0.02;
-export const BANDE_HAUTEUR = 0.1;
+/** Le bandeau translucide d'une ligne (vrai album à bandes) : commence SOUS
+ *  le centre du timbre et descend un peu sous son bord bas, sans mordre la
+ *  ligne suivante — il ne recouvre que le tiers bas du timbre, le plastique
+ *  par-dessus (photo Lindner ; « timbres trop bas » corrigé le 2026-08-31).
+ *  Fractions de la hauteur de page. */
+export const BANDE_TOP = 0.02;
+export const BANDE_HAUTEUR = 0.07;
 export function bandeDeLigne(ligne: Ligne): { top: number; hauteur: number } {
-  return { top: yDeLigne(ligne) - BANDE_DECALAGE, hauteur: BANDE_HAUTEUR };
+  return { top: yDeLigne(ligne) + BANDE_TOP, hauteur: BANDE_HAUTEUR };
 }
 
 /** La ligne dont le centre est le plus proche de la fraction verticale donnée. */
@@ -48,21 +49,29 @@ export function ligneLaPlusProche(yFraction: number): Ligne {
 /**
  * Position aimantée depuis un point écran (drag), relative au rect de la page —
  * `null` si le point est hors de la page (le composant essaie alors le bac).
+ * `tolerancePx` élargit la page de chaque côté : un point dans cette marge
+ * est ramené au bord le plus proche puis aimanté (le timbre est centré sous
+ * le doigt, qui peut sortir de quelques px quand on vise la 1ʳᵉ bande).
  */
 export function positionDepuisPointeur(
   rectPage: DOMRectLike,
   clientX: number,
   clientY: number,
+  tolerancePx = 0,
 ): { ligne: Ligne; x: number } | null {
+  const droite = rectPage.left + rectPage.width;
+  const bas = rectPage.top + rectPage.height;
   if (
-    clientX < rectPage.left ||
-    clientX > rectPage.left + rectPage.width ||
-    clientY < rectPage.top ||
-    clientY > rectPage.top + rectPage.height
+    clientX < rectPage.left - tolerancePx ||
+    clientX > droite + tolerancePx ||
+    clientY < rectPage.top - tolerancePx ||
+    clientY > bas + tolerancePx
   ) {
     return null;
   }
-  const xFraction = (clientX - rectPage.left) / rectPage.width;
-  const yFraction = (clientY - rectPage.top) / rectPage.height;
+  const x = Math.min(droite, Math.max(rectPage.left, clientX));
+  const y = Math.min(bas, Math.max(rectPage.top, clientY));
+  const xFraction = (x - rectPage.left) / rectPage.width;
+  const yFraction = (y - rectPage.top) / rectPage.height;
   return { ligne: ligneLaPlusProche(yFraction), x: xBorne(xFraction) };
 }

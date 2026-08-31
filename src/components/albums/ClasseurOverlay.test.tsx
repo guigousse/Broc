@@ -18,7 +18,13 @@ const p1 = pieces[1].id;
 
 const albums: AlbumsState = {
   classeur: { achete: true, pieces: { [p0]: 1, [p1]: 2 }, nouvelles: [] },
-  timbres: { achete: false, pieces: {}, nouvelles: [], placements: {}, ordreZ: [] },
+  timbres: {
+    achete: false,
+    pieces: {},
+    nouvelles: [],
+    placements: {},
+    ordreZ: [],
+  },
 };
 
 const { mocks } = vi.hoisted(() => ({
@@ -51,7 +57,9 @@ describe("ClasseurOverlay", () => {
   it("affiche 9 pochettes par page, le compteur et le badge ×N", () => {
     render(<ClasseurOverlay open onClose={() => {}} />);
     expect(screen.getByText("2 / 50")).toBeTruthy();
-    expect(document.querySelectorAll('[data-testid="pochette"]')).toHaveLength(9);
+    expect(document.querySelectorAll('[data-testid="pochette"]')).toHaveLength(
+      9,
+    );
     expect(screen.getByText("×2")).toBeTruthy();
   });
 
@@ -84,8 +92,12 @@ describe("ClasseurOverlay", () => {
   it("recycler : confirmation puis appel, toast au pluriel (n=2)", () => {
     const { recyclerDoublonsAlbum } = mocks;
     render(<ClasseurOverlay open onClose={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: /recycler les doublons \(1\)/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^recycler/i, hidden: false }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /recycler les doublons \(1\)/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /^recycler/i, hidden: false }),
+    );
     expect(recyclerDoublonsAlbum).toHaveBeenCalledWith("classeur");
     expect(mocks.toast).toHaveBeenCalledWith(
       "+2 pièces · Jeux & Loisirs",
@@ -97,8 +109,12 @@ describe("ClasseurOverlay", () => {
   it("recycler un seul doublon : toast au singulier (n=1)", () => {
     mocks.recyclerDoublonsAlbum.mockReturnValueOnce(1);
     render(<ClasseurOverlay open onClose={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: /recycler les doublons \(1\)/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^recycler/i, hidden: false }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /recycler les doublons \(1\)/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /^recycler/i, hidden: false }),
+    );
     expect(mocks.toast).toHaveBeenCalledWith(
       "+1 pièce · Jeux & Loisirs",
       expect.objectContaining({ type: "succes" }),
@@ -126,7 +142,9 @@ describe("ClasseurOverlay — plein écran", () => {
     expect(dialog.style.top).toBe(
       "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px))",
     );
-    expect(dialog.style.bottom).toBe("calc(var(--mobile-tabbar-h) + var(--safe-bottom))");
+    expect(dialog.style.bottom).toBe(
+      "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
+    );
     expect(dialog.style.left).toBe("0px");
     expect(dialog.style.right).toBe("0px");
     expect(dialog.style.overflowY).not.toBe("auto");
@@ -157,8 +175,9 @@ describe("ClasseurOverlay — plein écran", () => {
       expect(c.style.overflow).toBe("hidden");
     }
     // Le visuel est sorti du flux : il ne pèse plus sur la taille de la case.
-    const visuel = document.querySelector('[data-testid="pochette"] [data-testid="piece-visuel"]')
-      ?.parentElement as HTMLElement;
+    const visuel = document.querySelector(
+      '[data-testid="pochette"] [data-testid="piece-visuel"]',
+    )?.parentElement as HTMLElement;
     expect(visuel.style.position).toBe("absolute");
   });
 });
@@ -172,4 +191,13 @@ it("le plafond de largeur de la grille soustrait l'en-tête ET la TabBar", () =>
   const grille = screen.getByTestId("page-classeur") as HTMLElement;
   expect(grille.style.maxWidth).toContain("100dvh - (calc(var(--safe-top)");
   expect(grille.style.maxWidth).toContain(") - (calc(var(--mobile-tabbar-h)");
+});
+
+/* Le panneau est un calque SUR le bureau (comme les menus), pas une page :
+   bureau visible et flouté derrière. */
+it("le panneau laisse voir le bureau flouté derrière lui", () => {
+  render(<ClasseurOverlay open onClose={() => {}} />);
+  const dialog = screen.getByRole("dialog") as HTMLElement;
+  expect(dialog.style.backdropFilter).toContain("blur(");
+  expect(dialog.style.background).toMatch(/^rgba\(/);
 });

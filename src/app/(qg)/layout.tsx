@@ -58,7 +58,10 @@ import { QgColis } from "@/components/mobile/qg/QgColis";
 import { QgCadeau } from "@/components/mobile/qg/QgCadeau";
 import { ColisOverlay } from "@/components/mobile/qg/overlays/ColisOverlay";
 import { COLIS_TUTORIEL_TAILLE } from "@/data/starterInventory";
-import { cadeauAnniversaireVisible, doigtSwipeVersGramophone } from "@/lib/anniversaire";
+import {
+  cadeauAnniversaireVisible,
+  doigtSwipeVersGramophone,
+} from "@/lib/anniversaire";
 import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
@@ -86,17 +89,16 @@ import {
   type DialogueSequence,
 } from "@/data/dialogues";
 import { stockageEstPlein } from "@/lib/stockage";
-import { bazarEstOuvert, joursAvantOuvertureBazar } from "@/lib/bazar/ouverture";
+import {
+  bazarEstOuvert,
+  joursAvantOuvertureBazar,
+} from "@/lib/bazar/ouverture";
 import { destinationChiner, destinationEtaler } from "@/lib/porte";
 import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import { nomExpediteur } from "@/lib/i18n/contenu";
-import {
-  tutorielActif,
-  chapitreDuCarnetDu,
-  portePulse,
-} from "@/lib/tutoriel";
+import { tutorielActif, chapitreDuCarnetDu, portePulse } from "@/lib/tutoriel";
 import {
   aConnaisseurTendance,
   aGenBulletinMeteo,
@@ -186,10 +188,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
    * poser leur propre cible ; le chapitre du grand-père accepté carnet
    * FERMÉ l'arme pour la prochaine ouverture générique.
    */
-  const { missionCibleId, armerAttente: armerAttenteMissionCible } = useMissionCible(
-    carnetOuvert,
-    searchParams.get("mission"),
-  );
+  const { missionCibleId, armerAttente: armerAttenteMissionCible } =
+    useMissionCible(carnetOuvert, searchParams.get("mission"));
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
   /** Sheet « Mes albums », ouverte depuis le livre de comptes (QgCarnet). */
@@ -217,18 +217,24 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // chapitre en cours de délivrance le temps du dialogue, pour l'accepter
   // (créer la mission) à sa fin — cf. onFini du DialogueOverlay ci-dessous.
   const chPret = state ? chapitrePret(state) : null;
-  const [dialogueChapitreId, setDialogueChapitreId] = useState<string | null>(null);
+  const [dialogueChapitreId, setDialogueChapitreId] = useState<string | null>(
+    null,
+  );
   // Dialogue du chapitre armé par l'ouverture du carnet (fin du tutoriel) :
   // il est joué après un court battement, le temps que le joueur voie la page
   // vide se poser. Stocké à part de `dialogueQg` pour que le minuteur vive
   // dans son propre effet — cf. les deux effets plus bas.
-  const [chapitreEnAttente, setChapitreEnAttente] = useState<DialogueSequence | null>(null);
+  const [chapitreEnAttente, setChapitreEnAttente] =
+    useState<DialogueSequence | null>(null);
   // Cérémonie du colis du tutoriel (étape "ouvrir-colis") : objet en cours
   // de révélation + son rang (1-based). null = overlay fermé.
   const [objetColis, setObjetColis] = useState<Objet | null>(null);
   const [numeroColis, setNumeroColis] = useState(0);
   // Cadeau d'anniversaire (11 juin) : objet en cours de révélation + son année.
-  const [objetCadeau, setObjetCadeau] = useState<{ objet: Objet; annee: number } | null>(null);
+  const [objetCadeau, setObjetCadeau] = useState<{
+    objet: Objet;
+    annee: number;
+  } | null>(null);
 
   // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
@@ -423,7 +429,13 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         setDialogueQg(SEQUENCES_ANNIVERSAIRE.anniv_fin);
       }
     },
-    [vinyles, playGramophoneSong, handleNext, state?.miniTutoVinyle, terminerMiniTutoVinyle],
+    [
+      vinyles,
+      playGramophoneSong,
+      handleNext,
+      state?.miniTutoVinyle,
+      terminerMiniTutoVinyle,
+    ],
   );
 
   const categoriesConnuesTendance = useMemo(() => {
@@ -464,12 +476,16 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (dialogueQg) return;
     if (etape === "accueil") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_accueil);
-    else if (etape === "chine-sortir") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_retour);
+    else if (etape === "chine-sortir")
+      jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_retour);
     else if (etape === "collection-envoyer") {
       jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_peluche_collection);
-    } else if (etape === "ouvrir-colis") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_colis_avant);
-    else if (etape === "competences-visite") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_niveau_avant);
-    else if (etape === "conclusion") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
+    } else if (etape === "ouvrir-colis")
+      jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_colis_avant);
+    else if (etape === "competences-visite")
+      jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_niveau_avant);
+    else if (etape === "conclusion")
+      jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
   }, [etape, dialogueQg, jouerDialogueQg]);
 
   // Filet « rien à célébrer » : l'étape `niveau-celebration` attend la
@@ -778,9 +794,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
 
           {/* Mini-tuto vinyles : invite à swiper vers la droite (gramophone
               en zone repos) tant qu'on n'y est pas. zIndex 6 > dots (5). */}
-          {state && doigtSwipeVersGramophone(state.miniTutoVinyle, zoneActive) && (
-            <div className="tuto-main-swipe" aria-hidden />
-          )}
+          {state &&
+            doigtSwipeVersGramophone(state.miniTutoVinyle, zoneActive) && (
+              <div className="tuto-main-swipe" aria-hidden />
+            )}
 
           {/* Le doigt « swipe vers le carnet » a disparu d'ici : le livre de
               compte a quitté la zone gauche du panorama pour devenir la route
@@ -905,7 +922,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             : null
         }
         jourCelebrite={
-          state.gazetteAchetee && aGenCarnetMondain(state) && state.celebriteActuelle
+          state.gazetteAchetee &&
+          aGenCarnetMondain(state) &&
+          state.celebriteActuelle
             ? state.jourActuel -
               indexJourSemaine(state.jourActuel) +
               state.celebriteActuelle.jourSemaine
@@ -941,7 +960,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           setAlbumOuvert(album);
         }}
       />
-      <ClasseurOverlay open={albumOuvert === "classeur"} onClose={() => setAlbumOuvert(null)} />
+      <ClasseurOverlay
+        open={albumOuvert === "classeur"}
+        onClose={() => setAlbumOuvert(null)}
+      />
       <AlbumTimbresOverlay
         open={albumOuvert === "timbres"}
         onClose={() => setAlbumOuvert(null)}
@@ -972,7 +994,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         celebrite={state.celebriteActuelle}
         revelerCelebrite={aGenCarnetMondain(state)}
         influenceDisponible={
-          aGenInfluence(state) && !state.influenceUtilisee && state.gazetteAchetee
+          aGenInfluence(state) &&
+          !state.influenceUtilisee &&
+          state.gazetteAchetee
         }
         onRerollMeteo={() => rerollMeteo()}
         onRerollCelebrite={() => rerollCelebrite()}
@@ -1039,7 +1063,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           // La feuille du carnet est descendue en z-index 36 (pour laisser la
           // barre du bas cliquable) : cette pastille, fixe en 40, resterait
           // peinte PAR-DESSUS le carnet. Le voile plein écran la masquait avant.
+          // Même chose pour les albums (calques en 35 sur le bureau flouté) :
+          // la pastille recouvrait le 1ᵉʳ timbre du bac (2026-08-31).
           !carnetOuvert &&
+          albumOuvert === null &&
           // Chapitre 1 réservé au carnet tant que le mini-tuto de fin de
           // tutoriel n'est pas consommé, puis pendant tout le temps où son
           // dialogue est armé/joué : un seul chemin de délivrance.
@@ -1056,7 +1083,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
       {/* `!carnetOuvert` : même raison que pour GrandPereBadge — et ici c'est
           le chemin nominal d'entrée dans le carnet, la pastille resterait
           peinte sur la page qu'elle vient d'ouvrir. */}
-      {!tutoActif && !dialogueQg && !carnetOuvert && (
+      {!tutoActif && !dialogueQg && !carnetOuvert && albumOuvert === null && (
         <LivrablesBadges
           livrables={livrables}
           sureleves={!!chPret}
@@ -1084,7 +1111,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
               // de fin de tutoriel) : recaler la cible sur la commande qui
               // vient d'être créée, sans naviguer — `replace` corrige l'URL
               // en place (pas de nouvelle entrée d'historique).
-              router.replace(`/quetes?mission=${encodeURIComponent(dialogueChapitreId)}`);
+              router.replace(
+                `/quetes?mission=${encodeURIComponent(dialogueChapitreId)}`,
+              );
             } else {
               // Carnet fermé (pastille du grand-père hors `/quetes`) :
               // rien dans l'URL à corriger sans l'ouvrir malgré lui — armer
@@ -1103,11 +1132,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function QgLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function QgLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Suspense fallback={null}>

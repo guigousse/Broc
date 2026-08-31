@@ -30,15 +30,31 @@ describe("albumTimbresLayout", () => {
 });
 
 describe("bandeDeLigne — le bandeau translucide d'une ligne", () => {
-  it("recouvre la moitié basse du timbre et reste dans sa ligne", () => {
+  it("ne recouvre que le tiers bas du timbre et reste dans sa ligne", () => {
     const demiTimbre = TAILLE_TIMBRE / 2 / HAUTEUR_PAGE_RATIO; // en fraction de hauteur
     for (const l of [0, 1, 2, 3, 4] as const) {
       const centre = yDeLigne(l);
       const b = bandeDeLigne(l);
-      expect(b.top).toBeLessThan(centre); // commence au-dessus du centre du timbre
-      expect(b.top).toBeGreaterThan(centre - demiTimbre); // …mais pas au-dessus de son bord haut
+      expect(b.top).toBeGreaterThan(centre); // commence SOUS le centre du timbre…
+      expect(b.top).toBeLessThan(centre + demiTimbre); // …mais avant son bord bas
       expect(b.top + b.hauteur).toBeGreaterThan(centre + demiTimbre); // dépasse sous le timbre
       expect(b.top + b.hauteur).toBeLessThan((l + 1) / 5); // sans mordre la ligne suivante
     }
+  });
+});
+
+describe("positionDepuisPointeur — tolérance autour de la page", () => {
+  const rect = { left: 0, top: 0, width: 300, height: 390 };
+  it("un point juste au-dessus de la page, dans la tolérance, est ramené sur la ligne 0", () => {
+    expect(positionDepuisPointeur(rect, 150, -10, 25)).toEqual({
+      ligne: 0,
+      x: 0.5,
+    });
+  });
+  it("un point au-delà de la tolérance reste hors page", () => {
+    expect(positionDepuisPointeur(rect, 150, -40, 25)).toBeNull();
+  });
+  it("sans tolérance, le comportement strict est conservé", () => {
+    expect(positionDepuisPointeur(rect, 150, -1)).toBeNull();
   });
 });

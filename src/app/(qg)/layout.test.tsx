@@ -96,32 +96,80 @@ vi.mock("@/components/ui/Toast", () => ({
 // Composants du panorama sans rapport avec cette tâche : stubs inertes, pour
 // ne pas avoir à fournir un GameState complet (missions, tendances, météo…)
 // juste pour les monter.
-vi.mock("@/components/mobile/qg/QgJournalSol", () => ({ QgJournalSol: () => null }));
+vi.mock("@/components/mobile/qg/QgJournalSol", () => ({
+  QgJournalSol: () => null,
+}));
 vi.mock("@/components/mobile/qg/QgPorte", () => ({ QgPorte: () => null }));
 vi.mock("@/components/mobile/qg/QgColis", () => ({ QgColis: () => null }));
 vi.mock("@/components/mobile/qg/QgCadeau", () => ({ QgCadeau: () => null }));
-vi.mock("@/components/mobile/qg/QgCourrier", () => ({ QgCourrier: () => null }));
-vi.mock("@/components/mobile/qg/QgPortemanteau", () => ({ QgPortemanteau: () => null }));
-vi.mock("@/components/mobile/qg/QgCalendrier", () => ({ QgCalendrier: () => null }));
-vi.mock("@/components/mobile/qg/QgFauteuil", () => ({ QgFauteuil: () => null }));
-vi.mock("@/components/mobile/qg/QgGramophone", () => ({ QgGramophone: () => null }));
-vi.mock("@/components/mobile/qg/QgChatBaladeur", () => ({ QgChatBaladeur: () => null }));
-vi.mock("@/components/mobile/qg/GazetteAchatModale", () => ({ GazetteAchatModale: () => null }));
-vi.mock("@/components/mobile/GazetteSheet", () => ({ GazetteSheet: () => null }));
-vi.mock("@/components/mobile/qg/sheets/PorteSheet", () => ({ PorteSheet: () => null }));
+vi.mock("@/components/mobile/qg/QgCourrier", () => ({
+  QgCourrier: () => null,
+}));
+vi.mock("@/components/mobile/qg/QgPortemanteau", () => ({
+  QgPortemanteau: () => null,
+}));
+vi.mock("@/components/mobile/qg/QgCalendrier", () => ({
+  QgCalendrier: () => null,
+}));
+vi.mock("@/components/mobile/qg/QgFauteuil", () => ({
+  QgFauteuil: () => null,
+}));
+vi.mock("@/components/mobile/qg/QgGramophone", () => ({
+  QgGramophone: () => null,
+}));
+vi.mock("@/components/mobile/qg/QgChatBaladeur", () => ({
+  QgChatBaladeur: () => null,
+}));
+vi.mock("@/components/mobile/qg/GazetteAchatModale", () => ({
+  GazetteAchatModale: () => null,
+}));
+vi.mock("@/components/mobile/GazetteSheet", () => ({
+  GazetteSheet: () => null,
+}));
+vi.mock("@/components/mobile/qg/sheets/PorteSheet", () => ({
+  PorteSheet: () => null,
+}));
 vi.mock("@/components/mobile/qg/sheets/PasserConfirmSheet", () => ({
   PasserConfirmSheet: () => null,
 }));
-vi.mock("@/components/mobile/qg/sheets/CourrierSheet", () => ({ CourrierSheet: () => null }));
-vi.mock("@/components/mobile/qg/sheets/CalendrierSheet", () => ({ CalendrierSheet: () => null }));
-vi.mock("@/components/mobile/qg/sheets/GramophoneSheet", () => ({ GramophoneSheet: () => null }));
-vi.mock("@/components/mobile/qg/overlays/ColisOverlay", () => ({ ColisOverlay: () => null }));
-vi.mock("@/components/mobile/qg/GrandPereBadge", () => ({ GrandPereBadge: () => null }));
-vi.mock("@/components/mobile/qg/LivrablesBadges", () => ({ LivrablesBadges: () => null }));
-vi.mock("@/components/mobile/dialogue/DialogueOverlay", () => ({ DialogueOverlay: () => null }));
-vi.mock("@/components/mobile/qg/carnet/CarnetOverlay", () => ({ CarnetOverlay: () => null }));
-vi.mock("@/components/mobile/EnergieRecharge", () => ({ EnergieRecharge: () => null }));
-vi.mock("@/components/mobile/IrisTransition", () => ({ IrisArrivee: () => null }));
+vi.mock("@/components/mobile/qg/sheets/CourrierSheet", () => ({
+  CourrierSheet: () => null,
+}));
+vi.mock("@/components/mobile/qg/sheets/CalendrierSheet", () => ({
+  CalendrierSheet: () => null,
+}));
+vi.mock("@/components/mobile/qg/sheets/GramophoneSheet", () => ({
+  GramophoneSheet: () => null,
+}));
+vi.mock("@/components/mobile/qg/overlays/ColisOverlay", () => ({
+  ColisOverlay: () => null,
+}));
+vi.mock("@/components/mobile/qg/GrandPereBadge", () => ({
+  GrandPereBadge: ({ visible }: { visible: boolean }) => (
+    <div data-testid="grand-pere-badge" data-visible={String(visible)} />
+  ),
+}));
+// Un chapitre toujours prêt : la pastille du grand-père est visible par défaut,
+// ce qui permet de prouver qu'un album ouvert la masque.
+vi.mock("@/lib/quetes/principales", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/quetes/principales")>()),
+  chapitrePret: () => ({ id: "ch_test", dialogue: [] }),
+}));
+vi.mock("@/components/mobile/qg/LivrablesBadges", () => ({
+  LivrablesBadges: () => null,
+}));
+vi.mock("@/components/mobile/dialogue/DialogueOverlay", () => ({
+  DialogueOverlay: () => null,
+}));
+vi.mock("@/components/mobile/qg/carnet/CarnetOverlay", () => ({
+  CarnetOverlay: () => null,
+}));
+vi.mock("@/components/mobile/EnergieRecharge", () => ({
+  EnergieRecharge: () => null,
+}));
+vi.mock("@/components/mobile/IrisTransition", () => ({
+  IrisArrivee: () => null,
+}));
 
 function etat(albums: AlbumsState): GameState {
   return createMockGameState({ albums });
@@ -159,5 +207,30 @@ describe("(qg)/layout — le livre de comptes et la sheet « Mes albums »", () 
       name: "Classeur de cartes",
     }) as HTMLButtonElement;
     expect(boutonClasseur.disabled).toBe(false);
+  });
+});
+
+describe("(qg)/layout — un album ouvert masque la pastille du grand-père", () => {
+  it("la pastille (z-index 40) disparaît tant que le classeur est ouvert, comme pour le carnet", () => {
+    mockState = etat({
+      ...initAlbums(),
+      classeur: { achete: true, pieces: {}, nouvelles: [] },
+    });
+    render(<QgLayout>{null}</QgLayout>);
+    const badge = () => screen.getByTestId("grand-pere-badge").dataset.visible;
+    expect(badge()).toBe("true");
+
+    const livre = document
+      .querySelector('img[src="/qg/carnet.webp"]')!
+      .closest("button")!;
+    fireEvent.click(livre);
+    fireEvent.click(screen.getByRole("button", { name: "Classeur de cartes" }));
+    expect(
+      screen.getByRole("dialog", { name: "Classeur de cartes" }),
+    ).toBeTruthy();
+    expect(badge()).toBe("false");
+
+    fireEvent.click(screen.getByRole("button", { name: "Fermer" }));
+    expect(badge()).toBe("true");
   });
 });

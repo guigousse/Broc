@@ -9,6 +9,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -111,6 +112,7 @@ describe("AlbumTimbresOverlay", () => {
   });
 
   it("lâcher un timbre du bac sur la page appelle poserTimbre avec la ligne aimantée", () => {
+    vi.useFakeTimers();
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
     const page = screen.getByTestId("page-timbres");
     page.getBoundingClientRect = () =>
@@ -129,12 +131,17 @@ describe("AlbumTimbresOverlay", () => {
     fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
     fireEvent.pointerMove(t, { clientX: 150, clientY: 200, pointerId: 1 });
     fireEvent.pointerUp(t, { clientX: 150, clientY: 200, pointerId: 1 });
+    // La pose est commitée à l'arrivée du calque sur sa ligne (150 ms).
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
     expect(mocks.poserTimbre).toHaveBeenCalledWith(
       expect.any(String),
       0,
       2,
       0.5,
     );
+    vi.useRealTimers();
   });
 
   it("un tap sans mouvement ouvre la fiche avec « Poser sur la page »", () => {
@@ -346,5 +353,95 @@ describe("AlbumTimbresOverlay — bandes et glisser fluide", () => {
     fireEvent.pointerUp(pose, { clientX: 160, clientY: 900, pointerId: 1 });
     expect(screen.queryByTestId("timbre-fantome")).toBeNull();
     expect(pose.style.opacity).not.toBe("0");
+  });
+});
+
+/* ── Dépôt animé, tolérance, sans transition sur les timbres posés ──────── */
+describe("AlbumTimbresOverlay — dépôt", () => {
+  function pageRect300x390() {
+    const page = screen.getByTestId("page-timbres");
+    page.getBoundingClientRect = () =>
+      ({
+        left: 0,
+        top: 0,
+        width: 300,
+        height: 390,
+        right: 300,
+        bottom: 390,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    return page;
+  }
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("au lâcher sur la page, le calque glisse vers la place aimantée et poserTimbre n'est appelé qu'à l'arrivée", () => {
+    vi.useFakeTimers();
+    mocks.poserTimbre.mockClear();
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    pageRect300x390();
+    const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
+    fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
+    fireEvent.pointerMove(t, { clientX: 150, clientY: 200, pointerId: 1 });
+    fireEvent.pointerUp(t, { clientX: 150, clientY: 200, pointerId: 1 });
+    const calque = screen.getByTestId("timbre-fantome");
+    expect(calque.style.transition).toContain("transform");
+    expect(calque.style.transform).toContain("translate3d(150px, 195px"); // ligne 2 → y = 0,5 × 390
+    expect(t.style.opacity).toBe("0"); // l'original reste effacé pendant le glissé
+    expect(mocks.poserTimbre).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
+    expect(mocks.poserTimbre).toHaveBeenCalledWith(
+      expect.any(String),
+      0,
+      2,
+      0.5,
+    );
+    expect(screen.queryByTestId("timbre-fantome")).toBeNull();
+  });
+
+  it("un nouveau geste pendant le glissé d'arrivée commite la pose immédiatement", () => {
+    vi.useFakeTimers();
+    mocks.poserTimbre.mockClear();
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    pageRect300x390();
+    const [a, b] = within(screen.getByTestId("bac")).getAllByTestId(
+      "timbre-bac",
+    );
+    fireEvent.pointerDown(a, { clientX: 10, clientY: 500, pointerId: 1 });
+    fireEvent.pointerMove(a, { clientX: 150, clientY: 200, pointerId: 1 });
+    fireEvent.pointerUp(a, { clientX: 150, clientY: 200, pointerId: 1 });
+    expect(mocks.poserTimbre).not.toHaveBeenCalled();
+    fireEvent.pointerDown(b, { clientX: 80, clientY: 500, pointerId: 2 });
+    expect(mocks.poserTimbre).toHaveBeenCalledTimes(1);
+  });
+
+  it("un lâcher juste au-dessus de la page (à moins d'une demi-largeur de timbre) pose sur la ligne 0", () => {
+    vi.useFakeTimers();
+    mocks.poserTimbre.mockClear();
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    pageRect300x390(); // demi-timbre = 300 / 6 / 2 = 25 px
+    const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
+    fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
+    fireEvent.pointerMove(t, { clientX: 150, clientY: 100, pointerId: 1 });
+    fireEvent.pointerUp(t, { clientX: 150, clientY: -10, pointerId: 1 });
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
+    expect(mocks.poserTimbre).toHaveBeenCalledWith(
+      expect.any(String),
+      0,
+      0,
+      0.5,
+    );
+  });
+
+  it("les timbres posés n'ont plus de transition de position (le calque porte le mouvement)", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    expect(screen.getByTestId("timbre-pose").style.transition).toBe("");
   });
 });
