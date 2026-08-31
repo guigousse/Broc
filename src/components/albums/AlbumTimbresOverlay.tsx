@@ -12,6 +12,7 @@ import { AlbumShell } from "@/components/albums/AlbumShell";
 import { FichePiece } from "@/components/albums/FichePiece";
 import { PieceVisuel } from "@/components/pieces/PieceVisuel";
 import {
+  bandeDeLigne,
   positionDepuisPointeur,
   yDeLigne,
   HAUTEUR_PAGE_RATIO,
@@ -19,7 +20,14 @@ import {
   type Ligne,
 } from "@/components/albums/albumTimbresLayout";
 import { CATEGORIE_ALBUM, getPiece, piecesDe } from "@/data/pieces";
-import { albumsDe, doublons, nbPossedees, NB_LIGNES_ALBUM, NB_PAGES_ALBUM, premierePlaceLibre } from "@/lib/albums";
+import {
+  albumsDe,
+  doublons,
+  nbPossedees,
+  NB_LIGNES_ALBUM,
+  NB_PAGES_ALBUM,
+  premierePlaceLibre,
+} from "@/lib/albums";
 import { useGame } from "@/context/GameContext";
 import { useToast } from "@/components/ui/Toast";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -34,10 +42,18 @@ import type { DictionnaireUI } from "@/lib/i18n/ui";
    borné pour ne jamais déborder (`xBorne`, dans `albumTimbresLayout`). Les
    timbres sans placement vivent en vrac dans le bac scrollable du bas.
 
+   Rendu « vrai album à bandes » (retour Guillaume 2026-08-31) : page
+   anthracite, un bandeau translucide par ligne qui recouvre la moitié basse
+   des timbres (`bandeDeLigne`), au-dessus d'eux et insensible au pointeur.
+
    Le geste unique est le glisser au pointeur (bac → page, page → bac, ou
-   page → page pour redéposer un timbre déjà posé) : un fantôme `position:
-   fixed` suit le doigt, et au lâcher on regarde où le point tombe — sur la
-   page (→ `poserTimbre`), sur le bac (→ `rendreTimbreAuBac`), ailleurs
+   page → page pour redéposer un timbre déjà posé) : le timbre LUI-MÊME suit
+   le doigt — son original s'efface et un calque `position: fixed` à la
+   taille des timbres de page est déplacé en écrivant `transform` DIRECTEMENT
+   dans le DOM à chaque pointermove (`calqueRef`, aucun re-rendu React par
+   frame, comme `CoffreCanvas`) ; le bandeau de la ligne visée s'éclaire de
+   la même façon (`bandesRef`). Au lâcher on regarde où le point tombe — sur
+   la page (→ `poserTimbre`), sur le bac (→ `rendreTimbreAuBac`), ailleurs
    (→ rien, le timbre reste où il était). Un lâcher SANS déplacement
    (< 6 px) est un tap, pas un glisser : il ouvre la fiche, avec un bouton
    « Poser sur la page » quand le timbre est encore dans le bac (place
@@ -45,30 +61,63 @@ import type { DictionnaireUI } from "@/lib/i18n/ui";
    sans geste de glisser peut suivre en entier). */
 
 const SEUIL_TAP_PX = 6;
-const GHOST_TAILLE_PX = 60;
+/** Largeur du calque mobile si la page n'est pas mesurable (tests). */
+const CALQUE_TAILLE_DEFAUT_PX = 60;
 /** Seuil vertical (px) au-delà duquel un geste démarré dans le bac est
  *  considéré comme un glisser (même s'il a autant ou plus bougé à
  *  l'horizontale) plutôt qu'un défilement natif du bac. */
 const SEUIL_VERTICAL_BAC_PX = 12;
 
+/** Anthracite → noir, comme les feuilles cartonnées d'un album Lindner. */
+const FOND_ALBUM = "linear-gradient(180deg, #2b2b2f 0%, #1c1c1f 100%)";
+
 const pageWrap: CSSProperties = {
   position: "relative",
   width: "100%",
   aspectRatio: `1 / ${HAUTEUR_PAGE_RATIO}`,
-  background: "var(--forest-800)",
+  backgroundImage: FOND_ALBUM,
   borderRadius: 8,
   overflow: "hidden",
   touchAction: "pan-y",
 };
 
-const ligneTrace: CSSProperties = {
-  position: "absolute",
-  left: 0,
-  right: 0,
-  height: 0,
-  borderTop: "1px dashed var(--brass-700)",
-  pointerEvents: "none",
-};
+/** Au-dessus de tous les timbres posés (zIndex = rang dans `ordreZ`, < 50). */
+const Z_BANDEAU = 100;
+
+const BANDEAU_FOND = "rgba(255, 255, 255, 0.1)";
+const BANDEAU_FOND_VISE = "rgba(255, 255, 255, 0.22)";
+const BANDEAU_OMBRE = "0 2px 5px rgba(0, 0, 0, 0.55)";
+const BANDEAU_OMBRE_VISE =
+  "0 2px 5px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--brass-300)";
+
+function bandeauStyle(ligne: Ligne): CSSProperties {
+  const b = bandeDeLigne(ligne);
+  return {
+    position: "absolute",
+    left: "3%",
+    right: "3%",
+    top: `${b.top * 100}%`,
+    height: `${b.hauteur * 100}%`,
+    backgroundColor: BANDEAU_FOND,
+    backgroundImage:
+      "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0))",
+    borderTop: "1px solid rgba(255, 255, 255, 0.38)",
+    borderRadius: 2,
+    boxShadow: BANDEAU_OMBRE,
+    pointerEvents: "none",
+    zIndex: Z_BANDEAU,
+    transition: "background-color 0.12s ease, box-shadow 0.12s ease",
+  };
+}
+
+/** Éclaire (ou éteint) un bandeau pendant le survol — écriture DOM directe,
+ *  hors React, à la fréquence du doigt. */
+function appliquerVise(el: HTMLDivElement | null, vise: boolean) {
+  if (!el) return;
+  el.dataset.vise = vise ? "true" : "false";
+  el.style.backgroundColor = vise ? BANDEAU_FOND_VISE : BANDEAU_FOND;
+  el.style.boxShadow = vise ? BANDEAU_OMBRE_VISE : BANDEAU_OMBRE;
+}
 
 /** Remise à zéro du style natif de `<button>` : ces items sont des boutons
  *  pour le clavier/VoiceOver, mais visuellement de simples cadres au tap. */
@@ -80,7 +129,13 @@ const resetBouton: CSSProperties = {
   color: "inherit",
 };
 
-function timbrePoseStyle(x: number, ligne: Ligne, z: number, sansTransition: boolean): CSSProperties {
+function timbrePoseStyle(
+  x: number,
+  ligne: Ligne,
+  z: number,
+  sansTransition: boolean,
+  enMain: boolean,
+): CSSProperties {
   return {
     ...resetBouton,
     position: "absolute",
@@ -92,6 +147,8 @@ function timbrePoseStyle(x: number, ligne: Ligne, z: number, sansTransition: boo
     zIndex: z,
     cursor: "grab",
     touchAction: "none",
+    // L'original s'efface pendant que son calque suit le doigt.
+    opacity: enMain ? 0 : undefined,
     transition: sansTransition ? undefined : "left 0.15s ease, top 0.15s ease",
   };
 }
@@ -102,7 +159,7 @@ const bacWrap: CSSProperties = {
   gap: 10,
   overflowX: "auto",
   padding: "10px 8px",
-  background: "var(--forest-800)",
+  backgroundImage: FOND_ALBUM,
   borderRadius: 8,
 };
 
@@ -147,13 +204,27 @@ const newBadge: CSSProperties = {
   pointerEvents: "none",
 };
 
-const fantome: CSSProperties = {
-  position: "fixed",
-  width: GHOST_TAILLE_PX,
-  transform: "translate(-50%, -50%)",
-  pointerEvents: "none",
-  zIndex: 110,
-};
+/** Le calque qui suit le doigt : ancré en (0,0) de l'écran, déplacé par
+ *  `transform` seul (compositeur, pas de layout), sans transition. */
+function calqueStyle(taillePx: number, x: number, y: number): CSSProperties {
+  return {
+    position: "fixed",
+    left: 0,
+    top: 0,
+    width: taillePx,
+    aspectRatio: "1",
+    transform: transformCalque(x, y),
+    transition: "none",
+    willChange: "transform",
+    filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.55))",
+    pointerEvents: "none",
+    zIndex: 110,
+  };
+}
+
+function transformCalque(x: number, y: number): string {
+  return `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+}
 
 const paginationBar: CSSProperties = {
   display: "flex",
@@ -273,17 +344,38 @@ interface StartInfo {
   started: boolean;
 }
 
-export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AlbumTimbresOverlay({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const { d, tr, locale } = useLangue();
-  const { state, recyclerDoublonsAlbum, marquerPieceConsultee, poserTimbre, rendreTimbreAuBac } = useGame();
+  const {
+    state,
+    recyclerDoublonsAlbum,
+    marquerPieceConsultee,
+    poserTimbre,
+    rendreTimbreAuBac,
+  } = useGame();
   const { toast } = useToast();
   const [page, setPage] = useState<0 | 1>(0);
   const [fiche, setFiche] = useState<string | null>(null);
-  const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
+  // `drag` ne change qu'au début et à la fin du geste (un re-rendu chacun) :
+  // entre les deux, le calque et les bandeaux sont pilotés par refs.
+  const [drag, setDrag] = useState<{
+    id: string;
+    taillePx: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const startRef = useRef<StartInfo | null>(null);
   const swipeStartRef = useRef<number | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
   const bacRef = useRef<HTMLDivElement | null>(null);
+  const calqueRef = useRef<HTMLDivElement | null>(null);
+  const bandesRef = useRef<(HTMLDivElement | null)[]>([]);
 
   if (!open || !state) return null;
 
@@ -304,7 +396,9 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
     if (!piece) return "";
     const nom = nomObjet({ templateId: id, nom: piece.nom }, locale);
     const quantite = album.pieces[id] ?? 0;
-    return quantite > 1 ? `${nom} ${tr(d.albums.doublon, { n: quantite })}` : nom;
+    return quantite > 1
+      ? `${nom} ${tr(d.albums.doublon, { n: quantite })}`
+      : nom;
   };
 
   const ouvrirFiche = (id: string) => {
@@ -318,23 +412,50 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
   // `click` natif suit toujours le `mouseup` même après un glisser (la
   // capture de pointeur garde la cible) et rouvrirait la fiche par-dessus la
   // pose/le retour au bac qu'on vient de faire.
-  const onKeyDownTimbre = (id: string) => (e: ReactKeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
-      e.preventDefault();
-      ouvrirFiche(id);
-    }
+  const onKeyDownTimbre =
+    (id: string) => (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+        e.preventDefault();
+        ouvrirFiche(id);
+      }
+    };
+
+  /** Largeur d'un timbre de page en px : le calque garde cette taille. */
+  const tailleCalquePx = () => {
+    const w = pageRef.current?.getBoundingClientRect().width;
+    return w ? w * TAILLE_TIMBRE : CALQUE_TAILLE_DEFAUT_PX;
+  };
+
+  const demarrerCalque = (id: string, x: number, y: number) => {
+    setDrag({ id, taillePx: tailleCalquePx(), x, y });
+  };
+
+  /** Suivi du doigt hors React : calque + bandeau visé. */
+  const suivreDoigt = (x: number, y: number) => {
+    if (calqueRef.current)
+      calqueRef.current.style.transform = transformCalque(x, y);
+    const rectPage = pageRef.current?.getBoundingClientRect();
+    const vise = rectPage
+      ? positionDepuisPointeur(rectPage, x, y)?.ligne
+      : undefined;
+    bandesRef.current.forEach((el, l) => appliquerVise(el, l === vise));
+  };
+
+  const eteindreBandeaux = () => {
+    bandesRef.current.forEach((el) => appliquerVise(el, false));
   };
 
   const onPointerDownTimbre =
-    (id: string, origine: OrigineGeste) => (e: ReactPointerEvent<HTMLButtonElement>) => {
+    (id: string, origine: OrigineGeste) =>
+    (e: ReactPointerEvent<HTMLButtonElement>) => {
       e.stopPropagation();
       e.currentTarget.setPointerCapture?.(e.pointerId);
-      // Un item posé démarre son glisser immédiatement (comme avant) ; un
-      // item du bac attend le franchissement du seuil vertical, pour ne pas
-      // voler le défilement horizontal natif à un simple swipe du bac.
+      // Un item posé démarre son glisser immédiatement ; un item du bac
+      // attend le franchissement du seuil vertical, pour ne pas voler le
+      // défilement horizontal natif à un simple swipe du bac.
       const started = origine === "page";
       startRef.current = { id, x: e.clientX, y: e.clientY, origine, started };
-      if (started) setDrag({ id, x: e.clientX, y: e.clientY });
+      if (started) demarrerCalque(id, e.clientX, e.clientY);
     };
 
   const onPointerMoveTimbre = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -343,10 +464,12 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
     if (!start.started) {
       const dx = e.clientX - start.x;
       const dy = e.clientY - start.y;
-      if (Math.abs(dy) <= Math.abs(dx) && Math.abs(dy) <= SEUIL_VERTICAL_BAC_PX) return;
+      if (Math.abs(dy) <= Math.abs(dx) && Math.abs(dy) <= SEUIL_VERTICAL_BAC_PX)
+        return;
       start.started = true;
+      demarrerCalque(start.id, e.clientX, e.clientY);
     }
-    setDrag({ id: start.id, x: e.clientX, y: e.clientY });
+    suivreDoigt(e.clientX, e.clientY);
   };
 
   const onPointerUpTimbre = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -354,6 +477,7 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
     const start = startRef.current;
     startRef.current = null;
     setDrag(null);
+    eteindreBandeaux();
     if (!start) return;
     const distance = Math.hypot(e.clientX - start.x, e.clientY - start.y);
     if (distance < SEUIL_TAP_PX) {
@@ -361,13 +485,17 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
       return;
     }
     const rectPage = pageRef.current?.getBoundingClientRect();
-    const placePage = rectPage ? positionDepuisPointeur(rectPage, e.clientX, e.clientY) : null;
+    const placePage = rectPage
+      ? positionDepuisPointeur(rectPage, e.clientX, e.clientY)
+      : null;
     if (placePage) {
       poserTimbre(start.id, page, placePage.ligne, placePage.x);
       return;
     }
     const rectBac = bacRef.current?.getBoundingClientRect();
-    const dansLeBac = rectBac ? positionDepuisPointeur(rectBac, e.clientX, e.clientY) : null;
+    const dansLeBac = rectBac
+      ? positionDepuisPointeur(rectBac, e.clientX, e.clientY)
+      : null;
     if (dansLeBac) {
       rendreTimbreAuBac(start.id);
     }
@@ -383,6 +511,7 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
   const onPointerAbandonneTimbre = () => {
     startRef.current = null;
     setDrag(null);
+    eteindreBandeaux();
   };
 
   const onSwipeDown = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -432,9 +561,20 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
         onPointerCancel={onSwipeAbandonne}
         onPointerLeave={onSwipeAbandonne}
       >
-        {Array.from({ length: NB_LIGNES_ALBUM }, (_, l) => l as Ligne).map((l) => (
-          <div key={l} style={{ ...ligneTrace, top: `${yDeLigne(l) * 100}%` }} />
-        ))}
+        {Array.from({ length: NB_LIGNES_ALBUM }, (_, l) => l as Ligne).map(
+          (l) => (
+            <div
+              key={l}
+              data-testid="bandeau"
+              data-vise="false"
+              ref={(el) => {
+                bandesRef.current[l] = el;
+              }}
+              style={bandeauStyle(l)}
+              aria-hidden
+            />
+          ),
+        )}
         {idsPosesPage.map((id) => {
           const placement = album.placements[id];
           const z = album.ordreZ.indexOf(id);
@@ -445,7 +585,13 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
               data-testid="timbre-pose"
               data-id={id}
               aria-label={ariaLabelTimbre(id)}
-              style={timbrePoseStyle(placement.x, placement.ligne, z, sansTransition)}
+              style={timbrePoseStyle(
+                placement.x,
+                placement.ligne,
+                z,
+                sansTransition,
+                drag?.id === id,
+              )}
               onPointerDown={onPointerDownTimbre(id, "page")}
               onPointerMove={onPointerMoveTimbre}
               onPointerUp={onPointerUpTimbre}
@@ -461,7 +607,12 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
       <div style={bacLabel} aria-hidden>
         {d.albums.bac}
       </div>
-      <div ref={bacRef} data-testid="bac" style={bacWrap} aria-label={d.albums.bac}>
+      <div
+        ref={bacRef}
+        data-testid="bac"
+        style={bacWrap}
+        aria-label={d.albums.bac}
+      >
         {idsBac.map((id) => {
           const quantite = album.pieces[id] ?? 0;
           return (
@@ -471,7 +622,9 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
               data-testid="timbre-bac"
               data-id={id}
               aria-label={ariaLabelTimbre(id)}
-              style={bacItemStyle}
+              style={
+                drag?.id === id ? { ...bacItemStyle, opacity: 0 } : bacItemStyle
+              }
               onPointerDown={onPointerDownTimbre(id, "bac")}
               onPointerMove={onPointerMoveTimbre}
               onPointerUp={onPointerUpTimbre}
@@ -481,7 +634,9 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
             >
               <PieceVisuel id={id} thumb />
               {quantite > 1 && (
-                <span style={badgeQuantite}>{tr(d.albums.doublon, { n: quantite })}</span>
+                <span style={badgeQuantite}>
+                  {tr(d.albums.doublon, { n: quantite })}
+                </span>
               )}
               {album.nouvelles.includes(id) && (
                 <span style={newBadge} aria-hidden>
@@ -494,12 +649,20 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
       </div>
       <Pagination page={page} onChange={setPage} d={d} />
       {drag && (
-        <div data-testid="timbre-fantome" style={{ ...fantome, left: drag.x, top: drag.y }}>
+        <div
+          ref={calqueRef}
+          data-testid="timbre-fantome"
+          style={calqueStyle(drag.taillePx, drag.x, drag.y)}
+        >
           <PieceVisuel id={drag.id} />
         </div>
       )}
       {fiche && (
-        <FichePiece id={fiche} quantite={album.pieces[fiche] ?? 0} onClose={() => setFiche(null)}>
+        <FichePiece
+          id={fiche}
+          quantite={album.pieces[fiche] ?? 0}
+          onClose={() => setFiche(null)}
+        >
           {fichePlacement ? (
             // Symétrie avec « Poser sur la page » : un timbre déjà posé se
             // rend au bac sans passer par le glisser (même chemin que

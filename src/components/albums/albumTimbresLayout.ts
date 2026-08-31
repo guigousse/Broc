@@ -29,6 +29,16 @@ export function yDeLigne(ligne: Ligne): number {
   return (ligne + 0.5) / 5;
 }
 
+/** Le bandeau translucide d'une ligne (vrai album à bandes) : commence un
+ *  peu au-dessus du centre du timbre et descend sous son bord bas, sans
+ *  mordre la ligne suivante — le timbre paraît glissé dans la bande, le
+ *  plastique par-dessus sa moitié basse. Fractions de la hauteur de page. */
+export const BANDE_DECALAGE = 0.02;
+export const BANDE_HAUTEUR = 0.1;
+export function bandeDeLigne(ligne: Ligne): { top: number; hauteur: number } {
+  return { top: yDeLigne(ligne) - BANDE_DECALAGE, hauteur: BANDE_HAUTEUR };
+}
+
 /** La ligne dont le centre est le plus proche de la fraction verticale donnée. */
 export function ligneLaPlusProche(yFraction: number): Ligne {
   const idx = Math.round(yFraction * 5 - 0.5);

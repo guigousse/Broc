@@ -8,7 +8,13 @@
  * ligne 2 de la page 0) + les actions en espion.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { AlbumTimbresOverlay } from "./AlbumTimbresOverlay";
 import { piecesDe } from "@/data/pieces";
 import type { AlbumsState } from "@/types/game";
@@ -97,7 +103,9 @@ describe("AlbumTimbresOverlay", () => {
 
   it("les timbres sans placement sont dans le bac, le timbre posé sur sa ligne", () => {
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
-    expect(within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")).toHaveLength(2);
+    expect(
+      within(screen.getByTestId("bac")).getAllByTestId("timbre-bac"),
+    ).toHaveLength(2);
     const pose = screen.getByTestId("timbre-pose");
     expect(pose.style.top).toBe("50%"); // ligne 2
   });
@@ -106,12 +114,27 @@ describe("AlbumTimbresOverlay", () => {
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
     const page = screen.getByTestId("page-timbres");
     page.getBoundingClientRect = () =>
-      ({ left: 0, top: 0, width: 300, height: 390, right: 300, bottom: 390, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+      ({
+        left: 0,
+        top: 0,
+        width: 300,
+        height: 390,
+        right: 300,
+        bottom: 390,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
     const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
     fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
     fireEvent.pointerMove(t, { clientX: 150, clientY: 200, pointerId: 1 });
     fireEvent.pointerUp(t, { clientX: 150, clientY: 200, pointerId: 1 });
-    expect(mocks.poserTimbre).toHaveBeenCalledWith(expect.any(String), 0, 2, 0.5);
+    expect(mocks.poserTimbre).toHaveBeenCalledWith(
+      expect.any(String),
+      0,
+      2,
+      0.5,
+    );
   });
 
   it("un tap sans mouvement ouvre la fiche avec « Poser sur la page »", () => {
@@ -120,7 +143,12 @@ describe("AlbumTimbresOverlay", () => {
     fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
     fireEvent.pointerUp(t, { clientX: 12, clientY: 501, pointerId: 1 });
     fireEvent.click(screen.getByRole("button", { name: "Poser sur la page" }));
-    expect(mocks.poserTimbre).toHaveBeenCalledWith(expect.any(String), 0, 0, 0.1);
+    expect(mocks.poserTimbre).toHaveBeenCalledWith(
+      expect.any(String),
+      0,
+      0,
+      0.1,
+    );
   });
 
   it("un tap sur un timbre posé ouvre la fiche avec « Rendre au bac »", () => {
@@ -136,7 +164,17 @@ describe("AlbumTimbresOverlay", () => {
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
     const bac = screen.getByTestId("bac");
     bac.getBoundingClientRect = () =>
-      ({ left: 0, top: 400, width: 300, height: 80, right: 300, bottom: 480, x: 0, y: 400, toJSON: () => ({}) }) as DOMRect;
+      ({
+        left: 0,
+        top: 400,
+        width: 300,
+        height: 80,
+        right: 300,
+        bottom: 480,
+        x: 0,
+        y: 400,
+        toJSON: () => ({}),
+      }) as DOMRect;
     const posee = screen.getByTestId("timbre-pose");
     fireEvent.pointerDown(posee, { clientX: 150, clientY: 200, pointerId: 1 });
     fireEvent.pointerMove(posee, { clientX: 150, clientY: 440, pointerId: 1 });
@@ -147,7 +185,9 @@ describe("AlbumTimbresOverlay", () => {
   // ── I4 revue finale 2026-08-30 ────────────────────────────────────────
   it("le bac défile au doigt : touchAction pan-x sur ses items, none sur un timbre posé", () => {
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
-    const item = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
+    const item = within(screen.getByTestId("bac")).getAllByTestId(
+      "timbre-bac",
+    )[0];
     expect(item.style.touchAction).toBe("pan-x");
     const pose = screen.getByTestId("timbre-pose");
     expect(pose.style.touchAction).toBe("none");
@@ -171,7 +211,9 @@ describe("AlbumTimbresOverlay", () => {
 
   it("un timbre du bac est un bouton nommé (nom + ×N si doublon), activable au clavier", () => {
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
-    const items = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac");
+    const items = within(screen.getByTestId("bac")).getAllByTestId(
+      "timbre-bac",
+    );
     expect(items[0].tagName).toBe("BUTTON");
     expect(items[0].getAttribute("aria-label")).toBeTruthy();
     fireEvent.keyDown(items[0], { key: "Enter" });
@@ -192,7 +234,17 @@ describe("AlbumTimbresOverlay", () => {
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
     const page = screen.getByTestId("page-timbres");
     page.getBoundingClientRect = () =>
-      ({ left: 0, top: 0, width: 300, height: 390, right: 300, bottom: 390, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+      ({
+        left: 0,
+        top: 0,
+        width: 300,
+        height: 390,
+        right: 300,
+        bottom: 390,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
     const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
     fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
     fireEvent.pointerMove(t, { clientX: 150, clientY: 200, pointerId: 1 });
@@ -214,6 +266,85 @@ describe("AlbumTimbresOverlay", () => {
   it("le libellé « En vrac » est affiché au-dessus du bac, et porté par son aria-label", () => {
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
     expect(screen.getByText("En vrac")).toBeTruthy();
-    expect(screen.getByTestId("bac").getAttribute("aria-label")).toBe("En vrac");
+    expect(screen.getByTestId("bac").getAttribute("aria-label")).toBe(
+      "En vrac",
+    );
+  });
+});
+
+/* ── Vrai album à bandes + glisser fluide (retour Guillaume 2026-08-31) ── */
+describe("AlbumTimbresOverlay — bandes et glisser fluide", () => {
+  function pageRect300x390() {
+    const page = screen.getByTestId("page-timbres");
+    page.getBoundingClientRect = () =>
+      ({
+        left: 0,
+        top: 0,
+        width: 300,
+        height: 390,
+        right: 300,
+        bottom: 390,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    return page;
+  }
+
+  it("la page porte 5 bandeaux translucides insensibles au pointeur, et plus aucun pointillé", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const page = screen.getByTestId("page-timbres");
+    const bandes = within(page).getAllByTestId("bandeau");
+    expect(bandes).toHaveLength(5);
+    for (const b of bandes) {
+      expect(b.style.pointerEvents).toBe("none");
+      expect(b.style.backgroundColor).toContain("rgba(255");
+    }
+    expect(page.querySelectorAll('[style*="dashed"]')).toHaveLength(0);
+  });
+
+  it("pendant le glisser, le timbre d'origine s'efface et le calque mobile suit le doigt (transform écrit sans re-rendu)", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    pageRect300x390();
+    const pose = screen.getByTestId("timbre-pose");
+    fireEvent.pointerDown(pose, { clientX: 150, clientY: 195, pointerId: 1 });
+    fireEvent.pointerMove(pose, { clientX: 160, clientY: 120, pointerId: 1 });
+    expect(pose.style.opacity).toBe("0");
+    const calque = screen.getByTestId("timbre-fantome");
+    expect(calque.style.transform).toContain("translate3d(160px, 120px");
+    fireEvent.pointerMove(pose, { clientX: 170, clientY: 100, pointerId: 1 });
+    expect(calque.style.transform).toContain("translate3d(170px, 100px");
+    expect(calque.style.transition).toBe("none");
+  });
+
+  it("le bandeau de la ligne visée s'éclaire pendant le survol de la page", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    pageRect300x390();
+    const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
+    fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
+    fireEvent.pointerMove(t, { clientX: 150, clientY: 200, pointerId: 1 }); // y = 0,51 → ligne 2
+    const bandes = within(screen.getByTestId("page-timbres")).getAllByTestId(
+      "bandeau",
+    );
+    expect(bandes.map((b) => b.dataset.vise)).toEqual([
+      "false",
+      "false",
+      "true",
+      "false",
+      "false",
+    ]);
+    fireEvent.pointerMove(t, { clientX: 150, clientY: 600, pointerId: 1 }); // hors page
+    expect(bandes.every((b) => b.dataset.vise === "false")).toBe(true);
+  });
+
+  it("un lâcher ni sur la page ni sur le bac rend le timbre d'origine visible à sa place", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    pageRect300x390();
+    const pose = screen.getByTestId("timbre-pose");
+    fireEvent.pointerDown(pose, { clientX: 150, clientY: 195, pointerId: 1 });
+    fireEvent.pointerMove(pose, { clientX: 160, clientY: 900, pointerId: 1 });
+    fireEvent.pointerUp(pose, { clientX: 160, clientY: 900, pointerId: 1 });
+    expect(screen.queryByTestId("timbre-fantome")).toBeNull();
+    expect(pose.style.opacity).not.toBe("0");
   });
 });

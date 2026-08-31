@@ -3,7 +3,15 @@
  * timbres (pas de DOM : testable en environnement `node`).
  */
 import { describe, expect, it } from "vitest";
-import { ligneLaPlusProche, positionDepuisPointeur, xBorne } from "./albumTimbresLayout";
+import {
+  HAUTEUR_PAGE_RATIO,
+  TAILLE_TIMBRE,
+  bandeDeLigne,
+  ligneLaPlusProche,
+  positionDepuisPointeur,
+  xBorne,
+  yDeLigne,
+} from "./albumTimbresLayout";
 
 describe("albumTimbresLayout", () => {
   it("aimante à la ligne la plus proche et borne x à la demi-largeur du timbre", () => {
@@ -13,7 +21,24 @@ describe("albumTimbresLayout", () => {
     expect(xBorne(-1)).toBeCloseTo(1 / 12);
     expect(xBorne(2)).toBeCloseTo(11 / 12);
     const rect = { left: 100, top: 200, width: 300, height: 390 };
-    expect(positionDepuisPointeur(rect, 250, 395)).toEqual({ ligne: 2, x: 0.5 });
+    expect(positionDepuisPointeur(rect, 250, 395)).toEqual({
+      ligne: 2,
+      x: 0.5,
+    });
     expect(positionDepuisPointeur(rect, 50, 395)).toBeNull();
+  });
+});
+
+describe("bandeDeLigne — le bandeau translucide d'une ligne", () => {
+  it("recouvre la moitié basse du timbre et reste dans sa ligne", () => {
+    const demiTimbre = TAILLE_TIMBRE / 2 / HAUTEUR_PAGE_RATIO; // en fraction de hauteur
+    for (const l of [0, 1, 2, 3, 4] as const) {
+      const centre = yDeLigne(l);
+      const b = bandeDeLigne(l);
+      expect(b.top).toBeLessThan(centre); // commence au-dessus du centre du timbre
+      expect(b.top).toBeGreaterThan(centre - demiTimbre); // …mais pas au-dessus de son bord haut
+      expect(b.top + b.hauteur).toBeGreaterThan(centre + demiTimbre); // dépasse sous le timbre
+      expect(b.top + b.hauteur).toBeLessThan((l + 1) / 5); // sans mordre la ligne suivante
+    }
   });
 });
