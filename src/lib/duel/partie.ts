@@ -9,7 +9,7 @@ import { degatsDAttaque, piocher, verifierFin } from "@/lib/duel/operations";
 import { blesserObjet, cibleRequise, ciblesDeChoix, declencher, nettoyerCasse } from "@/lib/duel/effets";
 
 function joueurInitial(deck: string[]): Joueur {
-  return { vitrine: VITRINE_INITIALE, plafond: 0, energie: 0, main: [], deck, etal: [], casse: [], echecsPioche: 0 };
+  return { vitrine: VITRINE_INITIALE, plafond: 0, energie: 0, bonusEnergie: 0, main: [], deck, etal: [], casse: [], echecsPioche: 0 };
 }
 
 /** Mute `e` : énergie, pioche, remise à zéro des attaques, effets `debutTour`. */
@@ -17,7 +17,8 @@ function commencerTour(e: EtatPartie): void {
   e.tour += 1;
   const j = e.joueurs[e.actif];
   j.plafond = Math.min(PLAFOND_MAX, j.plafond + 1);
-  j.energie = j.plafond;
+  j.energie = j.plafond + j.bonusEnergie;
+  j.bonusEnergie = 0;
   for (const o of j.etal) o.aAttaque = false;
   piocher(e, e.actif, 1);
   for (const o of [...j.etal]) declencher(e, e.actif, o.uid, "debutTour");
@@ -31,7 +32,8 @@ export function nouvellePartie(deckA: readonly string[], deckB: readonly string[
     actif: 0, tour: 0, prochainUid: 1, fini: null, journal: [],
   };
   piocher(e, 0, MAIN_INITIALE);
-  piocher(e, 1, MAIN_INITIALE + 1); // compensation du second joueur (spec §3.1)
+  piocher(e, 1, MAIN_INITIALE + 1);
+  e.joueurs[1].bonusEnergie = 1; // compensation du second joueur (spec §3.1)
   commencerTour(e);
   return e;
 }

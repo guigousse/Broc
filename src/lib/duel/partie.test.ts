@@ -5,19 +5,21 @@ import { finirTour, nouvellePartie } from "@/lib/duel/partie";
 import { MAIN_MAX, VITRINE_INITIALE } from "@/lib/duel/etat";
 
 describe("nouvellePartie", () => {
-  it("vitrines à 20, premier joueur 4 cartes + 1 piochée, second 5 cartes, énergie 1/1 au tour 1", () => {
+  it("vitrines à 20, premier joueur 4 cartes + 1 piochée, second 5 cartes et 1 énergie de bonus, énergie 1/1 au tour 1", () => {
     const e = nouvellePartie(DECK_A, DECK_B, creerRng(1));
     expect(e.joueurs[0].vitrine).toBe(VITRINE_INITIALE);
     expect(e.joueurs[1].vitrine).toBe(VITRINE_INITIALE);
     expect(e.actif).toBe(0);
     expect(e.tour).toBe(1);
     expect(e.joueurs[0].main).toHaveLength(5); // 4 + la pioche du tour 1
-    expect(e.joueurs[1].main).toHaveLength(5); // compensation du second joueur
+    expect(e.joueurs[1].main).toHaveLength(5); // compensation du second joueur : 5ᵉ carte…
     expect(e.joueurs[0].deck).toHaveLength(15);
     expect(e.joueurs[1].deck).toHaveLength(15);
     expect(e.joueurs[0].plafond).toBe(1);
     expect(e.joueurs[0].energie).toBe(1);
     expect(e.joueurs[1].plafond).toBe(0);
+    expect(e.joueurs[1].bonusEnergie).toBe(1); // … et 1 énergie à son premier tour
+    expect(e.joueurs[0].bonusEnergie).toBe(0);
     expect(e.fini).toBeNull();
   });
 
@@ -35,8 +37,13 @@ describe("finirTour", () => {
     expect(e.actif).toBe(1);
     expect(e.tour).toBe(2);
     expect(e.joueurs[1].plafond).toBe(1);
+    expect(e.joueurs[1].energie).toBe(2); // 1 de plafond + le bonus du second joueur
+    expect(e.joueurs[1].bonusEnergie).toBe(0); // consommé une seule fois
     expect(e.joueurs[1].main).toHaveLength(6);
-    for (let i = 0; i < 10; i++) e = finirTour(e).etat;
+    e = finirTour(e).etat; // tour 3
+    e = finirTour(e).etat; // tour 4 : le second joueur n'a plus de bonus
+    expect(e.joueurs[1].energie).toBe(2);
+    for (let i = 0; i < 8; i++) e = finirTour(e).etat;
     expect(e.joueurs[0].plafond).toBe(5);
     expect(e.joueurs[0].energie).toBe(5);
   });

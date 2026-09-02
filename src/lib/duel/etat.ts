@@ -22,6 +22,8 @@ export interface Joueur {
   vitrine: number;
   plafond: number;
   energie: number;
+  /** Énergie ajoutée au prochain rechargement, puis remise à zéro (compensation du §3.1). */
+  bonusEnergie: number;
   main: string[];
   deck: string[];
   etal: ObjetEnJeu[];
