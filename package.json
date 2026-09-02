@@ -26,6 +26,7 @@
     "gen:appstore": "node scripts/generate-appstore-shots.mjs",
     "gen:borne": "node scripts/generate-borne-arcade.mjs",
     "gen:captures-arcade": "tsx scripts/generate-captures-arcade.mjs",
+    "duel:campagne": "tsx scripts/duel-campagne.ts",
     "opt:images": "node scripts/optimize-item-images.mjs",
     "gen:webp": "node scripts/generate-webp.mjs",
     "gen:thumbs": "node scripts/generate-item-thumbs.mjs",
