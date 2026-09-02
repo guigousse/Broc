@@ -150,7 +150,7 @@ const FOND_PLANCHE = { r: 245, g: 238, b: 220 };
  *  lavis blanc, que le trim couleur ne voit pas). On demande à sharp la
  *  boîte d'encre (offsets de trim à seuil élevé), puis on recadre un carré
  *  centré dessus, avec une petite marge. */
-async function recentrerSujet(buf) {
+async function recentrerSujet(buf, zoom = false) {
   const meta = await sharp(buf).metadata();
   const { info } = await sharp(buf)
     .trim({ threshold: 45 })
@@ -161,7 +161,12 @@ async function recentrerSujet(buf) {
   if (!w || !h) return buf;
   const cx = left + w / 2;
   const cy = top + h / 2;
-  let side = Math.round(Math.max(w, h) * 1.05);
+  // « zoom » (tag violet, 3ᵉ passe) : carré pris À L'INTÉRIEUR de la boîte
+  // d'encre — les coins inesthétiques de l'illustration source sortent du
+  // cadre. Sinon, carré englobant avec une petite marge.
+  let side = zoom
+    ? Math.round(Math.min(w, h) * 0.95)
+    : Math.round(Math.max(w, h) * 1.05);
   side = Math.min(side, meta.width, meta.height);
   let x = Math.round(cx - side / 2);
   let y = Math.round(cy - side / 2);
@@ -195,7 +200,9 @@ async function trimCadrage(buf) {
 
 async function retoucherCellule(cellBuf, id, retouches) {
   let buf = cellBuf;
-  if (retouches.recentrage?.includes(id)) {
+  if (retouches.zoom?.includes(id)) {
+    buf = await recentrerSujet(await trimCadrage(buf), true);
+  } else if (retouches.recentrage?.includes(id)) {
     // Pourtour d'abord (sinon la fenêtre recadrée peut mordre le filet et
     // les marges, vues en bandes blanches aux coins — 2ᵉ passe de recette),
     // recentrage sur la boîte d'encre ensuite.
