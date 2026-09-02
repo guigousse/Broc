@@ -198,7 +198,7 @@ async function trimCadrage(buf) {
   return buf;
 }
 
-async function retoucherCellule(cellBuf, id, retouches) {
+async function retoucherCellule(cellBuf, id, retouches, teinte) {
   let buf = cellBuf;
   if (retouches.zoom?.includes(id)) {
     buf = await recentrerSujet(await trimCadrage(buf), true);
@@ -210,11 +210,33 @@ async function retoucherCellule(cellBuf, id, retouches) {
   } else if (retouches.cadrage?.includes(id)) {
     buf = await trimCadrage(buf);
   }
-  if (retouches.desaturation?.includes(id)) {
+  // MONOCHROME par catégorie (recette 2026-09-02) : duotone — luminance
+  // remappée par canal, de l'encre sombre du thème (couleur × 0,45) vers le
+  // blanc papier. `.tint()` de sharp était trop timide (rendu quasi gris).
+  // Chaque thème a sa couleur (config `teintes`), légendaires compris
+  // (couleur de LEUR thème, pas de la planche).
+  if (teinte) {
+    const [r, g, b] = [1, 3, 5].map((i) =>
+      parseInt(teinte.slice(i, i + 2), 16),
+    );
+    const encre = [r, g, b].map((c) => c * 0.45);
+    const papier = 250;
+    // `recomb` (luminance recopiée sur les 3 canaux) plutôt que
+    // `greyscale()` : ce dernier réduit à 1 bande et `linear` à 3 valeurs
+    // refuse alors (« Band expansion using linear is unsupported »).
+    const lum = [0.2126, 0.7152, 0.0722];
     buf = await sharp(buf)
-      .modulate({ saturation: 0.55 })
-      .linear(0.85, 28)
+      .recomb([lum, lum, lum])
+      .linear(
+        encre.map((d) => (papier - d) / 255),
+        encre,
+      )
       .toBuffer();
+  }
+  if (retouches.desaturation?.includes(id)) {
+    // Après le tint, il ne reste à adoucir que le CONTRASTE des cellules
+    // culture-pop, plus dur que la gravure des autres planches.
+    buf = await sharp(buf).linear(0.85, 28).toBuffer();
   }
   return buf;
 }
@@ -242,7 +264,7 @@ async function composerTimbre(cellBuf, id, gabaritPng) {
 }
 
 /* ── Découpe + composition ── */
-async function decouperPlanche(sheet, gabaritPng, retouches) {
+async function decouperPlanche(sheet, gabaritPng, retouches, teintes) {
   const sheetPath = path.join(SHEETS_DIR, `${sheet.nom}.png`);
   let img;
   try {
@@ -266,7 +288,7 @@ async function decouperPlanche(sheet, gabaritPng, retouches) {
 
   let n = 0;
   for (let i = 0; i < sheet.cases.length; i++) {
-    const { id } = sheet.cases[i];
+    const { id, theme } = sheet.cases[i];
     if (!id || ignores.has(id)) continue;
     const col = i % 3;
     const row = Math.floor(i / 3);
@@ -278,7 +300,12 @@ async function decouperPlanche(sheet, gabaritPng, retouches) {
         height: cellH - 2 * inset,
       })
       .toBuffer();
-    cell = await retoucherCellule(cell, id, retouches);
+    cell = await retoucherCellule(
+      cell,
+      id,
+      retouches,
+      teintes?.[theme ?? sheet.nom],
+    );
     await composerTimbre(cell, id, gabaritPng);
     n++;
   }
@@ -297,7 +324,7 @@ function promptSingle(single) {
   ].join("\n");
 }
 
-async function genererSingles(singles, ai, model, modelKey, gabaritPng, retouches) {
+async function genererSingles(singles, ai, model, modelKey, gabaritPng, retouches, teintes) {
   const dir = path.join(SHEETS_DIR, "singles");
   await fs.mkdir(dir, { recursive: true });
   for (const single of singles) {
@@ -331,10 +358,12 @@ async function genererSingles(singles, ai, model, modelKey, gabaritPng, retouche
     try {
       let cell = await fs.readFile(pngPath);
       // Même filet parasite possible qu'en planche : trim systématique.
-      cell = await retoucherCellule(cell, single.id, {
-        ...retouches,
-        cadrage: [...(retouches.cadrage ?? []), single.id],
-      });
+      cell = await retoucherCellule(
+        cell,
+        single.id,
+        { ...retouches, cadrage: [...(retouches.cadrage ?? []), single.id] },
+        teintes?.[single.theme],
+      );
       await composerTimbre(cell, single.id, gabaritPng);
     } catch {
       console.error(`❌  single absent : ${pngPath}`);
@@ -416,7 +445,7 @@ async function main() {
   let total = 0;
   for (const sheet of sheets) {
     console.log(`— découpe ${sheet.nom} —`);
-    total += await decouperPlanche(sheet, gabaritPng, retouches);
+    total += await decouperPlanche(sheet, gabaritPng, retouches, config.teintes);
   }
 
   if (!seuleSheet || seuleSheet === "singles") {
@@ -428,6 +457,7 @@ async function main() {
       modelKey,
       gabaritPng,
       retouches,
+      config.teintes,
     );
     total += retouches.singles.length;
   }

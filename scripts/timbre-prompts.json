@@ -1,5 +1,13 @@
 {
   "commentaire": "Planches 3×3 pour generate-timbres.mjs : 9 illustrations par image Gemini, découpées puis insérées dans le gabarit commun (fenêtre alpha). Les cases à id null sont générées mais non utilisées (remplissage de la grille). Célébrités FICTIVES décrites génériquement (jamais de vraie personne), culture-pop en parodies sans marque ni texte. Retouches = tags Finder de la recette Guillaume 2026-09-02 : rouge→cadrage (trim des marges crème puis plein cadre), bleu→désaturation, vert→droits d'auteur (regénérés en singles avec un sujet original).",
+  "teintes": {
+    "commentaire": "Monochrome par catégorie (recette 2026-09-02) : gris puis tint — mêmes couleurs que COULEUR_THEME_TIMBRE (PieceVisuel).",
+    "voyage": "#6f9ac2",
+    "faune": "#7da36a",
+    "monuments": "#c9a86a",
+    "celebrites": "#c27a8a",
+    "culture-pop": "#8a7ac2"
+  },
   "retouches": {
     "zoom": [
       "timbre.bebert_bahut",
@@ -54,12 +62,14 @@
     {
       "id": "timbre.foxy_crush",
       "encre": "rich violet-purple",
-      "sujet": "a dapper cartoon fox in a bow tie juggling colorful gems, whimsical circus poster style"
+      "sujet": "a dapper cartoon fox in a bow tie juggling colorful gems, whimsical circus poster style",
+      "theme": "culture-pop"
     },
     {
       "id": "timbre.pocket_monster_jungle",
       "encre": "rich violet-purple",
-      "sujet": "small whimsical round-bodied jungle spirits with leaf hats and glowing eyes peeking through lush foliage, original storybook creatures"
+      "sujet": "small whimsical round-bodied jungle spirits with leaf hats and glowing eyes peeking through lush foliage, original storybook creatures",
+      "theme": "culture-pop"
     }
   ],
   "sheets": [
@@ -67,90 +77,257 @@
       "nom": "voyage",
       "encre": "deep Prussian blue",
       "cases": [
-        { "id": "timbre.paquebot_etoile_du_nord", "sujet": "a grand 1930s ocean liner at sea, three-quarter bow view, smoke trailing from its funnels" },
-        { "id": "timbre.ballon_monte_1870", "sujet": "a 19th-century gas balloon carrying mail sacks in its basket, drifting over city rooftops" },
-        { "id": "timbre.orient_express_quai_7", "sujet": "a luxurious steam express train waiting at a station platform under clouds of steam" },
-        { "id": "timbre.autocar_route_des_alpes", "sujet": "a vintage 1920s open-top touring bus climbing a winding alpine mountain road" },
-        { "id": "timbre.phare_de_ker_avel", "sujet": "a lighthouse on a rocky islet, waves crashing, its beam sweeping the night" },
-        { "id": "timbre.croisiere_du_nil_1932", "sujet": "a paddle steamer cruising a wide river past palm trees and distant pyramids" },
-        { "id": "timbre.hydravion_ligne_sud", "sujet": "a 1930s mail seaplane taking off from a calm bay at dawn" },
-        { "id": "timbre.cremaillere_du_mont_bleu", "sujet": "a rack railway carriage climbing a steep snowy mountainside" },
-        { "id": "timbre.dirigeable_aurore", "sujet": "a majestic silver airship floating above the clouds at sunrise" }
+        {
+          "id": "timbre.paquebot_etoile_du_nord",
+          "sujet": "a grand 1930s ocean liner at sea, three-quarter bow view, smoke trailing from its funnels"
+        },
+        {
+          "id": "timbre.ballon_monte_1870",
+          "sujet": "a 19th-century gas balloon carrying mail sacks in its basket, drifting over city rooftops"
+        },
+        {
+          "id": "timbre.orient_express_quai_7",
+          "sujet": "a luxurious steam express train waiting at a station platform under clouds of steam"
+        },
+        {
+          "id": "timbre.autocar_route_des_alpes",
+          "sujet": "a vintage 1920s open-top touring bus climbing a winding alpine mountain road"
+        },
+        {
+          "id": "timbre.phare_de_ker_avel",
+          "sujet": "a lighthouse on a rocky islet, waves crashing, its beam sweeping the night"
+        },
+        {
+          "id": "timbre.croisiere_du_nil_1932",
+          "sujet": "a paddle steamer cruising a wide river past palm trees and distant pyramids"
+        },
+        {
+          "id": "timbre.hydravion_ligne_sud",
+          "sujet": "a 1930s mail seaplane taking off from a calm bay at dawn"
+        },
+        {
+          "id": "timbre.cremaillere_du_mont_bleu",
+          "sujet": "a rack railway carriage climbing a steep snowy mountainside"
+        },
+        {
+          "id": "timbre.dirigeable_aurore",
+          "sujet": "a majestic silver airship floating above the clouds at sunrise"
+        }
       ]
     },
     {
       "nom": "faune",
       "encre": "deep forest green",
       "cases": [
-        { "id": "timbre.renard_roux", "sujet": "a red fox sitting alert in tall meadow grass" },
-        { "id": "timbre.herisson_d_europe", "sujet": "a european hedgehog among fallen autumn leaves" },
-        { "id": "timbre.mesange_bleue", "sujet": "a blue tit perched on a flowering branch" },
-        { "id": "timbre.cerf_en_brame", "sujet": "a roaring red deer stag in a misty forest clearing" },
-        { "id": "timbre.loutre_de_riviere", "sujet": "a river otter on a mossy bank at the water's edge" },
-        { "id": "timbre.chouette_hulotte", "sujet": "a tawny owl on an oak branch at dusk" },
-        { "id": "timbre.lynx_boreal", "sujet": "a northern lynx standing in snowy undergrowth" },
-        { "id": "timbre.ours_des_pyrenees", "sujet": "a brown bear on a rocky mountain slope" },
-        { "id": "timbre.gypaete_barbu", "sujet": "a bearded vulture soaring over mountain peaks" }
+        {
+          "id": "timbre.renard_roux",
+          "sujet": "a red fox sitting alert in tall meadow grass"
+        },
+        {
+          "id": "timbre.herisson_d_europe",
+          "sujet": "a european hedgehog among fallen autumn leaves"
+        },
+        {
+          "id": "timbre.mesange_bleue",
+          "sujet": "a blue tit perched on a flowering branch"
+        },
+        {
+          "id": "timbre.cerf_en_brame",
+          "sujet": "a roaring red deer stag in a misty forest clearing"
+        },
+        {
+          "id": "timbre.loutre_de_riviere",
+          "sujet": "a river otter on a mossy bank at the water's edge"
+        },
+        {
+          "id": "timbre.chouette_hulotte",
+          "sujet": "a tawny owl on an oak branch at dusk"
+        },
+        {
+          "id": "timbre.lynx_boreal",
+          "sujet": "a northern lynx standing in snowy undergrowth"
+        },
+        {
+          "id": "timbre.ours_des_pyrenees",
+          "sujet": "a brown bear on a rocky mountain slope"
+        },
+        {
+          "id": "timbre.gypaete_barbu",
+          "sujet": "a bearded vulture soaring over mountain peaks"
+        }
       ]
     },
     {
       "nom": "monuments",
       "encre": "warm ochre-brown",
       "cases": [
-        { "id": "timbre.tour_de_l_horloge", "sujet": "a medieval clock tower with an ornate astronomical clock face" },
-        { "id": "timbre.pont_des_arts", "sujet": "an iron footbridge over a river with strolling figures, Parisian atmosphere" },
-        { "id": "timbre.phare_de_cordouan", "sujet": "a monumental classical stone lighthouse standing alone in the sea" },
-        { "id": "timbre.chateau_de_chambord", "sujet": "a French renaissance château bristling with turrets and chimneys" },
-        { "id": "timbre.mont_saint_michel", "sujet": "a fortified abbey island rising from tidal flats" },
-        { "id": "timbre.arenes_de_nimes", "sujet": "a roman amphitheatre with two tiers of arched stone galleries" },
-        { "id": "timbre.viaduc_de_garabit", "sujet": "a tall red iron arch viaduct spanning a deep gorge" },
-        { "id": "timbre.opera_garnier", "sujet": "an opulent Beaux-Arts opera house facade with golden statues" },
-        { "id": "timbre.palais_ideal", "sujet": "a fantastical hand-built palace covered in sculpted stones, columns and grottoes" }
+        {
+          "id": "timbre.tour_de_l_horloge",
+          "sujet": "a medieval clock tower with an ornate astronomical clock face"
+        },
+        {
+          "id": "timbre.pont_des_arts",
+          "sujet": "an iron footbridge over a river with strolling figures, Parisian atmosphere"
+        },
+        {
+          "id": "timbre.phare_de_cordouan",
+          "sujet": "a monumental classical stone lighthouse standing alone in the sea"
+        },
+        {
+          "id": "timbre.chateau_de_chambord",
+          "sujet": "a French renaissance château bristling with turrets and chimneys"
+        },
+        {
+          "id": "timbre.mont_saint_michel",
+          "sujet": "a fortified abbey island rising from tidal flats"
+        },
+        {
+          "id": "timbre.arenes_de_nimes",
+          "sujet": "a roman amphitheatre with two tiers of arched stone galleries"
+        },
+        {
+          "id": "timbre.viaduc_de_garabit",
+          "sujet": "a tall red iron arch viaduct spanning a deep gorge"
+        },
+        {
+          "id": "timbre.opera_garnier",
+          "sujet": "an opulent Beaux-Arts opera house facade with golden statues"
+        },
+        {
+          "id": "timbre.palais_ideal",
+          "sujet": "a fantastical hand-built palace covered in sculpted stones, columns and grottoes"
+        }
       ]
     },
     {
       "nom": "celebrites",
       "encre": "deep carmine red",
       "cases": [
-        { "id": "timbre.victor_de_la_brasse", "sujet": "a 1960s rock'n'roll singer with a tall pompadour gripping a vintage microphone, stage lights behind" },
-        { "id": "timbre.judith_loiseau", "sujet": "an elegant 1960s female singer with a beehive hairdo singing into a studio microphone" },
-        { "id": "timbre.paul_nazamour", "sujet": "a tuxedoed crooner with a gentle smile caught in a single spotlight" },
-        { "id": "timbre.stevranos", "sujet": "a flamboyant showman with curly hair and tinted glasses, arms raised amid confetti" },
-        { "id": "timbre.grand_max", "sujet": "a jovial fairground showman in a checked jacket and bow tie, winking" },
-        { "id": "timbre.bebert_bahut", "sujet": "a painter in a paint-splattered smock holding brushes and a palette in front of an easel" },
-        { "id": "timbre.picassiette", "sujet": "a cubist painter seen from behind, at work on a canvas of fractured geometric shapes" },
-        { "id": "timbre.roland_duff", "sujet": "a bearded fauvist painter applying bold strokes of pure vivid color" },
-        { "id": "timbre.laluck_verrier", "sujet": "a master glassmaker shaping a glowing art-nouveau glass vase at his workbench" }
+        {
+          "id": "timbre.victor_de_la_brasse",
+          "sujet": "a 1960s rock'n'roll singer with a tall pompadour gripping a vintage microphone, stage lights behind"
+        },
+        {
+          "id": "timbre.judith_loiseau",
+          "sujet": "an elegant 1960s female singer with a beehive hairdo singing into a studio microphone"
+        },
+        {
+          "id": "timbre.paul_nazamour",
+          "sujet": "a tuxedoed crooner with a gentle smile caught in a single spotlight"
+        },
+        {
+          "id": "timbre.stevranos",
+          "sujet": "a flamboyant showman with curly hair and tinted glasses, arms raised amid confetti"
+        },
+        {
+          "id": "timbre.grand_max",
+          "sujet": "a jovial fairground showman in a checked jacket and bow tie, winking"
+        },
+        {
+          "id": "timbre.bebert_bahut",
+          "sujet": "a painter in a paint-splattered smock holding brushes and a palette in front of an easel"
+        },
+        {
+          "id": "timbre.picassiette",
+          "sujet": "a cubist painter seen from behind, at work on a canvas of fractured geometric shapes"
+        },
+        {
+          "id": "timbre.roland_duff",
+          "sujet": "a bearded fauvist painter applying bold strokes of pure vivid color"
+        },
+        {
+          "id": "timbre.laluck_verrier",
+          "sujet": "a master glassmaker shaping a glowing art-nouveau glass vase at his workbench"
+        }
       ]
     },
     {
       "nom": "culture-pop",
       "encre": "rich violet-purple",
       "cases": [
-        { "id": "timbre.le_plombier_sauteur", "sujet": "a cheerful cartoon plumber in overalls leaping between green pipes, retro video-game poster style" },
-        { "id": "timbre.foxy_crush", "sujet": "a mischievous cartoon fox mascot striking a cool pose, 1990s video-game style" },
-        { "id": "timbre.pocket_monster_jungle", "sujet": "cute pocket-sized cartoon creatures peeking through lush jungle leaves" },
-        { "id": "timbre.dark_father", "sujet": "a menacing sci-fi villain in a black cloak and angular helmet, dramatic backlight" },
-        { "id": "timbre.titou_cap_sur_la_lune", "sujet": "a young comic-strip adventurer and his small white dog planting a flag on the moon beside a retro red rocket" },
-        { "id": "timbre.le_petit_moustachu", "sujet": "a comical little silent-film tramp with bowler hat, small mustache and cane, black-and-white film still style" },
-        { "id": "timbre.loups_des_steppes", "sujet": "a wild rock band of four long-haired musicians on stage with guitars raised, concert poster style" },
-        { "id": "timbre.trolling_sons", "sujet": "a cartoon rock band of trolls with wild colorful hair and electric guitars" },
-        { "id": "timbre.legende_de_solda", "sujet": "a young adventurer in a green hooded tunic raising a glowing sword before a mysterious castle, adventure game poster style" }
+        {
+          "id": "timbre.le_plombier_sauteur",
+          "sujet": "a cheerful cartoon plumber in overalls leaping between green pipes, retro video-game poster style"
+        },
+        {
+          "id": "timbre.foxy_crush",
+          "sujet": "a mischievous cartoon fox mascot striking a cool pose, 1990s video-game style"
+        },
+        {
+          "id": "timbre.pocket_monster_jungle",
+          "sujet": "cute pocket-sized cartoon creatures peeking through lush jungle leaves"
+        },
+        {
+          "id": "timbre.dark_father",
+          "sujet": "a menacing sci-fi villain in a black cloak and angular helmet, dramatic backlight"
+        },
+        {
+          "id": "timbre.titou_cap_sur_la_lune",
+          "sujet": "a young comic-strip adventurer and his small white dog planting a flag on the moon beside a retro red rocket"
+        },
+        {
+          "id": "timbre.le_petit_moustachu",
+          "sujet": "a comical little silent-film tramp with bowler hat, small mustache and cane, black-and-white film still style"
+        },
+        {
+          "id": "timbre.loups_des_steppes",
+          "sujet": "a wild rock band of four long-haired musicians on stage with guitars raised, concert poster style"
+        },
+        {
+          "id": "timbre.trolling_sons",
+          "sujet": "a cartoon rock band of trolls with wild colorful hair and electric guitars"
+        },
+        {
+          "id": "timbre.legende_de_solda",
+          "sujet": "a young adventurer in a green hooded tunic raising a glowing sword before a mysterious castle, adventure game poster style"
+        }
       ]
     },
     {
       "nom": "legendaires",
       "encre": "sepia and antique gold",
       "cases": [
-        { "id": "timbre.premier_vol_postal_1925", "sujet": "a heroic biplane flying over desert dunes carrying a mail sack, golden dawn light" },
-        { "id": "timbre.grand_tetras_surcharge", "sujet": "a displaying capercaillie grouse with fanned tail on a forest floor" },
-        { "id": "timbre.tour_eiffel_erreur_de_couleur", "sujet": "an iron lattice tower rising over Paris rooftops, printed entirely in a striking crimson misprint hue" },
-        { "id": "timbre.ridor_couturier", "sujet": "an elegant mid-century couturier adjusting a dramatic New Look gown on a dress form" },
-        { "id": "timbre.guerre_galactique_1978", "sujet": "a retro 1978 space-opera poster scene, starfighters battling above a desert planet under dramatic rays" },
-        { "id": null, "sujet": "an ornate brass postal horn emblem with ribbons" },
-        { "id": null, "sujet": "a vintage globe crossed by dotted travel routes" },
-        { "id": null, "sujet": "a laurel wreath surrounding a five-pointed star" },
-        { "id": null, "sujet": "a quill pen resting against a glass inkwell" }
+        {
+          "id": "timbre.premier_vol_postal_1925",
+          "sujet": "a heroic biplane flying over desert dunes carrying a mail sack, golden dawn light",
+          "theme": "voyage"
+        },
+        {
+          "id": "timbre.grand_tetras_surcharge",
+          "sujet": "a displaying capercaillie grouse with fanned tail on a forest floor",
+          "theme": "faune"
+        },
+        {
+          "id": "timbre.tour_eiffel_erreur_de_couleur",
+          "sujet": "an iron lattice tower rising over Paris rooftops, printed entirely in a striking crimson misprint hue",
+          "theme": "monuments"
+        },
+        {
+          "id": "timbre.ridor_couturier",
+          "sujet": "an elegant mid-century couturier adjusting a dramatic New Look gown on a dress form",
+          "theme": "celebrites"
+        },
+        {
+          "id": "timbre.guerre_galactique_1978",
+          "sujet": "a retro 1978 space-opera poster scene, starfighters battling above a desert planet under dramatic rays",
+          "theme": "culture-pop"
+        },
+        {
+          "id": null,
+          "sujet": "an ornate brass postal horn emblem with ribbons"
+        },
+        {
+          "id": null,
+          "sujet": "a vintage globe crossed by dotted travel routes"
+        },
+        {
+          "id": null,
+          "sujet": "a laurel wreath surrounding a five-pointed star"
+        },
+        {
+          "id": null,
+          "sujet": "a quill pen resting against a glass inkwell"
+        }
       ]
     }
   ]
