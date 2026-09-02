@@ -4,7 +4,7 @@ const E = (declencheur: Effet["declencheur"], prix: number, ...actions: Effet["a
   type: "effet", declencheur, actions, prix,
 });
 
-/** Version 5 (2026-09-02), campagne 6 : règles 4 et 5 sur les deux dernières cartes retouchables. Historique dans docs/superpowers/duel/rapport-equilibrage.md. */
+/** Version 6 (2026-09-02), campagne 7 : Gutenberg reprend ses deux points en PV, la pince perd 1 attaque. Historique dans docs/superpowers/duel/rapport-equilibrage.md. */
 export const CARTES_DUEL: Record<string, StatsDuel> = {
   // ── Musique (8) : pioche, gains d'attaque alliés ──
   "carte.vinyle_des_loups_des_steppes_bark_to_be_free": { cout: 2, attaque: 2, pv: 1, texte: { type: "cri", variante: "pioche" } },
@@ -32,7 +32,7 @@ export const CARTES_DUEL: Record<string, StatsDuel> = {
   "carte.miserables_pleiade": { cout: 4, attaque: 4, pv: 3, texte: { type: "solide" } },
   "carte.conte_de_l_aviateur_et_de_l_enfant_roi_edition": { cout: 2, attaque: 2, pv: 2, texte: E("casse", 1, { type: "pioche", valeur: 1 }) },
   "carte.le_petit_moustachu_edition_originale_1961": { cout: 3, attaque: 2, pv: 4, texte: E("pose", 1, { type: "degats", cible: "objetAdverse", valeur: 2 }) },
-  "carte.gutenberg_feuillet": { cout: 4, attaque: 6, pv: 3, texte: E("pose", 1, { type: "pioche", valeur: 2 }) },
+  "carte.gutenberg_feuillet": { cout: 4, attaque: 4, pv: 5, texte: E("pose", 1, { type: "pioche", valeur: 2 }) },
 
   // ── Mode (7) : Ruse, retour en main, tempo ──
   "carte.veste_jean_delavee": { cout: 2, attaque: 2, pv: 2, texte: { type: "ruse" } },
@@ -64,7 +64,7 @@ export const CARTES_DUEL: Record<string, StatsDuel> = {
   "carte.marteau_menuisier": { cout: 1, attaque: 2, pv: 1 },
   "carte.boite_outils_complete": { cout: 3, attaque: 3, pv: 4 },
   "carte.etabli_pliant_ancien": { cout: 3, attaque: 3, pv: 3, texte: { type: "prompt" } },
-  "carte.pince_etirer_cuivre": { cout: 2, attaque: 3, pv: 1, texte: { type: "prompt" } },
+  "carte.pince_etirer_cuivre": { cout: 2, attaque: 2, pv: 2, texte: { type: "prompt" } },
   "carte.scie_egoine_de_charpentier": { cout: 4, attaque: 5, pv: 4 },
   "carte.boite_d_outils_de_manufacture_signee": { cout: 5, attaque: 4, pv: 4, texte: E("casse", 3, { type: "degats", cible: "tousObjetsAdverses", valeur: 2 }) },
   "carte.rabot_d_ebeniste_a_semelle_modele_605": { cout: 4, attaque: 4, pv: 3, texte: E("attaque", 2, { type: "degats", cible: "vitrineAdverse", valeur: 1 }) },

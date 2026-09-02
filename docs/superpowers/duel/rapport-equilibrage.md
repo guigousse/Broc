@@ -473,3 +473,46 @@ Hors cible :
 - carte pince_etirer_cuivre : victoire 55.3 %
 - premier joueur : 65.7 %
 - agressif contre contrôle : 64.1 %
+
+## Campagne 7 — graine 8, cartes v6
+
+### Retouches (itération 7)
+
+| Carte | Avant → après | Règle |
+|---|---|---|
+| gutenberg_feuillet | 6/3 → 4/5 | 5, réallocation : les deux points gagnés par `prix 3 → 1` repassent en PV |
+| pince_etirer_cuivre | 3/1 → 2/2 | 4 (1 attaque → 1 PV) |
+
+La règle 5 ne dit pas *quelle* stat reçoit le point gagné sur le prix. Les
+deux avaient été mis en attaque (itérations 4 et 5), puis l'itération 6 avait
+encore échangé 1 PV contre 1 attaque : mesuré **moins bon** (44,5 → 43,3 %).
+Gutenberg reprend donc ses deux points en PV : un feuillet à 3 PV mourait à
+tout.
+
+Graine 8 · 20000 parties
+
+| Mesure | Valeur |
+|---|---|
+| Premier joueur | 66.8 % |
+| Manches (moyenne / max) | 9.2 / 21 |
+| Nuls / épuisées | 0.0 % / 0.0 % |
+| Agressif contre contrôle | 60.7 % |
+
+| Catégorie | Victoires |
+|---|---|
+| Bricolage | 49.6 % |
+| Maison | 50.2 % |
+| Mode | 52.0 % |
+| Musique | 49.1 % |
+| Livres & Papeterie | 49.1 % |
+| Jeux & Loisirs | 50.2 % |
+| Objets d'art | 50.4 % |
+
+Hors cible :
+- carte la_petite_robe_noire_chaine_1925 : victoire 56.0 %
+- premier joueur : 66.8 %
+- agressif contre contrôle : 60.7 %
+
+Trois mesures hors cible sur 155 : les 50 taux de victoire et les 50 taux de
+pose sont dans la cible sauf un, comme les 7 catégories, la durée des parties
+et le taux de nuls.
