@@ -5,13 +5,14 @@ import {
   ETAL_MAX, MAIN_INITIALE, PLAFOND_MAX, VITRINE_INITIALE, adverse, cloner, sousRuse, trouverObjet,
   type Cible, type EtatPartie, type Joueur, type ObjetEnJeu, type Resultat,
 } from "@/lib/duel/etat";
-import { degatsDAttaque, infligerDegats, piocher, retirerCasses, verifierFin } from "@/lib/duel/operations";
+import { degatsDAttaque, piocher, verifierFin } from "@/lib/duel/operations";
+import { blesserObjet, cibleRequise, ciblesDeChoix, declencher, nettoyerCasse } from "@/lib/duel/effets";
 
 function joueurInitial(deck: string[]): Joueur {
   return { vitrine: VITRINE_INITIALE, plafond: 0, energie: 0, main: [], deck, etal: [], casse: [], echecsPioche: 0 };
 }
 
-/** Mute `e` : énergie, pioche, remise à zéro des attaques (effets debutTour en Task 5). */
+/** Mute `e` : énergie, pioche, remise à zéro des attaques, effets `debutTour`. */
 function commencerTour(e: EtatPartie): void {
   e.tour += 1;
   const j = e.joueurs[e.actif];
@@ -19,6 +20,7 @@ function commencerTour(e: EtatPartie): void {
   j.energie = j.plafond;
   for (const o of j.etal) o.aAttaque = false;
   piocher(e, e.actif, 1);
+  for (const o of [...j.etal]) declencher(e, e.actif, o.uid, "debutTour");
   verifierFin(e);
 }
 
@@ -37,7 +39,7 @@ export function finirTour(etat: EtatPartie): Resultat {
   if (etat.fini) return { ok: false, raison: "partieFinie", etat };
   const e = cloner(etat);
   for (const o of e.joueurs[e.actif].etal) if (o.motsCles.includes("fragile")) o.pv -= 1;
-  retirerCasses(e);
+  nettoyerCasse(e);
   verifierFin(e);
   if (!e.fini) {
     e.actif = adverse(e.actif);
@@ -67,9 +69,10 @@ export function attaquer(etat: EtatPartie, uid: number, cible: Cible): Resultat 
   const legale = ciblesLegales(etat, uid).some((c) => c.type === cible.type && (c.type === "vitrine" || c.uid === (cible as { uid: number }).uid));
   if (!legale) return { ok: false, raison: "cibleIllegale", etat };
   const e = cloner(etat);
-  const attaquant = trouverObjet(e, uid)!.objet;
+  let attaquant = trouverObjet(e, uid)!.objet;
   attaquant.aAttaque = true;
-  // Déclencheur « attaque » : Task 5.
+  declencher(e, e.actif, uid, "attaque");
+  attaquant = trouverObjet(e, uid)!.objet; // ses stats ont pu changer
   if (cible.type === "vitrine") {
     e.joueurs[adverse(e.actif)].vitrine -= attaquant.attaque;
     e.journal.push(`J${e.actif} ${attaquant.id} → vitrine ${attaquant.attaque}`);
@@ -77,10 +80,10 @@ export function attaquer(etat: EtatPartie, uid: number, cible: Cible): Resultat 
     const defenseur = trouverObjet(e, cible.uid)!.objet;
     const dA = degatsDAttaque(attaquant, defenseur);
     const dD = degatsDAttaque(defenseur, attaquant);
-    infligerDegats(e, defenseur.uid, dA);
-    infligerDegats(e, attaquant.uid, dD);
     e.journal.push(`J${e.actif} ${attaquant.id} ⇄ ${defenseur.id} (${dA}/${dD})`);
-    retirerCasses(e);
+    blesserObjet(e, defenseur.uid, dA);
+    blesserObjet(e, attaquant.uid, dD);
+    nettoyerCasse(e);
   }
   verifierFin(e);
   return { ok: true, etat: e };
@@ -94,6 +97,10 @@ export function poser(etat: EtatPartie, id: string, cible?: Cible): Resultat {
   const s = statsDuel(id);
   if (s.cout > j.energie) return { ok: false, raison: "energie", etat };
   if (j.etal.length >= ETAL_MAX) return { ok: false, raison: "etalPlein", etat };
+  if (cibleRequise(id) && ciblesDeChoix(etat, etat.actif).length > 0) {
+    const valide = cible?.type === "objet" && ciblesDeChoix(etat, etat.actif).includes(cible.uid);
+    if (!valide) return { ok: false, raison: "cibleRequise", etat };
+  }
   const e = cloner(etat);
   const joueur = e.joueurs[e.actif];
   joueur.main.splice(i, 1);
@@ -102,7 +109,7 @@ export function poser(etat: EtatPartie, id: string, cible?: Cible): Resultat {
   const objet: ObjetEnJeu = { uid: e.prochainUid++, id, attaque: s.attaque, pv: s.pv, motsCles, poseAuTour: e.tour, aAttaque: false };
   joueur.etal.push(objet);
   e.journal.push(`J${e.actif} pose ${id}`);
-  void cible; // Cri et effets « pose » : Task 5.
+  declencher(e, e.actif, objet.uid, "pose", cible);
   verifierFin(e);
   return { ok: true, etat: e };
 }
