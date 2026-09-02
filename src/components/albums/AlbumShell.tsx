@@ -212,6 +212,74 @@ export function AlbumShell({
   );
 }
 
+/** Pagination au centre (children), compteur « x/50 » à sa gauche, Recycler
+ *  (icône + chiffre) à sa droite : la ligne du bas des deux albums. */
+const ligneBas: CSSProperties = {
+  position: "relative",
+  marginTop: 4,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const compteurCoin: CSSProperties = {
+  position: "absolute",
+  left: 0,
+  top: "50%",
+  transform: "translateY(-50%)",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  letterSpacing: "0.08em",
+  color: "var(--brass-300)",
+  whiteSpace: "nowrap",
+};
+
+const recyclerCoin: CSSProperties = {
+  position: "absolute",
+  right: 0,
+  top: "50%",
+  transform: "translateY(-50%)",
+};
+
+interface LigneBasAlbumProps {
+  compteur: { possedees: number; total: number };
+  /** Le titre de l'album, repris par la confirmation du Recycler. */
+  titre: string;
+  doublons: number;
+  onRecycler: () => void;
+  /** La pagination de l'album, au centre. */
+  children: ReactNode;
+}
+
+export function LigneBasAlbum({
+  compteur,
+  titre,
+  doublons,
+  onRecycler,
+  children,
+}: LigneBasAlbumProps) {
+  const { d, tr } = useLangue();
+  return (
+    <div style={ligneBas}>
+      <span style={compteurCoin}>
+        {tr(d.albums.compteur, {
+          n: compteur.possedees,
+          total: compteur.total,
+        })}
+      </span>
+      {children}
+      <div style={recyclerCoin}>
+        <RecyclerBouton
+          icone
+          titre={titre}
+          doublons={doublons}
+          onRecycler={onRecycler}
+        />
+      </div>
+    </div>
+  );
+}
+
 interface RecyclerBoutonProps {
   /** Le titre de l'album, repris par la modale de confirmation. */
   titre: string;

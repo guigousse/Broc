@@ -7,7 +7,13 @@
  * page) + les 4 actions du contexte en espion.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { ClasseurOverlay } from "./ClasseurOverlay";
 import { piecesDe } from "@/data/pieces";
 import type { AlbumsState } from "@/types/game";
@@ -151,12 +157,32 @@ describe("ClasseurOverlay — plein écran", () => {
     expect(dialog.style.border).toBe("");
   });
 
-  it("aucun titre visible dans le panneau ; le nom reste porté par l'aria-label du dialog", () => {
+  // Le titre avait été retiré à la recette du 2026-08-31, puis REPRIS au
+  // centre de l'en-tête à la refonte du 2026-09-02, comme l'album de timbres.
+  it("le titre est visible dans l'en-tête ET porté par l'aria-label du dialog", () => {
     render(<ClasseurOverlay open onClose={() => {}} />);
-    expect(screen.queryByText("Classeur de cartes")).toBeNull();
+    expect(screen.getByText("Classeur de cartes")).toBeTruthy();
     expect(
       screen.getByRole("dialog", { name: "Classeur de cartes" }),
     ).toBeTruthy();
+  });
+
+  /** Recette 2026-09-02 : chaque emplacement porte son numéro, continu à
+   *  travers les pages — cases « à venir » comprises. */
+  it("les emplacements sont numérotés, en continu d'une page à l'autre", () => {
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    const grille = () => within(screen.getByTestId("page-classeur"));
+    // Page 1 : numéros 1 à 9.
+    for (const n of [1, 5, 9]) {
+      expect(grille().getByText(String(n))).toBeTruthy();
+    }
+    expect(grille().queryByText("10")).toBeNull();
+    // Dernière page (6) : numéros 46 à 54, cases « à venir » comprises.
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(screen.getByRole("button", { name: "Page suivante" }));
+    }
+    expect(grille().getByText("46")).toBeTruthy();
+    expect(grille().getByText("54")).toBeTruthy();
   });
 
   it("les flèches de pagination n'ont ni cadre ni fond", () => {

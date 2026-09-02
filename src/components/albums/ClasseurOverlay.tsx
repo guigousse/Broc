@@ -9,6 +9,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   AlbumShell,
+  LigneBasAlbum,
   PANNEAU_BOTTOM,
   PANNEAU_TOP,
 } from "@/components/albums/AlbumShell";
@@ -24,10 +25,14 @@ import { nomObjet } from "@/lib/i18n/contenu";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 
 /* ── LE CLASSEUR DE CARTES ────────────────────────────────────────────────
-   6 pages de 9 pochettes (50 cartes + 4 emplacements « à venir » sur la
-   dernière page), navigables au swipe (seuil 40px, même valeur que
+   6 pages de 9 pochettes NUMÉROTÉES (50 cartes + 4 emplacements « à venir »
+   sur la dernière page), navigables au swipe (seuil 40px, même valeur que
    `ItemSwipeDeck`) ou aux boutons ◀▶. Une pochette possédée s'ouvre en
-   `FichePiece` et marque la pièce consultée (éteint sa pastille « * »). */
+   `FichePiece` et marque la pièce consultée (éteint sa pastille « * »).
+
+   Même agencement que l'album de timbres depuis la recette du 2026-09-02 :
+   titre centré dans l'en-tête, et la ligne compteur + pagination + Recycler
+   (icône + chiffre) poussée contre la TabBar. */
 
 const PAR_PAGE = 9;
 const SWIPE_SEUIL_PX = 40;
@@ -35,11 +40,12 @@ const SWIPE_SEUIL_PX = 40;
 const GAP_PX = 10;
 const PADDING_PX = 12;
 /** Hauteur (px) prise autour de la grille DANS le panneau : marges de la
- *  coquille, titre, ligne compteur/Recycler et barre de pagination. S'ajoute
- *  au chrome de l'app (en-tête, TabBar, safe areas) pour borner la largeur
- *  de la grille : ses 3 lignes tiennent TOUJOURS dans la hauteur restante
- *  sans défiler (iPhone SE compris). */
-const HORS_GRILLE_PX = 200;
+ *  coquille, ligne d'en-tête (titre/croix) et ligne compteur + pagination +
+ *  Recycler. S'ajoute au chrome de l'app (en-tête, TabBar, safe areas) pour
+ *  borner la largeur de la grille : ses 3 lignes tiennent TOUJOURS dans la
+ *  hauteur restante sans défiler (iPhone SE compris). Recompté à la refonte
+ *  du 2026-09-02 (plus de bouton Recycler encadré) : la grille y gagne. */
+const HORS_GRILLE_PX = 130;
 /* Parenthèses OBLIGATOIRES : `100dvh - calc(a) + calc(b)` ajouterait la
    TabBar au lieu de la soustraire. */
 const CHROME_APP = `(${PANNEAU_TOP}) - (${PANNEAU_BOTTOM})`;
@@ -101,6 +107,21 @@ const pointInterrogation: CSSProperties = {
   pointerEvents: "none",
 };
 
+/** Le numéro de l'emplacement (1..54, continu à travers les pages), discret
+ *  dans le coin haut-gauche de chaque pochette (recette 2026-09-02). */
+const numeroCase: CSSProperties = {
+  position: "absolute",
+  top: 2,
+  left: 5,
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  fontWeight: 700,
+  color: "var(--brass-700)",
+  textShadow: "0 0 2px var(--paper-100), 0 0 4px var(--paper-100)",
+  pointerEvents: "none",
+  zIndex: 1,
+};
+
 const badgeQuantite: CSSProperties = {
   position: "absolute",
   right: 4,
@@ -136,7 +157,11 @@ const paginationBar: CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   gap: 14,
-  marginTop: 12,
+};
+
+/** Pousse la ligne du bas contre la TabBar, la grille reste en haut. */
+const basWrap: CSSProperties = {
+  marginTop: "auto",
 };
 
 const pageBtn: CSSProperties = {
@@ -256,23 +281,23 @@ export function ClasseurOverlay({
     startXRef.current = null;
   };
 
+  const recycler = () => {
+    const n = recyclerDoublonsAlbum("classeur");
+    toast(
+      tr(n === 1 ? d.albums.recycleFaitUn : d.albums.recycleFait, {
+        n,
+        categorie: libelleCategorie(CATEGORIE_ALBUM.classeur, d),
+      }),
+      { type: "succes" },
+    );
+  };
+
   return (
     <AlbumShell
       open={open}
       onClose={onClose}
       titre={d.albums.classeurTitre}
-      compteur={{ possedees: nbPossedees(album), total: pieces.length }}
-      doublons={doublons(album)}
-      onRecycler={() => {
-        const n = recyclerDoublonsAlbum("classeur");
-        toast(
-          tr(n === 1 ? d.albums.recycleFaitUn : d.albums.recycleFait, {
-            n,
-            categorie: libelleCategorie(CATEGORIE_ALBUM.classeur, d),
-          }),
-          { type: "succes" },
-        );
-      }}
+      titreVisible
     >
       <div
         style={grille3x3}
@@ -283,9 +308,13 @@ export function ClasseurOverlay({
         onPointerLeave={onPointerAbandonne}
       >
         {cases.map((p, i) => {
+          const numero = page * PAR_PAGE + i + 1;
           if (!p) {
             return (
               <div key={`vide-${i}`} style={{ ...pochette, opacity: 0.4 }}>
+                <span style={numeroCase} aria-hidden>
+                  {numero}
+                </span>
                 {d.albums.aVenir}
               </div>
             );
@@ -309,6 +338,9 @@ export function ClasseurOverlay({
                 setFiche(p.id);
               }}
             >
+              <span style={numeroCase} aria-hidden>
+                {numero}
+              </span>
               <div style={visuelWrap}>
                 <PieceVisuel id={p.id} grise={!possedee} thumb />
               </div>
@@ -327,7 +359,16 @@ export function ClasseurOverlay({
           );
         })}
       </div>
-      <Pagination page={page} pages={pages} onChange={setPage} d={d} />
+      <div style={basWrap}>
+        <LigneBasAlbum
+          compteur={{ possedees: nbPossedees(album), total: pieces.length }}
+          titre={d.albums.classeurTitre}
+          doublons={doublons(album)}
+          onRecycler={recycler}
+        >
+          <Pagination page={page} pages={pages} onChange={setPage} d={d} />
+        </LigneBasAlbum>
+      </div>
       {fiche && (
         <FichePiece
           id={fiche}

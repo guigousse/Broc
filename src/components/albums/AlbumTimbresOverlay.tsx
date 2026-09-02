@@ -12,7 +12,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   AlbumShell,
-  RecyclerBouton,
+  LigneBasAlbum,
   PANNEAU_BOTTOM,
   PANNEAU_TOP,
 } from "@/components/albums/AlbumShell";
@@ -285,35 +285,6 @@ function calqueStyle(taillePx: number, x: number, y: number): CSSProperties {
 function transformCalque(x: number, y: number): string {
   return `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
 }
-
-/** Pagination au centre, compteur « x/50 » à sa gauche, Recycler (icône +
- *  chiffre) à sa droite : la ligne entre l'album et le bandeau « En vrac ». */
-const ligneBas: CSSProperties = {
-  position: "relative",
-  marginTop: 4,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const recyclerCoin: CSSProperties = {
-  position: "absolute",
-  right: 0,
-  top: "50%",
-  transform: "translateY(-50%)",
-};
-
-const compteurCoin: CSSProperties = {
-  position: "absolute",
-  left: 0,
-  top: "50%",
-  transform: "translateY(-50%)",
-  fontFamily: "var(--font-mono)",
-  fontSize: 12,
-  letterSpacing: "0.08em",
-  color: "var(--brass-300)",
-  whiteSpace: "nowrap",
-};
 
 const paginationBar: CSSProperties = {
   display: "flex",
@@ -751,20 +722,14 @@ export function AlbumTimbresOverlay({
         </div>
       </div>
       <div style={basWrap}>
-        <div style={ligneBas}>
-          <span style={compteurCoin}>
-            {tr(d.albums.compteur, { n: nbPossedees(album), total })}
-          </span>
+        <LigneBasAlbum
+          compteur={{ possedees: nbPossedees(album), total }}
+          titre={d.albums.albumTitre}
+          doublons={doublons(album)}
+          onRecycler={recycler}
+        >
           <Pagination page={page} onChange={setPage} d={d} />
-          <div style={recyclerCoin}>
-            <RecyclerBouton
-              icone
-              titre={d.albums.albumTitre}
-              doublons={doublons(album)}
-              onRecycler={recycler}
-            />
-          </div>
-        </div>
+        </LigneBasAlbum>
         <div
           ref={bacRef}
           data-testid="bac"
