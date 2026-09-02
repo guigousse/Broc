@@ -57,6 +57,15 @@ describe("cartesDuel — garde du set", () => {
     }
   });
 
+  it("le prix d'un effet reste dans sa fourchette : 1 à 3 pour une rare, 1 à 4 pour une légendaire", () => {
+    for (const c of CARTES) {
+      const t = statsDuel(c.id).texte;
+      if (t?.type !== "effet") continue;
+      expect(t.prix, c.id).toBeGreaterThanOrEqual(1);
+      expect(t.prix, c.id).toBeLessThanOrEqual(c.rarete === "legendaire" ? 4 : 3);
+    }
+  });
+
   it("courbe de coût 8/12/13/10/7 ; légendaires en 4 ou 5", () => {
     const parCout = [0, 0, 0, 0, 0, 0];
     for (const c of CARTES) {

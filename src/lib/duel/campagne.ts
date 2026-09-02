@@ -31,8 +31,58 @@ const PROFILS: Profil[] = ["agressif", "prudent"];
 
 const CARTES_COUT: Record<string, number> = Object.fromEntries(CARTES.map((c) => [c.id, statsDuel(c.id).cout]));
 
-function deckAEstAggro(deck: string[]): boolean {
+export function deckAEstAggro(deck: readonly string[]): boolean {
   return deck.every((id) => CARTES_COUT[id] <= 3);
+}
+
+/**
+ * Crédite le camp agressif quel que soit le siège qu'il occupait : `vainqueur` est un siège
+ * (0 = deckA), `deckA` dit lequel des deux sièges portait le deck agressif.
+ */
+export function estVictoireAggro(vainqueur: 0 | 1, deckA: readonly string[]): boolean {
+  return (vainqueur === 0) === deckAEstAggro(deckA);
+}
+
+/**
+ * Deux crans distincts de la roue, tirés à la graine : le second est le premier décalé de 1 à 6,
+ * donc jamais égal au premier (`deckBicolore` exige `a !== b`). Consomme deux tirages.
+ */
+export function paireBicolore(rng: () => number): [CategorieObjet, CategorieObjet] {
+  const a = Math.floor(rng() * 7);
+  const b = (a + 1 + Math.floor(rng() * 6)) % 7;
+  return [ROUE[a], ROUE[b]];
+}
+
+/** Compteurs bruts d'une campagne, avant mise en taux. */
+export interface Cumul {
+  cartes: Record<string, MesureCarte>;
+  /** Parties décidées (ni nulles, ni épuisées) : le seul dénominateur du premier joueur. */
+  decidees: number;
+  premier: number;
+  manches: number;
+  manchesMax: number;
+  nuls: number;
+  epuisees: number;
+  aggroV: number;
+  aggroN: number;
+}
+
+/** Passe des compteurs bruts aux taux. Pure : c'est ici que vivent tous les dénominateurs. */
+export function mesuresDepuis(c: Cumul, nParties: number): Mesures {
+  const taux = (id: string) => (c.cartes[id].parties ? c.cartes[id].victoires / c.cartes[id].parties : 0.5);
+  const categories = Object.fromEntries(ROUE.map((cat) => {
+    const ids = CARTES.filter((x) => x.serie === cat).map((x) => x.id);
+    return [cat, ids.reduce((s, id) => s + taux(id), 0) / ids.length];
+  })) as Record<CategorieObjet, number>;
+  return {
+    parties: nParties, cartes: c.cartes, categories,
+    premierJoueur: c.decidees ? c.premier / c.decidees : 0.5,
+    manchesMoyenne: nParties ? c.manches / nParties : 0,
+    manchesMax: c.manchesMax,
+    nuls: nParties ? c.nuls / nParties : 0,
+    epuisees: nParties ? c.epuisees / nParties : 0,
+    agressifVsControle: c.aggroN ? c.aggroV / c.aggroN : 0.5,
+  };
 }
 
 /** Répartition : 50 % aléatoires, 25 % bicolores, 25 % par courbe. */
@@ -45,10 +95,10 @@ export function campagne({ graine, nParties }: { graine: number; nParties: numbe
     let deckA: string[], deckB: string[];
     if (famille === "aleatoire") { deckA = deckAleatoire(rng); deckB = deckAleatoire(rng); }
     else if (famille === "bicolore") {
-      const a = Math.floor(rng() * 7), b = (a + 1 + Math.floor(rng() * 6)) % 7;
-      deckA = deckBicolore(rng, ROUE[a], ROUE[b]);
-      const c = Math.floor(rng() * 7), d = (c + 1 + Math.floor(rng() * 6)) % 7;
-      deckB = deckBicolore(rng, ROUE[c], ROUE[d]);
+      const [a, b] = paireBicolore(rng);
+      deckA = deckBicolore(rng, a, b);
+      const [c, d] = paireBicolore(rng);
+      deckB = deckBicolore(rng, c, d);
     } else {
       const aggroEnA = rng() < 0.5;
       deckA = deckCourbe(rng, aggroEnA ? "agressif" : "controle");
@@ -70,21 +120,10 @@ export function campagne({ graine, nParties }: { graine: number; nParties: numbe
     for (const [id, n] of Object.entries(r.poses)) cartes[id].poses += n;
     if (famille === "courbe" && r.vainqueur !== null) {
       aggroN++;
-      if ((r.vainqueur === 0) === deckAEstAggro(deckA)) aggroV++;
+      if (estVictoireAggro(r.vainqueur, deckA)) aggroV++;
     }
   }
-  const taux = (id: string) => (cartes[id].parties ? cartes[id].victoires / cartes[id].parties : 0.5);
-  const categories = Object.fromEntries(ROUE.map((cat) => {
-    const ids = CARTES.filter((c) => c.serie === cat).map((c) => c.id);
-    return [cat, ids.reduce((s, id) => s + taux(id), 0) / ids.length];
-  })) as Record<CategorieObjet, number>;
-  return {
-    parties: nParties, cartes, categories,
-    premierJoueur: decidees ? premier / decidees : 0.5,
-    manchesMoyenne: manches / nParties, manchesMax,
-    nuls: nuls / nParties, epuisees: epuisees / nParties,
-    agressifVsControle: aggroN ? aggroV / aggroN : 0.5,
-  };
+  return mesuresDepuis({ cartes, decidees, premier, manches, manchesMax, nuls, epuisees, aggroV, aggroN }, nParties);
 }
 
 export function horsCible(m: Mesures): string[] {
@@ -93,8 +132,9 @@ export function horsCible(m: Mesures): string[] {
     const x = m.cartes[c.id];
     const t = x.parties ? x.victoires / x.parties : 0.5;
     const pose = x.pioches ? x.poses / x.pioches : 0;
-    if (t < CIBLES.carteMin || t > CIBLES.carteMax) l.push(`carte ${c.id} : victoire ${(t * 100).toFixed(1)} %`);
-    if (pose < CIBLES.poseMin) l.push(`carte ${c.id} : pose ${(pose * 100).toFixed(0)} %`);
+    const nom = c.id.replace("carte.", "");
+    if (t < CIBLES.carteMin || t > CIBLES.carteMax) l.push(`carte ${nom} : victoire ${(t * 100).toFixed(1)} %`);
+    if (pose < CIBLES.poseMin) l.push(`carte ${nom} : pose ${(pose * 100).toFixed(0)} %`);
   }
   for (const [cat, t] of Object.entries(m.categories)) if (t < CIBLES.categorieMin || t > CIBLES.categorieMax) l.push(`catégorie ${cat} : ${(t * 100).toFixed(1)} %`);
   if (m.premierJoueur >= CIBLES.premierJoueurMax || m.premierJoueur <= 1 - CIBLES.premierJoueurMax) l.push(`premier joueur : ${(m.premierJoueur * 100).toFixed(1)} %`);
