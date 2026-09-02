@@ -73,7 +73,9 @@ const ITEMS = [
     id: "classeur-cartes",
     sujet: [
       "Single object: a trading-card collector's ring binder, standing upright, seen at a slight three-quarter angle.",
-      "Textured vermilion red cover with a thin cream border line around its edge. Printed large in the center of the front cover: a bold, SIMPLIFIED cartoon illustration of a single wooden chair, flat schematic toon style with thick outlines, cream and warm brown tones. Nothing else on the cover. Rounded spine, cream-white page edges visible on the open side.",
+      // La chaise PERSONNIFIÉE en petit monstre mignon (recette 2026-09-02) :
+      // la mascotte du jeu de cartes, façon créature kawaii.
+      "Textured vermilion red cover with a thin cream border line around its edge. Printed large in the center of the front cover: a bold, SIMPLIFIED cartoon mascot — a cute little wooden chair PERSONIFIED as an adorable tiny monster: two big friendly round eyes and a small happy smile on the backrest, tiny stubby arms, its four legs like little feet, playful kawaii creature style with thick outlines, cream and warm brown tones. Nothing else on the cover. Rounded spine, cream-white page edges visible on the open side.",
     ],
   },
 ];
