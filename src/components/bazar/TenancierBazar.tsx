@@ -1,6 +1,13 @@
 "use client";
 
-import { useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from "react";
+import { alphaAuPoint } from "@/lib/alphaImage";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
@@ -52,8 +59,18 @@ export function TenancierBazar({ horloge, tirage = Math.random }: TenancierBazar
   // La dernière réplique servie : six phrases ne servent à rien si le tirage
   // rend deux fois la même à la suite — c'est la répétition qui se remarque.
   const precedente = useRef<number | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
-  const ouvrir = () => {
+  const ouvrir = (e: ReactMouseEvent<HTMLButtonElement>) => {
+    // Le buste détouré ne remplit pas son rectangle : un tap dans le VIDE du
+    // dessin (l'alpha du webp) ne compte pas. Un clic clavier (Entrée/Espace)
+    // a `detail` 0 et pas de coordonnées : il vise le bouton, pas un pixel —
+    // il ouvre toujours. Fail-open inverse du gramophone : alpha indisponible
+    // → le tap ouvre, le tenancier ne doit jamais devenir sourd.
+    if (e.detail > 0) {
+      const alpha = alphaAuPoint(imgRef.current, e.clientX, e.clientY);
+      if (alpha !== null && alpha < 32) return;
+    }
     const total = REPLIQUES_TENANCIER_BAZAR.length;
     let i = Math.min(total - 1, Math.floor(tirage() * total));
     if (i === precedente.current) i = (i + 1) % total;
@@ -105,6 +122,7 @@ export function TenancierBazar({ horloge, tirage = Math.random }: TenancierBazar
             bouton qui porte le nom. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          ref={imgRef}
           src="/bazar/vendeur-bazar.webp"
           alt=""
           draggable={false}

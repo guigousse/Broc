@@ -128,3 +128,72 @@ describe("TenancierBazar", () => {
     expect(screen.queryByText(premiere)).toBeNull();
   });
 });
+
+/**
+ * Le buste détouré ne remplit pas son rectangle : le tap doit toucher le
+ * DESSIN, pas le vide du webp (demande de l'auteur, 2026-09-02). Même
+ * échantillonnage alpha que le gramophone, fail-open inversé : quand l'alpha
+ * est indisponible, le tap ouvre — le tenancier ne doit jamais devenir sourd.
+ */
+describe("TenancierBazar — l'alpha du dessin est sourd", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  /** Donne à l'img du bouton une géométrie et un canvas au pixel truqué. */
+  function truquerAlpha(alpha: number) {
+    const img = screen
+      .getByRole("button", { name: /tenancier/i })
+      .querySelector("img")!;
+    Object.defineProperty(img, "complete", { value: true });
+    Object.defineProperty(img, "naturalWidth", { value: 100 });
+    Object.defineProperty(img, "naturalHeight", { value: 100 });
+    img.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 100, height: 100 }) as DOMRect;
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      drawImage: () => {},
+      getImageData: () => ({ data: [0, 0, 0, alpha] }),
+    } as unknown as CanvasRenderingContext2D);
+  }
+
+  it("un tap sur un pixel transparent n'ouvre pas la conversation", () => {
+    monter();
+    truquerAlpha(0);
+    fireEvent.click(screen.getByRole("button", { name: /tenancier/i }), {
+      detail: 1,
+      clientX: 50,
+      clientY: 50,
+    });
+    expect(screen.queryByRole("button", { name: /continuer/i })).toBeNull();
+  });
+
+  it("un tap sur un pixel plein ouvre", () => {
+    monter();
+    truquerAlpha(255);
+    fireEvent.click(screen.getByRole("button", { name: /tenancier/i }), {
+      detail: 1,
+      clientX: 50,
+      clientY: 50,
+    });
+    expect(screen.getByRole("button", { name: /continuer/i })).toBeTruthy();
+  });
+
+  it("alpha indisponible : le tap ouvre quand même (fail-open)", () => {
+    monter();
+    // jsdom sans canvas : `getContext` rend null, l'échantillonnage échoue.
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+    fireEvent.click(screen.getByRole("button", { name: /tenancier/i }), {
+      detail: 1,
+      clientX: 50,
+      clientY: 50,
+    });
+    expect(screen.getByRole("button", { name: /continuer/i })).toBeTruthy();
+  });
+
+  it("un clic clavier (detail 0, sans coordonnées) ouvre toujours", () => {
+    monter();
+    truquerAlpha(0);
+    fireEvent.click(screen.getByRole("button", { name: /tenancier/i }), {
+      detail: 0,
+    });
+    expect(screen.getByRole("button", { name: /continuer/i })).toBeTruthy();
+  });
+});
