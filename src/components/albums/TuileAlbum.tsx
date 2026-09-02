@@ -48,20 +48,23 @@ const tuileSticker: CSSProperties = {
   cursor: "pointer",
 };
 
-/** Compteur lisible sur la planche de bois : encre sombre, halo papier —
- *  même famille que la pastille « * » de `CollectionGrid`. */
+/** Compteur en PASTILLE laiton (recette 2026-09-02 : le halo papier ne
+ *  suffisait pas sur le bois) — même famille que les badges ×N des albums. */
 const compteurSticker: CSSProperties = {
   position: "absolute",
-  left: 0,
-  right: 0,
-  bottom: 2,
-  textAlign: "center",
+  left: "50%",
+  bottom: 0,
+  transform: "translateX(-50%)",
+  padding: "1px 7px",
   fontFamily: "var(--font-mono)",
-  fontSize: 10,
+  fontSize: 11,
   fontWeight: 700,
   letterSpacing: "0.04em",
+  whiteSpace: "nowrap",
   color: "var(--forest-800)",
-  textShadow: "0 0 2px var(--paper-100), 0 0 4px var(--paper-100)",
+  background: "linear-gradient(180deg, var(--brass-300), var(--brass-500))",
+  borderRadius: 4,
+  boxShadow: "0 1px 3px rgba(0,0,0,0.35)",
   pointerEvents: "none",
 };
 
