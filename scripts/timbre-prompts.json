@@ -1,6 +1,14 @@
 {
   "commentaire": "Planches 3×3 pour generate-timbres.mjs : 9 illustrations par image Gemini, découpées puis insérées dans le gabarit commun (fenêtre alpha). Les cases à id null sont générées mais non utilisées (remplissage de la grille). Célébrités FICTIVES décrites génériquement (jamais de vraie personne), culture-pop en parodies sans marque ni texte. Retouches = tags Finder de la recette Guillaume 2026-09-02 : rouge→cadrage (trim des marges crème puis plein cadre), bleu→désaturation, vert→droits d'auteur (regénérés en singles avec un sujet original).",
   "retouches": {
+    "recentrage": [
+      "timbre.bebert_bahut",
+      "timbre.judith_loiseau",
+      "timbre.stevranos",
+      "timbre.grand_max",
+      "timbre.le_petit_moustachu",
+      "timbre.ridor_couturier"
+    ],
     "cadrage": [
       "timbre.arenes_de_nimes",
       "timbre.bebert_bahut",

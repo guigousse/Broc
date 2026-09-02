@@ -146,26 +146,62 @@ function promptPlanche(sheet) {
    sont ramenées vers la douceur des planches gravure (faune). */
 const FOND_PLANCHE = { r: 245, g: 238, b: 220 };
 
+/** Recentre le SUJET (2ᵉ passe de recette : personnages décalés sur leur
+ *  lavis blanc, que le trim couleur ne voit pas). On demande à sharp la
+ *  boîte d'encre (offsets de trim à seuil élevé), puis on recadre un carré
+ *  centré dessus, avec une petite marge. */
+async function recentrerSujet(buf) {
+  const meta = await sharp(buf).metadata();
+  const { info } = await sharp(buf)
+    .trim({ threshold: 45 })
+    .toBuffer({ resolveWithObject: true });
+  const left = -(info.trimOffsetLeft ?? 0);
+  const top = -(info.trimOffsetTop ?? 0);
+  const { width: w, height: h } = info;
+  if (!w || !h) return buf;
+  const cx = left + w / 2;
+  const cy = top + h / 2;
+  let side = Math.round(Math.max(w, h) * 1.05);
+  side = Math.min(side, meta.width, meta.height);
+  let x = Math.round(cx - side / 2);
+  let y = Math.round(cy - side / 2);
+  x = Math.max(0, Math.min(x, meta.width - side));
+  y = Math.max(0, Math.min(y, meta.height - side));
+  return sharp(buf)
+    .extract({ left: x, top: y, width: side, height: side })
+    .toBuffer();
+}
+
+/** Le trim « cadrage » : marges crème de la planche, puis le filet sombre
+ *  dessiné autour de l'illustration (3 % de plus l'avalent). */
+async function trimCadrage(buf) {
+  buf = await sharp(buf)
+    .trim({ background: FOND_PLANCHE, threshold: 35 })
+    .toBuffer();
+  const m = await sharp(buf).metadata();
+  const ins = Math.round(Math.min(m.width, m.height) * 0.03);
+  if (m.width > 4 * ins && m.height > 4 * ins) {
+    buf = await sharp(buf)
+      .extract({
+        left: ins,
+        top: ins,
+        width: m.width - 2 * ins,
+        height: m.height - 2 * ins,
+      })
+      .toBuffer();
+  }
+  return buf;
+}
+
 async function retoucherCellule(cellBuf, id, retouches) {
   let buf = cellBuf;
-  if (retouches.cadrage?.includes(id)) {
-    buf = await sharp(buf)
-      .trim({ background: FOND_PLANCHE, threshold: 35 })
-      .toBuffer();
-    const m = await sharp(buf).metadata();
-    // Le trim s'arrête au filet sombre dessiné autour de l'illustration :
-    // 3 % de plus l'avalent.
-    const ins = Math.round(Math.min(m.width, m.height) * 0.03);
-    if (m.width > 4 * ins && m.height > 4 * ins) {
-      buf = await sharp(buf)
-        .extract({
-          left: ins,
-          top: ins,
-          width: m.width - 2 * ins,
-          height: m.height - 2 * ins,
-        })
-        .toBuffer();
-    }
+  if (retouches.recentrage?.includes(id)) {
+    // Pourtour d'abord (sinon la fenêtre recadrée peut mordre le filet et
+    // les marges, vues en bandes blanches aux coins — 2ᵉ passe de recette),
+    // recentrage sur la boîte d'encre ensuite.
+    buf = await recentrerSujet(await trimCadrage(buf));
+  } else if (retouches.cadrage?.includes(id)) {
+    buf = await trimCadrage(buf);
   }
   if (retouches.desaturation?.includes(id)) {
     buf = await sharp(buf)
