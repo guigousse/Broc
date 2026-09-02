@@ -24,6 +24,12 @@ export function deckAleatoire(rng: () => number): string[] {
   return composer(rng, [], TOUTES);
 }
 
+/**
+ * Contient toutes les cartes des deux catégories `a`/`b`, sauf les légendaires au-delà de
+ * `LEGENDAIRES_MAX` ; les emplacements restants (jusqu'à `TAILLE_DECK`) sont piochés au hasard
+ * dans le reste du pool. Précondition non vérifiée à l'exécution : `a !== b` (la campagne ne
+ * l'enfreint jamais).
+ */
 export function deckBicolore(rng: () => number, a: CategorieObjet, b: CategorieObjet): string[] {
   const dedans = CARTES.filter((c) => c.serie === a || c.serie === b).map((c) => c.id);
   return composer(rng, dedans, TOUTES.filter((id) => !dedans.includes(id)));
