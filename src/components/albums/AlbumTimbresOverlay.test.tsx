@@ -25,12 +25,15 @@ const t0 = pieces[0].id;
 const t1 = pieces[1].id;
 const t2 = pieces[2].id;
 
+/** Quantité du premier timbre : 2 pour fabriquer un doublon à recycler. */
+let quantiteT0 = 1;
+
 function albumsAvec(): AlbumsState {
   return {
     classeur: { achete: false, pieces: {}, nouvelles: [] },
     timbres: {
       achete: true,
-      pieces: { [t0]: 1, [t1]: 1, [t2]: 1 },
+      pieces: { [t0]: quantiteT0, [t1]: 1, [t2]: 1 },
       nouvelles: [],
       placements: { [t2]: { page: 0, ligne: 2, x: 0.5 } },
       ordreZ: [t2],
@@ -64,7 +67,10 @@ vi.mock("@/components/ui/Toast", () => ({
   useToastSafe: () => ({ toast: mocks.toast }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  quantiteT0 = 1;
+});
 
 describe("AlbumTimbresOverlay", () => {
   // En premier : les autres tests appellent `poserTimbre`/`rendreTimbreAuBac`
@@ -275,12 +281,47 @@ describe("AlbumTimbresOverlay", () => {
     expect(pose.getAttribute("aria-label")).toBeTruthy();
   });
 
-  it("le libellé « En vrac » est affiché au-dessus du bac, et porté par son aria-label", () => {
+  // Refonte 2026-09-02 : « En vrac » est un bandeau façon gramophone, sans
+  // libellé visible — le nom ne vit plus que dans l'aria-label.
+  it("le bac n'a plus de libellé visible, son nom reste l'aria-label", () => {
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
-    expect(screen.getByText("En vrac")).toBeTruthy();
+    expect(screen.queryByText("En vrac")).toBeNull();
     expect(screen.getByTestId("bac").getAttribute("aria-label")).toBe(
       "En vrac",
     );
+  });
+
+  it("le titre « Album de timbres » est visible au-dessus de la page", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    expect(screen.getByText("Album de timbres")).toBeTruthy();
+  });
+
+  /** Refonte 2026-09-02 : le Recycler est une icône + chiffre à droite de la
+   *  pagination — plus le bouton encadré de l'en-tête. */
+  it("sans doublon : l'icône Recycler affiche 0 et est désactivée", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const btn = screen.getByRole("button", {
+      name: /recycler les doublons \(0\)/i,
+    }) as HTMLButtonElement;
+    expect(btn.textContent).toBe("0");
+    expect(btn.disabled).toBe(true);
+  });
+
+  it("avec un doublon : l'icône affiche 1 et la confirmation recycle", () => {
+    quantiteT0 = 2;
+    mocks.recyclerDoublonsAlbum.mockReturnValueOnce(1);
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const btn = screen.getByRole("button", {
+      name: /recycler les doublons \(1\)/i,
+    }) as HTMLButtonElement;
+    expect(btn.textContent).toBe("1");
+    expect(btn.disabled).toBe(false);
+    fireEvent.click(btn);
+    fireEvent.click(
+      screen.getByRole("button", { name: /^recycler/i, hidden: false }),
+    );
+    expect(mocks.recyclerDoublonsAlbum).toHaveBeenCalledWith("timbres");
+    expect(mocks.toast).toHaveBeenCalled();
   });
 });
 
@@ -505,9 +546,11 @@ it("le calque qui suit le doigt est rendu hors du panneau (portail sur le body)"
   expect(calque.parentElement).toBe(document.body);
 });
 
-it("album de timbres : aucun titre visible, flèches de pagination sans cadre", () => {
+// Le titre avait été retiré à la recette du 2026-08-31, puis REPRIS au centre
+// de l'en-tête à la refonte du 2026-09-02 — c'est le test « titre visible »
+// plus haut qui le garde. Ici : le dialog reste nommé, les flèches nues.
+it("album de timbres : dialog nommé, flèches de pagination sans cadre", () => {
   render(<AlbumTimbresOverlay open onClose={() => {}} />);
-  expect(screen.queryByText("Album de timbres")).toBeNull();
   expect(screen.getByRole("dialog", { name: "Album de timbres" })).toBeTruthy();
   for (const nom of ["Page précédente", "Page suivante"]) {
     const btn = screen.getByRole("button", { name: nom }) as HTMLButtonElement;

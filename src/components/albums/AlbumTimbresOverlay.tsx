@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   AlbumShell,
+  RecyclerBouton,
   PANNEAU_BOTTOM,
   PANNEAU_TOP,
 } from "@/components/albums/AlbumShell";
@@ -78,23 +79,23 @@ const CALQUE_TAILLE_DEFAUT_PX = 60;
 const SEUIL_VERTICAL_BAC_PX = 12;
 
 /** Hauteur (px) prise DANS le panneau autour de la page : marges de la
- *  coquille, ligne compteur/Recycler, libellé + bac « En vrac », pagination.
- *  S'ajoute au chrome de l'app (en-tête, TabBar, safe areas) pour borner la
- *  largeur de la colonne : la page garde son ratio 1,3 et tient TOUJOURS dans
- *  la hauteur restante — sur iPad ou en fenêtre large, le flex l'écrasait en
- *  hauteur (1416 × 559 px, timbres plus hauts que les lignes — 2026-08-31). */
-const HORS_PAGE_PX = 250;
+ *  coquille, ligne d'en-tête (compteur/titre/croix), bandeau « En vrac »,
+ *  ligne pagination + Recycler. S'ajoute au chrome de l'app (en-tête, TabBar,
+ *  safe areas) pour borner la largeur de la colonne : la page garde son ratio
+ *  1,3 et tient TOUJOURS dans la hauteur restante — sur iPad ou en fenêtre
+ *  large, le flex l'écrasait en hauteur (1416 × 559 px, timbres plus hauts
+ *  que les lignes — 2026-08-31). Recompté à la refonte du 2026-09-02 (titre
+ *  dans l'en-tête, bandeau sans libellé, pagination compacte) : la page y a
+ *  gagné ce que le chrome a perdu. */
+const HORS_PAGE_PX = 212;
 
-/** Page + bac + pagination : pleine largeur sur téléphone, bornée par la
- *  hauteur disponible et centrée sur les grands écrans. Parenthèses
- *  OBLIGATOIRES autour des `calc()` du chrome (même piège que le classeur). */
+/** La page seule : pleine largeur sur téléphone, bornée par la hauteur
+ *  disponible et centrée sur les grands écrans. Parenthèses OBLIGATOIRES
+ *  autour des `calc()` du chrome (même piège que le classeur). */
 const colonne: CSSProperties = {
   width: "100%",
   maxWidth: `calc((100dvh - (${PANNEAU_TOP}) - (${PANNEAU_BOTTOM}) - ${HORS_PAGE_PX}px) / ${HAUTEUR_PAGE_RATIO})`,
   margin: "0 auto",
-  display: "flex",
-  flexDirection: "column",
-  minHeight: 0,
 };
 
 /** Anthracite → noir, comme les feuilles cartonnées d'un album Lindner. */
@@ -186,16 +187,37 @@ function timbrePoseStyle(
 
 const BAC_ITEM_PX = 56;
 const BAC_GAP_PX = 10;
-const BAC_PADDING_X_PX = 8;
+/** = le padding horizontal du panneau : le bandeau est en pleine largeur
+ *  (marges négatives), son padding ramène les timbres au bord du contenu. */
+const BAC_PADDING_X_PX = 12;
 
-const bacWrap: CSSProperties = {
-  marginTop: 12,
+/** Le bas du panneau, poussé contre la TabBar (`marginTop: auto`) : bandeau
+ *  « En vrac » puis ligne pagination + Recycler (refonte 2026-09-02). */
+const basWrap: CSSProperties = {
+  marginTop: "auto",
   display: "flex",
+  flexDirection: "column",
+};
+
+/** « En vrac » en BANDEAU pleine largeur, même matière que la bande de
+ *  sélection des vinyles du gramophone (bois sombre, ombre interne) — plus
+ *  la boîte anthracite arrondie ni son libellé (refonte 2026-09-02). Le nom
+ *  reste porté par l'`aria-label`. */
+const bacWrap: CSSProperties = {
+  marginTop: 10,
+  marginLeft: -BAC_PADDING_X_PX,
+  marginRight: -BAC_PADDING_X_PX,
+  display: "flex",
+  alignItems: "center",
   gap: BAC_GAP_PX,
   overflowX: "auto",
+  WebkitOverflowScrolling: "touch",
+  scrollbarWidth: "none",
   padding: `10px ${BAC_PADDING_X_PX}px`,
-  backgroundImage: FOND_ALBUM,
-  borderRadius: 8,
+  minHeight: BAC_ITEM_PX + 20,
+  background: "var(--gradient-cargo-wood)",
+  borderTop: "1px solid rgba(0,0,0,0.4)",
+  boxShadow: "inset 0 2px 6px rgba(0,0,0,0.55)",
 };
 
 const bacItemStyle: CSSProperties = {
@@ -261,12 +283,28 @@ function transformCalque(x: number, y: number): string {
   return `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
 }
 
+/** Pagination au centre, Recycler (icône + chiffre) posé à sa droite : la
+ *  ligne du bas, juste au-dessus de la TabBar. */
+const ligneBas: CSSProperties = {
+  position: "relative",
+  marginTop: 4,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const recyclerCoin: CSSProperties = {
+  position: "absolute",
+  right: 0,
+  top: "50%",
+  transform: "translateY(-50%)",
+};
+
 const paginationBar: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   gap: 14,
-  marginTop: 12,
 };
 
 const pageBtn: CSSProperties = {
@@ -296,16 +334,6 @@ const point = (actif: boolean): CSSProperties => ({
   borderRadius: "50%",
   background: actif ? "var(--brass-300)" : "var(--brass-700)",
 });
-
-const bacLabel: CSSProperties = {
-  marginTop: 12,
-  marginBottom: -6,
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: "var(--brass-300)",
-};
 
 const poserBtn: CSSProperties = {
   width: "100%",
@@ -636,23 +664,24 @@ export function AlbumTimbresOverlay({
 
   const fichePlacement = fiche ? album.placements[fiche] : undefined;
 
+  const recycler = () => {
+    const n = recyclerDoublonsAlbum("timbres");
+    toast(
+      tr(n === 1 ? d.albums.recycleFaitUn : d.albums.recycleFait, {
+        n,
+        categorie: libelleCategorie(CATEGORIE_ALBUM.timbres, d),
+      }),
+      { type: "succes" },
+    );
+  };
+
   return (
     <AlbumShell
       open={open}
       onClose={onClose}
       titre={d.albums.albumTitre}
+      titreVisible
       compteur={{ possedees: nbPossedees(album), total }}
-      doublons={doublons(album)}
-      onRecycler={() => {
-        const n = recyclerDoublonsAlbum("timbres");
-        toast(
-          tr(n === 1 ? d.albums.recycleFaitUn : d.albums.recycleFait, {
-            n,
-            categorie: libelleCategorie(CATEGORIE_ALBUM.timbres, d),
-          }),
-          { type: "succes" },
-        );
-      }}
     >
       <div style={colonne}>
         <div
@@ -706,9 +735,8 @@ export function AlbumTimbresOverlay({
             );
           })}
         </div>
-        <div style={bacLabel} aria-hidden>
-          {d.albums.bac}
-        </div>
+      </div>
+      <div style={basWrap}>
         <div
           ref={bacRef}
           data-testid="bac"
@@ -751,7 +779,17 @@ export function AlbumTimbresOverlay({
             );
           })}
         </div>
-        <Pagination page={page} onChange={setPage} d={d} />
+        <div style={ligneBas}>
+          <Pagination page={page} onChange={setPage} d={d} />
+          <div style={recyclerCoin}>
+            <RecyclerBouton
+              icone
+              titre={d.albums.albumTitre}
+              doublons={doublons(album)}
+              onRecycler={recycler}
+            />
+          </div>
+        </div>
       </div>
       {/* Portail sur le body : le panneau porte un `backdrop-filter`, qui
           ferait de lui le bloc conteneur de ce `position: fixed` — le calque

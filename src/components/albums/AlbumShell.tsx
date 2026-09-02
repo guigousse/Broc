@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { X } from "lucide-react";
+import { Recycle, X } from "lucide-react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useLangue } from "@/lib/i18n/LangueContext";
 
@@ -11,19 +11,29 @@ import { useLangue } from "@/lib/i18n/LangueContext";
    la TabBar (mêmes bornes que
    `CarnetOverlay` / `FloatingRoomOverlay`, pour que les deux restent
    accessibles — retour de Guillaume 2026-08-31), pas une carte bordée qui
-   défile. Dedans : PAS de titre (retiré à la recette du 2026-08-31 — le nom reste
-   l'aria-label du dialog) ; compteur, bouton Recycler et croix ; puis le
-   contenu (grille de pochettes ou pages de timbres) en `children`, dans une
-   zone `flex: 1` qui ne défile pas. Le bouton Recycler ouvre une
-   confirmation avant de débiter les doublons — action irréversible. */
+   défile. Dedans : la ligne d'en-tête (compteur, titre centré si
+   `titreVisible` — l'album de timbres l'a repris à la recette du 2026-09-02,
+   le classeur reste sans titre visible et le nom reste l'aria-label du
+   dialog —, bouton Recycler et croix) ; puis le contenu (grille de pochettes
+   ou pages de timbres) en `children`, dans une zone `flex: 1` qui ne défile
+   pas.
+
+   Le bouton Recycler vit dans `RecyclerBouton` (exporté) : bouton encadré
+   d'en-tête par défaut, ou icône + chiffre (`icone`) qu'un album place où il
+   veut — les timbres le posent à droite de leur pagination. Dans les deux
+   cas il ouvre une confirmation avant de débiter les doublons — action
+   irréversible. Sans `onRecycler`, la coquille n'en rend AUCUN : c'est à
+   l'album de rendre le sien. */
 
 interface AlbumShellProps {
   open: boolean;
   onClose: () => void;
   titre: string;
+  /** Affiche `titre` au centre de la ligne d'en-tête. */
+  titreVisible?: boolean;
   compteur: { possedees: number; total: number };
-  doublons: number;
-  onRecycler: () => void;
+  doublons?: number;
+  onRecycler?: () => void;
   children: ReactNode;
 }
 
@@ -62,11 +72,28 @@ const contenu: CSSProperties = {
 };
 
 const ligneActions: CSSProperties = {
+  // `relative` : le titre centré est posé en absolu sur toute la largeur,
+  // pour être au CENTRE de l'écran, pas au centre de l'espace que compteur
+  // et croix veulent bien lui laisser.
+  position: "relative",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
   gap: 10,
   marginBottom: 12,
+};
+
+const titreStyle: CSSProperties = {
+  position: "absolute",
+  left: 0,
+  right: 0,
+  textAlign: "center",
+  fontFamily: "var(--font-display)",
+  fontSize: 13,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: "var(--brass-300)",
+  pointerEvents: "none",
 };
 
 const compteurStyle: CSSProperties = {
@@ -97,6 +124,22 @@ const recyclerBtn: CSSProperties = {
   cursor: "pointer",
 };
 
+/** L'icône de recyclage nue + le chiffre des doublons (0 compris). */
+const recyclerIconeBtn: CSSProperties = {
+  minWidth: "var(--tap-min)",
+  minHeight: "var(--tap-min)",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 5,
+  border: "none",
+  background: "transparent",
+  color: "var(--brass-300)",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  cursor: "pointer",
+};
+
 const croixBtn: CSSProperties = {
   minWidth: "var(--tap-min)",
   minHeight: "var(--tap-min)",
@@ -113,15 +156,14 @@ export function AlbumShell({
   open,
   onClose,
   titre,
+  titreVisible = false,
   compteur,
-  doublons,
+  doublons = 0,
   onRecycler,
   children,
 }: AlbumShellProps) {
   const { d, tr } = useLangue();
-  const [confirmOuvert, setConfirmOuvert] = useState(false);
   if (!open) return null;
-  const libelleRecycler = tr(d.albums.recycler, { n: doublons });
 
   return (
     <div style={panneau} role="dialog" aria-label={titre}>
@@ -132,19 +174,14 @@ export function AlbumShell({
             total: compteur.total,
           })}
         </span>
+        {titreVisible && <span style={titreStyle}>{titre}</span>}
         <div style={actions}>
-          {/* Masqué pendant la confirmation : évite deux boutons « Recycler »
-             concurrents dans l'arbre d'accessibilité (celui de la modale
-             reprend le même libellé). */}
-          {!confirmOuvert && (
-            <button
-              type="button"
-              style={recyclerBtn}
-              disabled={doublons === 0}
-              onClick={() => setConfirmOuvert(true)}
-            >
-              {libelleRecycler}
-            </button>
+          {onRecycler && (
+            <RecyclerBouton
+              titre={titre}
+              doublons={doublons}
+              onRecycler={onRecycler}
+            />
           )}
           <button
             type="button"
@@ -157,15 +194,68 @@ export function AlbumShell({
         </div>
       </div>
       <div style={contenu}>{children}</div>
+    </div>
+  );
+}
+
+interface RecyclerBoutonProps {
+  /** Le titre de l'album, repris par la modale de confirmation. */
+  titre: string;
+  doublons: number;
+  onRecycler: () => void;
+  /** Icône de recyclage + chiffre plutôt que le bouton encadré d'en-tête. */
+  icone?: boolean;
+}
+
+/** Le déclencheur du recyclage et SA confirmation, autoportants : chaque
+ *  album le pose où il veut (en-tête du classeur, droite de la pagination
+ *  des timbres). */
+export function RecyclerBouton({
+  titre,
+  doublons,
+  onRecycler,
+  icone = false,
+}: RecyclerBoutonProps) {
+  const { d, tr } = useLangue();
+  const [confirmOuvert, setConfirmOuvert] = useState(false);
+  const libelle = tr(d.albums.recycler, { n: doublons });
+
+  return (
+    <>
+      {/* Masqué pendant la confirmation : évite deux boutons « Recycler »
+         concurrents dans l'arbre d'accessibilité (celui de la modale
+         reprend le même libellé). */}
+      {!confirmOuvert && (
+        <button
+          type="button"
+          style={
+            icone
+              ? { ...recyclerIconeBtn, opacity: doublons === 0 ? 0.45 : 1 }
+              : recyclerBtn
+          }
+          disabled={doublons === 0}
+          aria-label={icone ? libelle : undefined}
+          onClick={() => setConfirmOuvert(true)}
+        >
+          {icone ? (
+            <>
+              <Recycle size={16} strokeWidth={1.6} aria-hidden />
+              <span>{doublons}</span>
+            </>
+          ) : (
+            libelle
+          )}
+        </button>
+      )}
       <ConfirmModal
         open={confirmOuvert}
         onClose={() => setConfirmOuvert(false)}
         onConfirm={onRecycler}
         titre={titre}
-        confirmLabel={libelleRecycler}
+        confirmLabel={libelle}
       >
         {tr(d.albums.recyclerConfirm, { n: doublons })}
       </ConfirmModal>
-    </div>
+    </>
   );
 }
