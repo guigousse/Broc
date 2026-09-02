@@ -107,14 +107,15 @@ const pointInterrogation: CSSProperties = {
   pointerEvents: "none",
 };
 
-/** Le numéro de l'emplacement (1..54, continu à travers les pages), discret
- *  dans le coin haut-gauche de chaque pochette (recette 2026-09-02). */
+/** Le numéro de l'emplacement (1..54, continu à travers les pages), en bas à
+ *  droite de chaque pochette et bien lisible (recette 2026-09-02) — le badge
+ *  ×N des doublons lui a cédé le coin et vit en bas à gauche. */
 const numeroCase: CSSProperties = {
   position: "absolute",
-  top: 2,
-  left: 5,
+  bottom: 2,
+  right: 6,
   fontFamily: "var(--font-mono)",
-  fontSize: 10,
+  fontSize: 16,
   fontWeight: 700,
   color: "var(--brass-700)",
   textShadow: "0 0 2px var(--paper-100), 0 0 4px var(--paper-100)",
@@ -124,7 +125,7 @@ const numeroCase: CSSProperties = {
 
 const badgeQuantite: CSSProperties = {
   position: "absolute",
-  right: 4,
+  left: 4,
   bottom: 4,
   padding: "1px 5px",
   fontFamily: "var(--font-mono)",
