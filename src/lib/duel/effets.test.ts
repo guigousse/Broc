@@ -4,6 +4,7 @@ import { attaquer, finirTour, nouvellePartie, poser } from "@/lib/duel/partie";
 import { MAIN_MAX, trouverObjet } from "@/lib/duel/etat";
 import { appliquerAction, blesserObjet, cibleRequise } from "@/lib/duel/effets";
 import { avecMain, avecObjet, DECK_A, DECK_B } from "@/lib/duel/__test__/helpers";
+import { statsDuel } from "@/data/duel/cartesDuel";
 
 const base = () => nouvellePartie(DECK_A, DECK_B, creerRng(1));
 const LOUPS = "carte.vinyle_des_loups_des_steppes_bark_to_be_free"; // Cri pioche
@@ -81,7 +82,10 @@ describe("effets uniques", () => {
     s = avecObjet(s.etat, 0, MARTEAU);
     let e = finirTour(s.etat).etat; // J1
     e = finirTour(e).etat; // J0 : debutTour
-    expect(e.joueurs[0].etal.map((o) => o.attaque)).toEqual([5, 2]); // violon 4→5, marteau (Bricolage) inchangé
+    // Le violon gagne 1 d'attaque (Musique), le marteau (Bricolage) reste tel quel : lu dans la
+    // donnée, que la boucle d'équilibrage retouche.
+    expect(e.joueurs[0].etal.map((o) => o.attaque))
+      .toEqual([statsDuel(VIOLON).attaque + 1, statsDuel(MARTEAU).attaque]);
   });
 
   it("attaque → pioche, résolu avant les dégâts", () => {

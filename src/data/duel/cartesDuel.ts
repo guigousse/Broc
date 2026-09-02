@@ -4,7 +4,7 @@ const E = (declencheur: Effet["declencheur"], prix: number, ...actions: Effet["a
   type: "effet", declencheur, actions, prix,
 });
 
-/** Version 2 (2026-09-02), campagne 2 : règle 6 (pose) sur les six cartes les moins posées. Historique dans docs/superpowers/duel/rapport-equilibrage.md. */
+/** Version 3 (2026-09-02), campagne 4 : règles 4 et 5 sur les six taux de victoire les plus extrêmes. Historique dans docs/superpowers/duel/rapport-equilibrage.md. */
 export const CARTES_DUEL: Record<string, StatsDuel> = {
   // ── Musique (8) : pioche, gains d'attaque alliés ──
   "carte.vinyle_des_loups_des_steppes_bark_to_be_free": { cout: 2, attaque: 2, pv: 1, texte: { type: "cri", variante: "pioche" } },
@@ -14,7 +14,7 @@ export const CARTES_DUEL: Record<string, StatsDuel> = {
   "carte.vinyle_stevranos_vive_la_fet_a": { cout: 4, attaque: 4, pv: 5 },
   "carte.guitare_classique_ancienne": { cout: 3, attaque: 2, pv: 4, texte: E("attaque", 1, { type: "pioche", valeur: 1 }) },
   "carte.test_pressing_des_trolling_sons": { cout: 2, attaque: 1, pv: 2, texte: E("pose", 2, { type: "gain", stat: "attaque", cible: "allies", valeur: 1 }) },
-  "carte.violon_de_maitre_cremonais_1715": { cout: 5, attaque: 4, pv: 5, texte: E("debutTour", 3, { type: "gain", stat: "attaque", cible: "alliesCategorie", categorie: "Musique", valeur: 1 }) },
+  "carte.violon_de_maitre_cremonais_1715": { cout: 5, attaque: 5, pv: 5, texte: E("debutTour", 2, { type: "gain", stat: "attaque", cible: "alliesCategorie", categorie: "Musique", valeur: 1 }) },
 
   // ── Jeux & Loisirs (7) : Prompt, Fragile, bon marché ──
   "carte.cartouche_le_plombier_sauteur_8_bit": { cout: 1, attaque: 1, pv: 1, texte: { type: "prompt" } },
@@ -29,19 +29,19 @@ export const CARTES_DUEL: Record<string, StatsDuel> = {
   "carte.monte_cristo": { cout: 3, attaque: 3, pv: 4 },
   "carte.les_aventures_de_titou_cap_sur_la_lune": { cout: 1, attaque: 1, pv: 1, texte: { type: "cri", variante: "degat" } },
   "carte.paris_match_70s": { cout: 2, attaque: 2, pv: 1, texte: { type: "cri", variante: "pioche" } },
-  "carte.miserables_pleiade": { cout: 4, attaque: 3, pv: 4, texte: { type: "solide" } },
+  "carte.miserables_pleiade": { cout: 4, attaque: 4, pv: 3, texte: { type: "solide" } },
   "carte.conte_de_l_aviateur_et_de_l_enfant_roi_edition": { cout: 2, attaque: 2, pv: 2, texte: E("casse", 1, { type: "pioche", valeur: 1 }) },
   "carte.le_petit_moustachu_edition_originale_1961": { cout: 3, attaque: 2, pv: 4, texte: E("pose", 1, { type: "degats", cible: "objetAdverse", valeur: 2 }) },
-  "carte.gutenberg_feuillet": { cout: 4, attaque: 3, pv: 4, texte: E("pose", 3, { type: "pioche", valeur: 2 }) },
+  "carte.gutenberg_feuillet": { cout: 4, attaque: 4, pv: 4, texte: E("pose", 2, { type: "pioche", valeur: 2 }) },
 
   // ── Mode (7) : Ruse, retour en main, tempo ──
   "carte.veste_jean_delavee": { cout: 2, attaque: 2, pv: 2, texte: { type: "ruse" } },
   "carte.blouson_cuir_vintage": { cout: 3, attaque: 3, pv: 3, texte: { type: "ruse" } },
-  "carte.chapeau_feutre_50s": { cout: 1, attaque: 2, pv: 1 },
+  "carte.chapeau_feutre_50s": { cout: 1, attaque: 1, pv: 2 },
   "carte.robe_50s_pinup": { cout: 4, attaque: 4, pv: 4, texte: { type: "cri", variante: "soin" } },
-  "carte.broche_emaillee_artdeco": { cout: 2, attaque: 1, pv: 1, texte: E("pose", 3, { type: "retourEnMain" }) },
+  "carte.broche_emaillee_artdeco": { cout: 2, attaque: 0, pv: 2, texte: E("pose", 3, { type: "retourEnMain" }) },
   "carte.sac_a_main_talaria": { cout: 3, attaque: 2, pv: 4, texte: E("attaque", 1, { type: "gain", stat: "attaque", cible: "soi", valeur: 1 }) },
-  "carte.la_petite_robe_noire_chaine_1925": { cout: 5, attaque: 4, pv: 4, texte: E("pose", 4, { type: "retourEnMain" }, { type: "gain", stat: "attaque", cible: "allies", valeur: 1 }) },
+  "carte.la_petite_robe_noire_chaine_1925": { cout: 5, attaque: 3, pv: 5, texte: E("pose", 4, { type: "retourEnMain" }, { type: "gain", stat: "attaque", cible: "allies", valeur: 1 }) },
 
   // ── Maison (7) : PV hauts, Barrage, soin ──
   "carte.figurine_porcelaine": { cout: 1, attaque: 1, pv: 1, texte: { type: "barrage" } },

@@ -338,3 +338,58 @@ Hors cible :
 - premier joueur : 64.6 %
 - agressif contre contrôle : 71.1 %
 
+## Campagne 4 — graine 5, cartes v3
+
+### Retouches (itération 4) — les six taux de victoire les plus extrêmes
+
+| Carte | Avant → après | Règle |
+|---|---|---|
+| gutenberg_feuillet | 3/4, effet prix 3 → 4/4, prix 2 | 5 (prix − 1, +1 point de stat) |
+| violon_de_maitre_cremonais | 4/5, prix 3 → 5/5, prix 2 | 5 (prix − 1, +1 point de stat) |
+| miserables_pleiade | 3/4 → 4/3 | 5 (1 PV → 1 attaque) |
+| chapeau_feutre_50s | 2/1 → 1/2 | 4 (1 attaque → 1 PV) |
+| broche_emaillee_artdeco | 1/1 → 0/2 | 4 (1 attaque → 1 PV) |
+| la_petite_robe_noire | 4/4 → 3/5 | 4 (1 attaque → 1 PV) |
+
+Deux notes de lecture des règles :
+
+- pour la broche et la petite robe noire, la première branche de la règle 4
+  (`prix + 1`) est **interdite par le test de garde** : une rare plafonne à 3,
+  une légendaire à 4 (spec §5.2), et elles y sont déjà. On tombe donc sur la
+  branche « déplacer 1 point d'attaque vers les PV » ;
+- la branche finale de la règle 4 (monter le coût en échangeant avec une carte
+  de coût voisin sous-performante) n'a jamais pu s'appliquer : aucune carte de
+  coût voisin n'était sous 45 % au moment voulu.
+
+Graine 5 · 20000 parties
+
+| Mesure | Valeur |
+|---|---|
+| Premier joueur | 65.3 % |
+| Manches (moyenne / max) | 9.1 / 21 |
+| Nuls / épuisées | 0.0 % / 0.0 % |
+| Agressif contre contrôle | 63.9 % |
+
+| Catégorie | Victoires |
+|---|---|
+| Bricolage | 49.5 % |
+| Maison | 50.5 % |
+| Mode | 52.8 % |
+| Musique | 49.2 % |
+| Livres & Papeterie | 49.0 % |
+| Jeux & Loisirs | 49.5 % |
+| Objets d'art | 50.1 % |
+
+Hors cible :
+- carte violon_de_maitre_cremonais_1715 : victoire 44.0 %
+- carte cartouche_stadium_events : victoire 44.9 %
+- carte monte_cristo : pose 60 %
+- carte gutenberg_feuillet : victoire 43.1 %
+- carte la_petite_robe_noire_chaine_1925 : victoire 58.7 %
+- carte boite_outils_complete : pose 60 %
+- premier joueur : 65.3 %
+- agressif contre contrôle : 63.9 %
+
+De 22 mesures hors cible à 8. « Agressif contre contrôle » descend de 71,1 à
+63,9 % : buffer le haut de courbe et affaiblir le bas travaille dans le bon
+sens.
