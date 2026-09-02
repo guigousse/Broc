@@ -128,6 +128,18 @@ export function BazarScene({
             marchandise. */}
         <BorneArcade onOuvrir={() => setBorneOuverte(true)} />
 
+        {/* Le tenancier, qui répond enfin quand on lui parle : il porte le
+            nom et le visage du Joueur du Vide-grenier, l'un des commanditaires
+            du courrier. Il tient son propre état (sa bulle) — la scène n'a pas
+            à savoir ce qu'il raconte.
+
+            ICI, avec le décor, et pas après la marchandise : son rectangle
+            détouré chevauche les cases de la planche du bas, et rendu après
+            elles il passait DEVANT — les paquets sous son coude devenaient
+            intapables (recette du 2026-09-02). Peint en premier, les articles
+            le recouvrent et reçoivent leurs taps. */}
+        <TenancierBazar horloge={horloge} />
+
         {etal.lotsPieces[0] &&
           (() => {
             const lot = etal.lotsPieces[0];
@@ -303,12 +315,6 @@ export function BazarScene({
             />
           );
         })}
-
-        {/* Le tenancier, qui répond enfin quand on lui parle : il porte le
-            nom et le visage du Joueur du Vide-grenier, l'un des commanditaires
-            du courrier. Il tient son propre état (sa bulle) — la scène n'a pas
-            à savoir ce qu'il raconte. */}
-        <TenancierBazar horloge={horloge} />
 
         <button
           type="button"

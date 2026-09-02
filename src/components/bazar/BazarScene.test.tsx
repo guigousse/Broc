@@ -104,6 +104,25 @@ describe("BazarScene", () => {
     expect(onZoneIndex).toHaveBeenCalledWith(2);
   });
 
+  /**
+   * Le rectangle détouré du tenancier chevauche les cases de la planche du
+   * bas : rendu APRÈS elles, il passait devant et les paquets sous son coude
+   * étaient intapables (recette du 2026-09-02). L'ordre de peinture est la
+   * seule chose qui l'en empêche — pas de z-index dans la scène.
+   */
+  it("le tenancier est peint AVANT la marchandise, qui le recouvre", () => {
+    monter();
+    const tenancier = screen.getByTestId("tenancier-bazar");
+    const articles = document.querySelectorAll('[data-testid^="article-case"]');
+    expect(articles.length).toBeGreaterThan(0);
+    for (const article of articles) {
+      expect(
+        tenancier.compareDocumentPosition(article) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
+
   it("pose l'unique lot sur la planche du bas", () => {
     monter();
     expect(screen.getByTestId("article-case4")).toBeTruthy();
