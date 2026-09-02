@@ -198,6 +198,39 @@ async function trimCadrage(buf) {
   return buf;
 }
 
+/** La couleur du thème avec sa saturation HSL poussée (bornée à 1). */
+function teinteSaturee(hex, boost = 1.45) {
+  const [r, g, b] = [1, 3, 5].map(
+    (i) => parseInt(hex.slice(i, i + 2), 16) / 255,
+  );
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  let h = 0;
+  let s = 0;
+  if (d > 0) {
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+    else if (max === g) h = ((b - r) / d + 2) / 6;
+    else h = ((r - g) / d + 4) / 6;
+  }
+  s = Math.min(1, s * boost);
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const canal = (t) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  return [canal(h + 1 / 3), canal(h), canal(h - 1 / 3)].map((c) =>
+    Math.round(c * 255),
+  );
+}
+
 async function retoucherCellule(cellBuf, id, retouches, teinte) {
   let buf = cellBuf;
   if (retouches.zoom?.includes(id)) {
@@ -216,11 +249,13 @@ async function retoucherCellule(cellBuf, id, retouches, teinte) {
   // Chaque thème a sa couleur (config `teintes`), légendaires compris
   // (couleur de LEUR thème, pas de la planche).
   if (teinte) {
-    const [r, g, b] = [1, 3, 5].map((i) =>
-      parseInt(teinte.slice(i, i + 2), 16),
-    );
-    const encre = [r, g, b].map((c) => c * 0.45);
-    const papier = 250;
+    // Encre : la couleur du thème SATURÉE (+45 % — « moins fade », retour du
+    // 2026-09-02) puis assombrie ; et une courbe de contraste (×1,2 autour
+    // du gris moyen) repliée dans la même rampe linéaire.
+    const encre = teinteSaturee(teinte).map((c) => c * 0.42);
+    const papier = 252;
+    const contraste = 1.2;
+    const decalage = -(contraste - 1) * 128;
     // `recomb` (luminance recopiée sur les 3 canaux) plutôt que
     // `greyscale()` : ce dernier réduit à 1 bande et `linear` à 3 valeurs
     // refuse alors (« Band expansion using linear is unsupported »).
@@ -228,8 +263,8 @@ async function retoucherCellule(cellBuf, id, retouches, teinte) {
     buf = await sharp(buf)
       .recomb([lum, lum, lum])
       .linear(
-        encre.map((d) => (papier - d) / 255),
-        encre,
+        encre.map((d) => ((papier - d) / 255) * contraste),
+        encre.map((d) => ((papier - d) / 255) * decalage + d),
       )
       .toBuffer();
   }
