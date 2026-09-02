@@ -516,3 +516,273 @@ Hors cible :
 Trois mesures hors cible sur 155 : les 50 taux de victoire et les 50 taux de
 pose sont dans la cible sauf un, comme les 7 catégories, la durée des parties
 et le taux de nuls.
+
+## Validation finale — cartes v6, graines 101, 202, 303
+
+Trois campagnes de 20 000 parties, **sans aucune retouche entre elles**.
+
+Graine 101 · 20000 parties
+
+| Mesure | Valeur |
+|---|---|
+| Premier joueur | 66.3 % |
+| Manches (moyenne / max) | 9.2 / 21 |
+| Nuls / épuisées | 0.0 % / 0.0 % |
+| Agressif contre contrôle | 60.6 % |
+
+| Catégorie | Victoires |
+|---|---|
+| Bricolage | 49.5 % |
+| Maison | 50.1 % |
+| Mode | 52.1 % |
+| Musique | 49.2 % |
+| Livres & Papeterie | 49.2 % |
+| Jeux & Loisirs | 50.0 % |
+| Objets d'art | 50.4 % |
+
+Hors cible :
+- carte gutenberg_feuillet : victoire 44.3 %
+- carte la_petite_robe_noire_chaine_1925 : victoire 55.7 %
+- premier joueur : 66.3 %
+- agressif contre contrôle : 60.6 %
+
+Graine 202 · 20000 parties
+
+| Mesure | Valeur |
+|---|---|
+| Premier joueur | 66.4 % |
+| Manches (moyenne / max) | 9.2 / 21 |
+| Nuls / épuisées | 0.0 % / 0.0 % |
+| Agressif contre contrôle | 61.1 % |
+
+| Catégorie | Victoires |
+|---|---|
+| Bricolage | 49.4 % |
+| Maison | 50.3 % |
+| Mode | 52.0 % |
+| Musique | 49.2 % |
+| Livres & Papeterie | 49.0 % |
+| Jeux & Loisirs | 50.2 % |
+| Objets d'art | 50.5 % |
+
+Hors cible :
+- carte gutenberg_feuillet : victoire 44.7 %
+- carte la_petite_robe_noire_chaine_1925 : victoire 55.8 %
+- premier joueur : 66.4 %
+- agressif contre contrôle : 61.1 %
+
+Graine 303 · 20000 parties
+
+| Mesure | Valeur |
+|---|---|
+| Premier joueur | 66.3 % |
+| Manches (moyenne / max) | 9.2 / 21 |
+| Nuls / épuisées | 0.0 % / 0.0 % |
+| Agressif contre contrôle | 60.6 % |
+
+| Catégorie | Victoires |
+|---|---|
+| Bricolage | 49.4 % |
+| Maison | 50.0 % |
+| Mode | 51.8 % |
+| Musique | 49.2 % |
+| Livres & Papeterie | 49.3 % |
+| Jeux & Loisirs | 50.4 % |
+| Objets d'art | 50.6 % |
+
+Hors cible :
+- carte la_petite_robe_noire_chaine_1925 : victoire 55.7 %
+- premier joueur : 66.3 %
+- agressif contre contrôle : 60.6 %
+
+### Les 50 cartes aux trois graines
+
+| Carte | Coût | Victoires 101 / 202 / 303 | Pose 101 / 202 / 303 |
+|---|---|---|---|
+| vinyle_des_loups_des_steppes_bark_to_be_free | 2 | 50.2 / 50.6 / 50.4 | 76.9 / 76.5 / 76.8 |
+| vinyle_grand_max_des_combines | 1 | 51.3 / 51.4 / 50.6 | 74.5 / 74.1 / 75.3 |
+| 33tours_jazz_1 | 3 | 47.0 / 47.0 / 47.3 | 62.1 / 62.1 / 61.7 |
+| harmonica_chromatique_de_bluesman | 2 | 52.4 / 52.7 / 52.0 | 76.1 / 76.0 / 76.6 |
+| vinyle_stevranos_vive_la_fet_a | 4 | 47.1 / 46.5 / 46.4 | 66.2 / 66.6 / 66.0 |
+| guitare_classique_ancienne | 3 | 47.4 / 47.3 / 47.8 | 61.7 / 61.9 / 61.8 |
+| test_pressing_des_trolling_sons | 2 | 53.0 / 52.8 / 53.2 | 76.2 / 76.7 / 77.1 |
+| violon_de_maitre_cremonais_1715 | 5 | 45.4 / 45.6 / 45.4 | 97.3 / 97.2 / 97.2 |
+| cartouche_le_plombier_sauteur_8_bit | 1 | 51.7 / 52.6 / 52.8 | 75.6 / 75.4 / 75.3 |
+| manette_megadrive | 1 | 52.5 / 53.1 / 52.9 | 76.1 / 75.0 / 76.0 |
+| playbox_pocket | 2 | 53.6 / 53.9 / 53.6 | 77.6 / 76.4 / 76.4 |
+| risk_1992 | 3 | 49.3 / 49.3 / 49.4 | 61.2 / 60.8 / 61.1 |
+| figurine_de_guerre_galactique_1978 | 4 | 47.9 / 47.6 / 48.5 | 65.7 / 64.9 / 65.4 |
+| flipper_a_plateau_annees_60 | 5 | 47.1 / 46.9 / 47.6 | 86.8 / 86.4 / 86.9 |
+| cartouche_stadium_events | 4 | 47.5 / 47.8 / 48.0 | 93.9 / 94.0 / 94.4 |
+| monte_cristo | 3 | 48.9 / 48.7 / 48.9 | 61.4 / 61.1 / 61.5 |
+| les_aventures_de_titou_cap_sur_la_lune | 1 | 52.7 / 52.0 / 52.0 | 76.0 / 75.6 / 76.0 |
+| paris_match_70s | 2 | 50.6 / 50.2 / 51.4 | 77.4 / 77.3 / 77.3 |
+| miserables_pleiade | 4 | 46.3 / 45.8 / 46.5 | 65.3 / 66.1 / 66.5 |
+| conte_de_l_aviateur_et_de_l_enfant_roi_edition | 2 | 50.9 / 51.7 / 51.5 | 76.3 / 76.9 / 76.4 |
+| le_petit_moustachu_edition_originale_1961 | 3 | 50.5 / 50.2 / 49.5 | 61.4 / 60.6 / 60.9 |
+| gutenberg_feuillet | 4 | 44.3 / 44.7 / 45.3 | 94.8 / 94.1 / 94.2 |
+| veste_jean_delavee | 2 | 52.9 / 53.1 / 52.7 | 76.7 / 76.3 / 76.3 |
+| blouson_cuir_vintage | 3 | 50.1 / 49.7 / 49.7 | 61.2 / 60.3 / 61.3 |
+| chapeau_feutre_50s | 1 | 53.0 / 53.4 / 52.9 | 74.4 / 73.8 / 74.1 |
+| robe_50s_pinup | 4 | 48.7 / 48.3 / 48.8 | 66.1 / 66.1 / 67.5 |
+| broche_emaillee_artdeco | 2 | 54.0 / 53.6 / 53.3 | 75.7 / 75.9 / 76.1 |
+| sac_a_main_talaria | 3 | 50.4 / 50.0 / 49.9 | 61.4 / 61.6 / 60.7 |
+| la_petite_robe_noire_chaine_1925 | 5 | 55.7 / 55.8 / 55.7 | 97.4 / 98.0 / 97.7 |
+| figurine_porcelaine | 1 | 52.4 / 52.2 / 52.8 | 74.4 / 74.4 / 75.2 |
+| service_the_faience | 2 | 50.9 / 51.8 / 50.9 | 76.1 / 75.7 / 76.6 |
+| tabouret_bois_patine | 3 | 49.6 / 49.5 / 48.8 | 61.8 / 61.9 / 61.2 |
+| vase_en_cristal_baraka | 4 | 47.4 / 47.8 / 47.5 | 66.5 / 66.7 / 67.5 |
+| boite_musique_ancienne | 2 | 50.3 / 50.8 / 50.5 | 76.8 / 75.0 / 76.1 |
+| lampe_bureau_artdeco | 3 | 49.1 / 49.6 / 49.2 | 61.7 / 61.9 / 61.4 |
+| uf_joaillier_imperial_en_email_replique | 5 | 51.2 / 50.2 / 50.5 | 97.3 / 97.5 / 97.6 |
+| aquarelle_paysage_anonyme | 1 | 52.1 / 52.6 / 52.6 | 75.1 / 74.8 / 75.7 |
+| terre_cuite_buste | 2 | 51.3 / 52.0 / 52.1 | 76.0 / 75.8 / 76.4 |
+| masque_tribal_decoratif | 3 | 50.1 / 49.5 / 50.1 | 61.1 / 61.2 / 61.7 |
+| bronze_animalier | 4 | 47.2 / 47.3 / 47.1 | 66.9 / 66.6 / 67.6 |
+| vase_galle_signe | 3 | 49.4 / 49.6 / 49.2 | 60.7 / 60.4 / 60.9 |
+| dessin_surrealiste_aux_montres_molles_signe | 5 | 52.5 / 52.1 / 52.2 | 85.8 / 85.5 / 85.5 |
+| marteau_menuisier | 1 | 53.2 / 53.0 / 53.3 | 75.4 / 74.8 / 76.1 |
+| boite_outils_complete | 3 | 49.1 / 49.2 / 49.2 | 60.5 / 60.3 / 60.7 |
+| etabli_pliant_ancien | 3 | 50.2 / 50.1 / 49.9 | 60.2 / 61.3 / 60.7 |
+| pince_etirer_cuivre | 2 | 53.6 / 53.8 / 53.1 | 76.7 / 76.3 / 76.8 |
+| scie_egoine_de_charpentier | 4 | 47.1 / 47.2 / 47.3 | 65.8 / 65.6 / 65.8 |
+| boite_d_outils_de_manufacture_signee | 5 | 49.2 / 48.7 / 48.9 | 86.0 / 85.4 / 85.8 |
+| rabot_d_ebeniste_a_semelle_modele_605 | 4 | 46.7 / 46.3 / 46.6 | 65.2 / 65.2 / 66.1 |
+| coffret_ebeniste_xixe | 5 | 46.6 / 46.5 / 46.8 | 85.8 / 86.2 / 86.1 |
+
+### Bilan
+
+| Cible (§6.4) | Résultat |
+|---|---|
+| Taux de victoire d'une carte, 45–55 % | **49 cartes sur 50** aux trois graines (la petite robe noire à 55,7 / 55,8 / 55,7 % ; Gutenberg à 44,3 / 44,7 % aux graines 101 et 202, dans la cible à la 303) |
+| Taux de pose ≥ 60 % | **50 sur 50**, aux trois graines |
+| Taux de victoire d'une catégorie, 45–55 % | **7 sur 7**, entre 48,5 et 52,3 % |
+| Durée moyenne 8 à 14 manches, aucune > 25 | **9,2 manches**, 21 au plus |
+| Nuls + parties épuisées < 2 % | **0,0 %** |
+| Avantage du premier joueur < 55 % | **66,3 % — résiste** |
+| Agressif contre contrôle 45–55 % | **60,6 à 61,1 % — résiste** |
+
+La condition d'arrêt du plan (`horsCible` vide sur trois graines) **n'est pas
+atteinte** : deux mesures globales résistent, plus une carte. Sept itérations
+sur les douze autorisées ont été consommées ; les cinq restantes n'ont pas été
+dépensées parce que **les règles de décision n'ont plus de coup légal** sur ce
+qui reste. Le détail suit.
+
+## Ce qui résiste, et pourquoi
+
+### 1. L'avantage du premier joueur (66,3 %) — structurel au format
+
+Ce n'est ni un défaut des cartes, ni un défaut des decks. Preuve : une partie
+**en miroir** (les deux joueurs jouent le même deck, avec le même profil d'IA)
+donne, sur 12 000 parties :
+
+| Miroir | Premier joueur | Manches |
+|---|---|---|
+| agressif contre agressif | 68,7 % | 7,6 |
+| prudent contre prudent | 67,4 % | 11,3 |
+
+Et le chiffre décroît régulièrement avec la durée de la partie (miroir prudent) :
+
+| Durée | 6–8 manches | 9–10 | 11–13 | 14–18 |
+|---|---|---|---|---|
+| Premier joueur | 82 % | 65–74 % | 58–64 % | 54–65 % |
+
+Le format est une course : la vitrine tient 20 points, le plafond d'énergie
+monte de 1 par tour, la partie se joue en 9 manches. Celui qui joue en premier
+attaque en premier **à chaque palier d'énergie**, une avance qui ne se rattrape
+pas. Il faudrait des parties de 18 manches et plus pour descendre sous 55 %,
+c'est-à-dire une vitrine bien plus grosse que 20 — une **règle du §3**, que le
+plan interdit de toucher.
+
+Les trois compensations du §3.1 ont été mesurées et la meilleure est en place
+(5ᵉ carte **et** +1 énergie au premier tour, cumulées) : elle a ramené la
+mesure de 74,2 % à 64,6 %. Le levier réglementaire est épuisé.
+
+**Décision qui revient à Guillaume** : assouplir la cible, ou changer une
+règle du §3 (vitrine plus grosse, ou compensation plus forte que celles
+prévues au §3.1).
+
+### 2. Agressif contre contrôle (60,6 %) — propriété du générateur de decks
+
+Le jeu de cartes, lui, est plat. En mesurant les trois familles de decks
+séparément (12 000 parties chacune), le taux de victoire moyen par palier de
+coût donne :
+
+| Famille de decks | Coût 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| aléatoire | 50,6 % | 50,0 % | 49,2 % | 49,1 % | 52,3 % |
+| bicolore | 50,4 % | 49,8 % | 49,6 % | 49,7 % | 51,1 % |
+| **par courbe** | **60,2 %** | **60,5 %** | 49,1 % | **39,1 %** | **40,5 %** |
+
+Dans les decks aléatoires et bicolores — 75 % de la campagne — la courbe de
+coût est **plate à un point près**. L'écart n'apparaît que dans la famille
+« par courbe » du §6.3, où le deck contrôle est fait de **20 cartes coûtant
+toutes 3 ou plus**. Dans un format où l'énergie monte de 1 par tour et où la
+partie dure 9 manches, ce deck ne peut rien jouer avant la manche 3 et a déjà
+encaissé le tiers de sa vitrine : ce n'est pas un deck de contrôle, c'est un
+deck injouable. Le §6.3 fige cette définition, le plan interdit d'y toucher.
+
+Les retouches de cartes ont quand même fait descendre la mesure de 71,1 % à
+60,6 % en buffant le haut de courbe et en affaiblissant le bas. Aller plus loin
+demanderait de sortir les cartes de coût 4–5 de la cible 45–55 % par le haut :
+une cible contre une autre.
+
+**Décision qui revient à Guillaume** : assouplir la cible, ou redéfinir les
+decks « par courbe » du §6.3 (par exemple contrôle = coûts 2 à 5, avec une
+poignée de cartes bon marché pour tenir le début de partie).
+
+### 3. La petite robe noire à chaîne (55,7 %) — un effet plus cher que le plafond
+
+Carte légendaire de coût 5, effet à la pose : *renvoyer un objet adverse dans
+la main de son propriétaire* **et** *+1 d'attaque à tous vos objets*. Elle a
+été retouchée trois fois de suite par la règle 4 (4/4 → 3/5 → 2/6 → 1/7) : la
+mesure n'a bougé que de 56,4 % à 55,7 %. C'est logique — sa puissance est dans
+son texte, pas dans ses stats.
+
+La règle 4 demande d'abord `prix + 1`. Elle est **bloquée** : le prix de son
+effet est déjà à 4, le plafond du §5.2 pour une légendaire (et du test de
+garde). La branche de repli (1 attaque → 1 PV) est allée jusqu'à 1 d'attaque ;
+la règle renvoie alors à « monter le coût de 1 », impossible à 5, le maximum du
+domaine. Toutes les branches sont fermées.
+
+Le diagnostic par famille est net : 59,6 % en decks aléatoires, 57,3 % en
+bicolores, 41,5 % en decks par courbe — c'est bien la carte qui est trop forte,
+et c'est le tirage « par courbe » qui masque la moitié de l'écart.
+
+**Décision qui revient à Guillaume** : relever le plafond de prix d'un effet
+légendaire à 5 (§5.2), ou n'accorder qu'**une** action à cette carte au lieu de
+deux (le §4.3 l'autorise : « les légendaires **au plus** deux »).
+
+### 4. Gutenberg à 44,3 % — le même effet de bord, à 0,5 point
+
+Feuillet de Gutenberg, légendaire de coût 4, *à la pose, piochez 2 cartes*.
+Buffé deux fois par la règle 5 (prix 3 → 2 → 1, le plancher), puis toutes les
+répartitions de ses 9 points de stats ont été mesurées à la graine 101 :
+
+| Stats | 6/3 | 5/4 | **4/5** | 3/6 |
+|---|---|---|---|---|
+| Victoires | 43,3 %¹ | 44,4 % | **44,3 %** | 43,5 % |
+
+¹ à la graine 7.
+
+Le plateau est à 44,4 % : aucune répartition légale n'atteint 45 %. Par
+famille : 46,4 % en aléatoire, 47,3 % en bicolore, **35,8 %** par courbe — le
+même effet de bord qu'au point 2, sur une carte de coût 4. La carte est dans la
+cible dès qu'on sort de la famille « par courbe » (et elle y est déjà à la
+graine 303). Piocher 2 cartes vaut peu dans un format où la ressource rare est
+l'énergie et la place d'étal, pas la carte en main : le prix 1 est encore trop
+cher, mais c'est le plancher du §5.2.
+
+## Journal des versions de cartes
+
+| Version | Itération | Campagne | Retouches |
+|---|---|---|---|
+| v1 | — | 0 et 1 | première version au budget (tâche 8) |
+| v1 | 1 | 1 | compensation du second joueur (règle 1), aucune carte |
+| v2 | 2 | 2 | 6 cartes, règle 6 (expérience décisive : la règle échoue) |
+| v2 | 3 | 3 | aucune carte — retouche d'IA sur `phasePose` |
+| v3 | 4 | 4 | 6 cartes, règles 4 et 5 |
+| v4 | 5 | 5 | 4 cartes, règles 4 et 5 |
+| v5 | 6 | 6 | 2 cartes, règles 4 et 5 |
+| v6 | 7 | 7 | 2 cartes, règles 4 et 5 |
+
