@@ -393,3 +393,43 @@ Hors cible :
 De 22 mesures hors cible à 8. « Agressif contre contrôle » descend de 71,1 à
 63,9 % : buffer le haut de courbe et affaiblir le bas travaille dans le bon
 sens.
+
+## Campagne 5 — graine 6, cartes v4
+
+### Retouches (itération 5)
+
+| Carte | Avant → après | Règle |
+|---|---|---|
+| la_petite_robe_noire | 3/5 → 2/6 | 4 (1 attaque → 1 PV) |
+| gutenberg_feuillet | 4/4, prix 2 → 5/4, prix 1 | 5 (prix − 1, +1 point de stat) |
+| violon_de_maitre_cremonais | 5/5, prix 2 → 6/5, prix 1 | 5 (prix − 1, +1 point de stat) |
+| cartouche_stadium_events | 2/4, prix 4 → 3/4, prix 3 | 5 (prix − 1, +1 point de stat) |
+
+Graine 6 · 20000 parties
+
+| Mesure | Valeur |
+|---|---|
+| Premier joueur | 65.6 % |
+| Manches (moyenne / max) | 9.1 / 21 |
+| Nuls / épuisées | 0.0 % / 0.0 % |
+| Agressif contre contrôle | 63.4 % |
+
+| Catégorie | Victoires |
+|---|---|
+| Bricolage | 49.0 % |
+| Maison | 50.1 % |
+| Mode | 52.4 % |
+| Musique | 49.3 % |
+| Livres & Papeterie | 49.4 % |
+| Jeux & Loisirs | 50.3 % |
+| Objets d'art | 50.2 % |
+
+Hors cible :
+- carte violon_de_maitre_cremonais_1715 : victoire 44.7 %
+- carte gutenberg_feuillet : victoire 44.5 %
+- carte la_petite_robe_noire_chaine_1925 : victoire 56.3 %
+- premier joueur : 65.6 %
+- agressif contre contrôle : 63.4 %
+
+Les deux derniers taux de pose rentrent dans la cible. Restent trois cartes,
+toutes légendaires, et les deux mesures globales.
