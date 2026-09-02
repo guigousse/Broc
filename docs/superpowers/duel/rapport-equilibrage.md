@@ -433,3 +433,43 @@ Hors cible :
 
 Les deux derniers taux de pose rentrent dans la cible. Restent trois cartes,
 toutes légendaires, et les deux mesures globales.
+
+## Campagne 6 — graine 7, cartes v5
+
+### Retouches (itération 6)
+
+| Carte | Avant → après | Règle |
+|---|---|---|
+| la_petite_robe_noire | 2/6 → 1/7 | 4 (1 attaque → 1 PV) |
+| gutenberg_feuillet | 5/4 → 6/3 | 5 (1 PV → 1 attaque) |
+
+Le violon n'est **plus retouchable** : son prix est au plancher (1, imposé par
+le test de garde) et son attaque au plafond du domaine (6). Il est laissé tel
+quel — et il rentre dans la cible à cette campagne.
+
+Graine 7 · 20000 parties
+
+| Mesure | Valeur |
+|---|---|
+| Premier joueur | 65.7 % |
+| Manches (moyenne / max) | 9.0 / 21 |
+| Nuls / épuisées | 0.0 % / 0.0 % |
+| Agressif contre contrôle | 64.1 % |
+
+| Catégorie | Victoires |
+|---|---|
+| Bricolage | 49.4 % |
+| Maison | 50.2 % |
+| Mode | 52.1 % |
+| Musique | 49.4 % |
+| Livres & Papeterie | 49.1 % |
+| Jeux & Loisirs | 50.3 % |
+| Objets d'art | 50.1 % |
+
+Hors cible :
+- carte gutenberg_feuillet : victoire 43.3 %
+- carte la_petite_robe_noire_chaine_1925 : victoire 55.1 %
+- carte boite_outils_complete : pose 60 %
+- carte pince_etirer_cuivre : victoire 55.3 %
+- premier joueur : 65.7 %
+- agressif contre contrôle : 64.1 %

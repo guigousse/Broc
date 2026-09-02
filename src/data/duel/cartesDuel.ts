@@ -4,7 +4,7 @@ const E = (declencheur: Effet["declencheur"], prix: number, ...actions: Effet["a
   type: "effet", declencheur, actions, prix,
 });
 
-/** Version 4 (2026-09-02), campagne 5 : règles 4 et 5 sur les quatre derniers taux de victoire hors cible. Historique dans docs/superpowers/duel/rapport-equilibrage.md. */
+/** Version 5 (2026-09-02), campagne 6 : règles 4 et 5 sur les deux dernières cartes retouchables. Historique dans docs/superpowers/duel/rapport-equilibrage.md. */
 export const CARTES_DUEL: Record<string, StatsDuel> = {
   // ── Musique (8) : pioche, gains d'attaque alliés ──
   "carte.vinyle_des_loups_des_steppes_bark_to_be_free": { cout: 2, attaque: 2, pv: 1, texte: { type: "cri", variante: "pioche" } },
@@ -32,7 +32,7 @@ export const CARTES_DUEL: Record<string, StatsDuel> = {
   "carte.miserables_pleiade": { cout: 4, attaque: 4, pv: 3, texte: { type: "solide" } },
   "carte.conte_de_l_aviateur_et_de_l_enfant_roi_edition": { cout: 2, attaque: 2, pv: 2, texte: E("casse", 1, { type: "pioche", valeur: 1 }) },
   "carte.le_petit_moustachu_edition_originale_1961": { cout: 3, attaque: 2, pv: 4, texte: E("pose", 1, { type: "degats", cible: "objetAdverse", valeur: 2 }) },
-  "carte.gutenberg_feuillet": { cout: 4, attaque: 5, pv: 4, texte: E("pose", 1, { type: "pioche", valeur: 2 }) },
+  "carte.gutenberg_feuillet": { cout: 4, attaque: 6, pv: 3, texte: E("pose", 1, { type: "pioche", valeur: 2 }) },
 
   // ── Mode (7) : Ruse, retour en main, tempo ──
   "carte.veste_jean_delavee": { cout: 2, attaque: 2, pv: 2, texte: { type: "ruse" } },
@@ -41,7 +41,7 @@ export const CARTES_DUEL: Record<string, StatsDuel> = {
   "carte.robe_50s_pinup": { cout: 4, attaque: 4, pv: 4, texte: { type: "cri", variante: "soin" } },
   "carte.broche_emaillee_artdeco": { cout: 2, attaque: 0, pv: 2, texte: E("pose", 3, { type: "retourEnMain" }) },
   "carte.sac_a_main_talaria": { cout: 3, attaque: 2, pv: 4, texte: E("attaque", 1, { type: "gain", stat: "attaque", cible: "soi", valeur: 1 }) },
-  "carte.la_petite_robe_noire_chaine_1925": { cout: 5, attaque: 2, pv: 6, texte: E("pose", 4, { type: "retourEnMain" }, { type: "gain", stat: "attaque", cible: "allies", valeur: 1 }) },
+  "carte.la_petite_robe_noire_chaine_1925": { cout: 5, attaque: 1, pv: 7, texte: E("pose", 4, { type: "retourEnMain" }, { type: "gain", stat: "attaque", cible: "allies", valeur: 1 }) },
 
   // ── Maison (7) : PV hauts, Barrage, soin ──
   "carte.figurine_porcelaine": { cout: 1, attaque: 1, pv: 1, texte: { type: "barrage" } },
