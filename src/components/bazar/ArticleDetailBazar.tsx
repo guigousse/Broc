@@ -210,6 +210,24 @@ function IconeAlbum({
   return <Icone size={72} />;
 }
 
+/** L'album de timbres a son art (2026-09-02, style Lindner) : le visuel de
+ *  la fiche est l'image détourée, sans le rond placeholder. */
+function VisuelAlbumTimbres({ taille }: { taille: number }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/bazar/albums/album-timbres.webp"
+      alt=""
+      draggable={false}
+      style={{
+        height: taille,
+        width: "auto",
+        filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.45))",
+      }}
+    />
+  );
+}
+
 /**
  * La fiche d'un article du Bazar : l'article en grand, son nom, son prix en
  * jetons, et le bouton qui l'achète.
@@ -348,9 +366,13 @@ export function ArticleDetailBazar({
             </div>
           ) : (
             <div style={pieceBox}>
-              <RondArticle size={120}>
-                <IconeAlbum genre={article.genre} album={article.album} />
-              </RondArticle>
+              {article.album === "timbres" && article.genre === "album" ? (
+                <VisuelAlbumTimbres taille={150} />
+              ) : (
+                <RondArticle size={120}>
+                  <IconeAlbum genre={article.genre} album={article.album} />
+                </RondArticle>
+              )}
             </div>
           )}
         </div>

@@ -157,7 +157,16 @@ export default function CollectionPage() {
     const albums = albumsDe(state);
     const iconesAlbum: Record<AlbumId, ReactNode> = {
       classeur: <Album size={28} strokeWidth={1.75} />,
-      timbres: <BookOpen size={28} strokeWidth={1.75} />,
+      // L'album de timbres a son art (2026-09-02, style Lindner).
+      timbres: (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/bazar/albums/album-timbres.webp"
+          alt=""
+          draggable={false}
+          style={{ height: 40, width: "auto" }}
+        />
+      ),
     };
     const titresAlbum: Record<AlbumId, string> = {
       classeur: d.albums.classeurTitre,
