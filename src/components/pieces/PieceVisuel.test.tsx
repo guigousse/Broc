@@ -14,10 +14,14 @@ describe("PieceVisuel", () => {
     expect(img.getAttribute("src")).toContain("br.marteau_menuisier");
     expect(v.style.width).toBe("96px");
   });
-  it("un timbre sans art montre un SVG dentelé numéroté", () => {
+  // Depuis le 2026-09-02, les 50 timbres ont leur art : le SVG dentelé de
+  // secours ne sert plus qu'à un id qui perdrait son fichier.
+  it("un timbre avec art montre son webp de public/timbres/", () => {
     const { container } = render(<PieceVisuel id="timbre.renard_roux" size={64} />);
-    expect(container.querySelector("svg")).not.toBeNull();
-    expect(container.textContent).toContain("11"); // ordre 10 → n° 11
+    const v = container.querySelector('[data-testid="piece-visuel"]') as HTMLElement;
+    expect(v.dataset.pieceSource).toBe("image");
+    const img = container.querySelector("img") as HTMLImageElement;
+    expect(img.getAttribute("src")).toBe("/timbres/timbre.renard_roux.webp");
   });
   it("grisé : filtre gris", () => {
     const { container } = render(<PieceVisuel id="timbre.renard_roux" size={64} grise />);
