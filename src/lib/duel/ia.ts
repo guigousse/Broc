@@ -53,15 +53,15 @@ function phasePose(e: EtatPartie): EtatPartie {
   }
 }
 
-/** L'objet `o` tue `cible` en survivant ? */
-function echangeGagnant(o: ObjetEnJeu, cible: ObjetEnJeu): boolean {
-  const dA = degatsDAttaque(o, cible) - (cible.motsCles.includes("solide") ? 1 : 0);
-  const dD = degatsDAttaque(cible, o) - (o.motsCles.includes("solide") ? 1 : 0);
-  return dA >= cible.pv && dD < o.pv;
-}
-
+/** `o` tue `cible` en un coup ? */
 function tue(o: ObjetEnJeu, cible: ObjetEnJeu): boolean {
   return degatsDAttaque(o, cible) - (cible.motsCles.includes("solide") ? 1 : 0) >= cible.pv;
+}
+
+/** L'objet `o` tue `cible` en survivant ? */
+function echangeGagnant(o: ObjetEnJeu, cible: ObjetEnJeu): boolean {
+  const dD = degatsDAttaque(cible, o) - (o.motsCles.includes("solide") ? 1 : 0);
+  return tue(o, cible) && dD < o.pv;
 }
 
 function phaseAttaque(e: EtatPartie, profil: Profil): EtatPartie {
@@ -90,7 +90,8 @@ function phaseAttaque(e: EtatPartie, profil: Profil): EtatPartie {
       if (deValeur) cible = { type: "objet", uid: deValeur.uid };
       else if (gagnant) cible = { type: "objet", uid: gagnant.uid };
       else if (vitrineOk && dominant) cible = { type: "vitrine" };
-      else if (vitrineOk) cible = { type: "vitrine" };
+      // Prudent (spec §6.2) : sans étal dominant, ne frappe pas la vitrine — l'objet tient.
+      else if (vitrineOk) { e = { ...e, joueurs: marquerAttaque(e, o.uid) }; continue; }
       else cible = { type: "objet", uid: objets.sort((a, b) => a.pv - b.pv)[0].uid };
     }
     const r = attaquer(e, o.uid, cible);

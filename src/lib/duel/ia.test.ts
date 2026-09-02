@@ -48,4 +48,33 @@ describe("IA", () => {
     expect(r.joueurs[1].vitrine).toBe(20);
     expect(r.joueurs[1].etal).toHaveLength(0);
   });
+
+  it("prudent : sans échange ni domination, tient l'étal plutôt que de frapper la vitrine", () => {
+    let s = avecObjet(base(), 0, MARTEAU); // 2/1, pas d'échange gagnant contre la scie
+    s = avecObjet(s.etat, 1, SCIE); // 5/4 : le marteau ne domine pas (2 < 5)
+    const r = jouerTour(avecMain(s.etat, 0, [], 0), "prudent");
+    expect(r.joueurs[1].vitrine).toBe(20);
+    expect(r.joueurs[0].etal.map((o) => o.id)).toEqual([MARTEAU]);
+  });
+
+  it("agressif : sur le même plateau marteau/scie, frappe quand même la vitrine (diverge du prudent)", () => {
+    let s = avecObjet(base(), 0, MARTEAU);
+    s = avecObjet(s.etat, 1, SCIE);
+    const r = jouerTour(avecMain(s.etat, 0, [], 0), "agressif");
+    expect(r.joueurs[1].vitrine).toBe(18);
+  });
+
+  it("prudent : à étal dominant, prend quand même l'échange gagnant plutôt que la vitrine", () => {
+    let s = avecObjet(base(), 0, SCIE); // 5/4, domine (5 > 2)
+    s = avecObjet(s.etat, 1, MARTEAU); // 2/1 : échange gagnant pour la scie
+    const r = jouerTour(avecMain(s.etat, 0, [], 0), "prudent");
+    expect(r.joueurs[1].etal).toHaveLength(0);
+    expect(r.joueurs[1].vitrine).toBe(20);
+  });
+
+  it("prudent : à étal dominant sans objet adverse, frappe la vitrine", () => {
+    const s = avecObjet(base(), 0, SCIE); // 5/4 seul, étal adverse vide : dominant
+    const r = jouerTour(avecMain(s.etat, 0, [], 0), "prudent");
+    expect(r.joueurs[1].vitrine).toBe(15);
+  });
 });
