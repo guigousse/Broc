@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Album, BookOpen, Mail, Package } from "lucide-react";
+import { Mail, Package } from "lucide-react";
 import { UnifiedPanorama, type PanoramaZone } from "@/components/mobile/panorama/UnifiedPanorama";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
 import { ItemSticker } from "@/components/ui/ItemSticker";
@@ -196,32 +196,33 @@ export function BazarScene({
                 ? d.bazar.pochetteTimbres
                 : d.bazar.albumTimbres;
           const prix = achete ? PRIX_PAQUET : PRIX_ALBUM;
-          const Icone = album === "classeur" ? (achete ? Package : Album) : achete ? Mail : BookOpen;
-          // L'album de timbres a son art (2026-09-02) : posé sur l'étagère
+          // Seul le paquet/la pochette (après achat) garde une icône.
+          const Icone = album === "classeur" ? Package : Mail;
+          // Les deux albums ont leur art (2026-09-02) : posés sur l'étagère
           // comme les objets du haut, le bas du livre sur l'arête de la case.
-          const visuel =
-            album === "timbres" && !achete ? (
-              <span
-                style={{ display: "block", width: "100%", aspectRatio: "1 / 1" }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/bazar/albums/album-timbres.webp"
-                  alt=""
-                  draggable={false}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "contain",
-                    objectPosition: "bottom",
-                  }}
-                />
-              </span>
-            ) : (
-              <RondArticle>
-                <Icone size={28} />
-              </RondArticle>
-            );
+          // Les paquets/pochettes (après achat) restent en placeholder.
+          const visuel = !achete ? (
+            <span
+              style={{ display: "block", width: "100%", aspectRatio: "1 / 1" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/bazar/albums/${album === "classeur" ? "classeur-cartes" : "album-timbres"}.webp`}
+                alt=""
+                draggable={false}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  objectPosition: "bottom",
+                }}
+              />
+            </span>
+          ) : (
+            <RondArticle>
+              <Icone size={28} />
+            </RondArticle>
+          );
           return (
             <ArticleBazar
               key={album}

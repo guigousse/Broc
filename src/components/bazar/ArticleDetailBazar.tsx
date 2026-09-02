@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { Album, BookOpen, Mail, Package } from "lucide-react";
+import { Mail, Package } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
 import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
@@ -197,26 +197,24 @@ const descriptionAlbum: CSSProperties = {
   textShadow: "0 1px 2px rgba(0,0,0,.6)",
 };
 
-/** L'icône PLACEHOLDER d'un album/paquet — en attendant `public/bazar/albums/*.webp`. */
-function IconeAlbum({
-  genre,
-  album,
-}: {
-  genre: "album" | "paquet";
-  album: AlbumId;
-}) {
-  const Icone =
-    album === "classeur" ? (genre === "paquet" ? Package : Album) : genre === "paquet" ? Mail : BookOpen;
+/** L'icône PLACEHOLDER d'un paquet/d'une pochette — les albums, eux, ont
+ *  leur art (`VisuelAlbum`). */
+function IconeAlbum({ album }: { album: AlbumId }) {
+  const Icone = album === "classeur" ? Package : Mail;
   return <Icone size={72} />;
 }
 
-/** L'album de timbres a son art (2026-09-02, style Lindner) : le visuel de
- *  la fiche est l'image détourée, sans le rond placeholder. */
-function VisuelAlbumTimbres({ taille }: { taille: number }) {
+/** Les deux albums ont leur art (2026-09-02) : le visuel de la fiche est
+ *  l'image détourée, sans le rond placeholder. */
+function VisuelAlbum({ album, taille }: { album: AlbumId; taille: number }) {
+  const src =
+    album === "classeur"
+      ? "/bazar/albums/classeur-cartes.webp"
+      : "/bazar/albums/album-timbres.webp";
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/bazar/albums/album-timbres.webp"
+      src={src}
       alt=""
       draggable={false}
       style={{
@@ -366,11 +364,11 @@ export function ArticleDetailBazar({
             </div>
           ) : (
             <div style={pieceBox}>
-              {article.album === "timbres" && article.genre === "album" ? (
-                <VisuelAlbumTimbres taille={150} />
+              {article.genre === "album" ? (
+                <VisuelAlbum album={article.album} taille={150} />
               ) : (
                 <RondArticle size={120}>
-                  <IconeAlbum genre={article.genre} album={article.album} />
+                  <IconeAlbum album={article.album} />
                 </RondArticle>
               )}
             </div>

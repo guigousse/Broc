@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Album, BookOpen } from "lucide-react";
+
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
@@ -156,10 +156,19 @@ export default function CollectionPage() {
   const casesSpeciales: CaseSpeciale[] = useMemo(() => {
     if (!state) return [];
     const albums = albumsDe(state);
+    // Les deux albums ont leur art (2026-09-02) : le MÊME sticker die-cut
+    // que les objets de la grille (contour blanc, droit).
     const iconesAlbum: Record<AlbumId, ReactNode> = {
-      classeur: <Album size={28} strokeWidth={1.75} />,
-      // L'album de timbres a son art (2026-09-02, style Lindner) : le MÊME
-      // sticker die-cut que les objets de la grille (contour blanc, droit).
+      classeur: (
+        <ItemSticker
+          templateId="classeur-cartes"
+          categorie={CATEGORIE_ALBUM.classeur}
+          srcOverride="/bazar/albums/classeur-cartes.webp"
+          fill
+          tilt={false}
+          eager
+        />
+      ),
       timbres: (
         <ItemSticker
           templateId="album-timbres"
@@ -192,7 +201,7 @@ export default function CollectionPage() {
               total={piecesDe(albumId).length}
               nouveau={album.nouvelles.length > 0}
               onTap={() => setAlbumOuvert(albumId)}
-              sticker={albumId === "timbres"}
+              sticker
             />
           ),
         },
