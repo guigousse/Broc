@@ -1,5 +1,52 @@
 {
-  "commentaire": "Planches 3×3 pour generate-timbres.mjs : 9 illustrations par image Gemini, découpées puis insérées dans le gabarit commun (fenêtre alpha). Les cases à id null sont générées mais non utilisées (remplissage de la grille). Célébrités FICTIVES décrites génériquement (jamais de vraie personne), culture-pop en parodies sans marque ni texte.",
+  "commentaire": "Planches 3×3 pour generate-timbres.mjs : 9 illustrations par image Gemini, découpées puis insérées dans le gabarit commun (fenêtre alpha). Les cases à id null sont générées mais non utilisées (remplissage de la grille). Célébrités FICTIVES décrites génériquement (jamais de vraie personne), culture-pop en parodies sans marque ni texte. Retouches = tags Finder de la recette Guillaume 2026-09-02 : rouge→cadrage (trim des marges crème puis plein cadre), bleu→désaturation, vert→droits d'auteur (regénérés en singles avec un sujet original).",
+  "retouches": {
+    "cadrage": [
+      "timbre.arenes_de_nimes",
+      "timbre.bebert_bahut",
+      "timbre.chateau_de_chambord",
+      "timbre.dark_father",
+      "timbre.grand_max",
+      "timbre.grand_tetras_surcharge",
+      "timbre.judith_loiseau",
+      "timbre.laluck_verrier",
+      "timbre.le_petit_moustachu",
+      "timbre.loups_des_steppes",
+      "timbre.opera_garnier",
+      "timbre.palais_ideal",
+      "timbre.paul_nazamour",
+      "timbre.phare_de_cordouan",
+      "timbre.picassiette",
+      "timbre.pont_des_arts",
+      "timbre.premier_vol_postal_1925",
+      "timbre.ridor_couturier",
+      "timbre.roland_duff",
+      "timbre.stevranos",
+      "timbre.tour_de_l_horloge",
+      "timbre.tour_eiffel_erreur_de_couleur",
+      "timbre.viaduc_de_garabit",
+      "timbre.victor_de_la_brasse"
+    ],
+    "desaturation": [
+      "timbre.le_plombier_sauteur",
+      "timbre.legende_de_solda",
+      "timbre.trolling_sons",
+      "timbre.foxy_crush",
+      "timbre.pocket_monster_jungle"
+    ]
+  },
+  "singles": [
+    {
+      "id": "timbre.foxy_crush",
+      "encre": "rich violet-purple",
+      "sujet": "a dapper cartoon fox in a bow tie juggling colorful gems, whimsical circus poster style"
+    },
+    {
+      "id": "timbre.pocket_monster_jungle",
+      "encre": "rich violet-purple",
+      "sujet": "small whimsical round-bodied jungle spirits with leaf hats and glowing eyes peeking through lush foliage, original storybook creatures"
+    }
+  ],
   "sheets": [
     {
       "nom": "voyage",

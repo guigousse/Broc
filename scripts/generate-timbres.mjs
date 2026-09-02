@@ -139,8 +139,67 @@ function promptPlanche(sheet) {
   ].join("\n");
 }
 
+/* ── Retouches (tags Finder de la recette 2026-09-02) ──────────────────────
+   cadrage (rouge) : l'illustration ne remplissait pas sa cellule — trim des
+   marges crème de la planche, rognage du filet dessiné restant, puis plein
+   cadre. desaturation (bleu) : les cellules trop contrastées (culture-pop)
+   sont ramenées vers la douceur des planches gravure (faune). */
+const FOND_PLANCHE = { r: 245, g: 238, b: 220 };
+
+async function retoucherCellule(cellBuf, id, retouches) {
+  let buf = cellBuf;
+  if (retouches.cadrage?.includes(id)) {
+    buf = await sharp(buf)
+      .trim({ background: FOND_PLANCHE, threshold: 35 })
+      .toBuffer();
+    const m = await sharp(buf).metadata();
+    // Le trim s'arrête au filet sombre dessiné autour de l'illustration :
+    // 3 % de plus l'avalent.
+    const ins = Math.round(Math.min(m.width, m.height) * 0.03);
+    if (m.width > 4 * ins && m.height > 4 * ins) {
+      buf = await sharp(buf)
+        .extract({
+          left: ins,
+          top: ins,
+          width: m.width - 2 * ins,
+          height: m.height - 2 * ins,
+        })
+        .toBuffer();
+    }
+  }
+  if (retouches.desaturation?.includes(id)) {
+    buf = await sharp(buf)
+      .modulate({ saturation: 0.55 })
+      .linear(0.85, 28)
+      .toBuffer();
+  }
+  return buf;
+}
+
+async function composerTimbre(cellBuf, id, gabaritPng) {
+  const cell = await sharp(cellBuf)
+    .resize(FENETRE_PX, FENETRE_PX, { fit: "cover" })
+    .toBuffer();
+  const timbre = await sharp({
+    create: {
+      width: TAILLE,
+      height: TAILLE,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([
+      { input: cell, left: FENETRE_POS, top: FENETRE_POS },
+      { input: gabaritPng, left: 0, top: 0 },
+    ])
+    .webp({ quality: 90 })
+    .toBuffer();
+  await fs.writeFile(path.join(OUTPUT_DIR, `${id}.webp`), timbre);
+  console.log(`  ✂️  ${id}.webp (${Math.round(timbre.length / 1024)} kB)`);
+}
+
 /* ── Découpe + composition ── */
-async function decouperPlanche(sheet, gabaritPng) {
+async function decouperPlanche(sheet, gabaritPng, retouches) {
   const sheetPath = path.join(SHEETS_DIR, `${sheet.nom}.png`);
   let img;
   try {
@@ -158,43 +217,86 @@ async function decouperPlanche(sheet, gabaritPng) {
   // avec de la marge sans trop manger l'illustration.
   const inset = Math.round(cellW * 0.05);
 
+  // Un single regénéré (droits d'auteur) remplace la cellule de la planche :
+  // ne pas l'écraser à la re-découpe.
+  const ignores = new Set((retouches.singles ?? []).map((s) => s.id));
+
   let n = 0;
   for (let i = 0; i < sheet.cases.length; i++) {
     const { id } = sheet.cases[i];
-    if (!id) continue;
+    if (!id || ignores.has(id)) continue;
     const col = i % 3;
     const row = Math.floor(i / 3);
-    const cell = await sharp(await fs.readFile(sheetPath))
+    let cell = await sharp(await fs.readFile(sheetPath))
       .extract({
         left: col * cellW + inset,
         top: row * cellH + inset,
         width: cellW - 2 * inset,
         height: cellH - 2 * inset,
       })
-      .resize(FENETRE_PX, FENETRE_PX, { fit: "cover" })
       .toBuffer();
-    const timbre = await sharp({
-      create: {
-        width: TAILLE,
-        height: TAILLE,
-        channels: 4,
-        background: { r: 0, g: 0, b: 0, alpha: 0 },
-      },
-    })
-      .composite([
-        { input: cell, left: FENETRE_POS, top: FENETRE_POS },
-        { input: gabaritPng, left: 0, top: 0 },
-      ])
-      .webp({ quality: 90 })
-      .toBuffer();
-    const outPath = path.join(OUTPUT_DIR, `${id}.webp`);
-    await fs.writeFile(outPath, timbre);
-    console.log(
-      `  ✂️  ${id}.webp (${Math.round(timbre.length / 1024)} kB)`,
-    );
+    cell = await retoucherCellule(cell, id, retouches);
+    await composerTimbre(cell, id, gabaritPng);
     n++;
   }
   return n;
+}
+
+/* ── Singles : une image Gemini par timbre à refaire (droits d'auteur) ── */
+function promptSingle(single) {
+  return [
+    "One single square vintage postage-stamp illustration: fine taille-douce engraving with delicate hatching and cross-hatching, " +
+      single.encre +
+      " ink with soft watercolor wash accents, on a pale cream paper background.",
+    "The illustration completely fills the image edge to edge (full bleed), subject centered and large.",
+    "No text, no letters, no numbers, no frames, no borders, no perforations — the stamp frame is added separately later.",
+    `It depicts: ${single.sujet}`,
+  ].join("\n");
+}
+
+async function genererSingles(singles, ai, model, modelKey, gabaritPng, retouches) {
+  const dir = path.join(SHEETS_DIR, "singles");
+  await fs.mkdir(dir, { recursive: true });
+  for (const single of singles) {
+    const pngPath = path.join(dir, `${single.id}.png`);
+    let existe = true;
+    try {
+      await fs.access(pngPath);
+    } catch {
+      existe = false;
+    }
+    if ((!existe || force) && ai) {
+      console.log(`🎨  single ${single.id} — génération (${model})…`);
+      const requestConfig = {
+        model,
+        contents: promptSingle(single),
+        ...(modelKey === "pro"
+          ? { config: { imageConfig: { aspectRatio: "1:1", imageSize: "1K" } } }
+          : {}),
+      };
+      const response = await ai.models.generateContent(requestConfig);
+      const part = (response.candidates?.[0]?.content?.parts ?? []).find(
+        (p) => p.inlineData?.data,
+      );
+      if (!part) {
+        console.error(`❌  ${single.id} : pas d'image dans la réponse`);
+        process.exitCode = 1;
+        continue;
+      }
+      await fs.writeFile(pngPath, Buffer.from(part.inlineData.data, "base64"));
+    }
+    try {
+      let cell = await fs.readFile(pngPath);
+      // Même filet parasite possible qu'en planche : trim systématique.
+      cell = await retoucherCellule(cell, single.id, {
+        ...retouches,
+        cadrage: [...(retouches.cadrage ?? []), single.id],
+      });
+      await composerTimbre(cell, single.id, gabaritPng);
+    } catch {
+      console.error(`❌  single absent : ${pngPath}`);
+    }
+  }
 }
 
 /* ── Main ── */
@@ -207,27 +309,33 @@ async function main() {
   if (templateOnly) return;
 
   const config = JSON.parse(await fs.readFile(CONFIG_PATH, "utf8"));
+  const retouches = {
+    ...(config.retouches ?? {}),
+    singles: config.singles ?? [],
+  };
   let sheets = config.sheets;
   if (seuleSheet) {
     sheets = sheets.filter((s) => s.nom === seuleSheet);
-    if (sheets.length === 0) {
+    if (sheets.length === 0 && seuleSheet !== "singles") {
       console.error(`❌  --sheet="${seuleSheet}" inconnue.`);
       process.exit(1);
     }
   }
 
+  let ai = null;
+  let model = null;
   if (!sliceOnly) {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       console.error("❌  GEMINI_API_KEY absente (cf. .env).");
       process.exit(1);
     }
-    const model = MODEL_IDS[modelKey];
+    model = MODEL_IDS[modelKey];
     if (!model) {
       console.error(`❌  --model="${modelKey}" inconnu (pro | flash).`);
       process.exit(1);
     }
-    const ai = new GoogleGenAI({ apiKey });
+    ai = new GoogleGenAI({ apiKey });
 
     for (const sheet of sheets) {
       const sheetPath = path.join(SHEETS_DIR, `${sheet.nom}.png`);
@@ -265,7 +373,20 @@ async function main() {
   let total = 0;
   for (const sheet of sheets) {
     console.log(`— découpe ${sheet.nom} —`);
-    total += await decouperPlanche(sheet, gabaritPng);
+    total += await decouperPlanche(sheet, gabaritPng, retouches);
+  }
+
+  if (!seuleSheet || seuleSheet === "singles") {
+    console.log("— singles —");
+    await genererSingles(
+      retouches.singles,
+      ai,
+      model,
+      modelKey,
+      gabaritPng,
+      retouches,
+    );
+    total += retouches.singles.length;
   }
   console.log(`\n${total} timbre(s) écrits dans public/timbres/`);
 }
