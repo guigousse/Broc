@@ -148,3 +148,193 @@ Hors cible :
 |---|---|---|
 | *(aucune carte)* | compensation du second joueur : 5ᵉ carte → 5ᵉ carte **et** +1 énergie au premier tour (`bonusEnergie`) | 1 |
 
+## Campagne 2 — graine 3, cartes v2
+
+Itération 2 : règle 6 (pose < 60 %) sur les six cartes les moins posées de la
+campagne 1, en gardant le budget exact.
+
+### Retouches (itération 2)
+
+| Carte | Avant → après | Règle |
+|---|---|---|
+| le_petit_moustachu | 2/3, effet prix 2 → 2/4, effet prix 1 | 6 (effet : prix − 1, +1 PV) |
+| lampe_bureau_artdeco | 2/3, effet prix 2 → 2/4, effet prix 1 | 6 (effet : prix − 1, +1 PV) |
+| guitare_classique_ancienne | 2/3, effet prix 2 → 2/4, effet prix 1 | 6 (effet : prix − 1, +1 PV) |
+| 33tours_jazz_1 | 2/3 → 3/2 | 6 (1 PV contre 1 attaque) |
+| paris_match_70s | 1/2 → 2/1 | 6 (1 PV contre 1 attaque) |
+| vinyle_des_loups_des_steppes | 1/2 → 2/1 | 6 (1 PV contre 1 attaque) |
+
+Graine 3 · 20000 parties
+
+| Mesure | Valeur |
+|---|---|
+| Premier joueur | 64.8 % |
+| Manches (moyenne / max) | 8.6 / 21 |
+| Nuls / épuisées | 0.0 % / 0.0 % |
+| Agressif contre contrôle | 75.9 % |
+
+| Catégorie | Victoires |
+|---|---|
+| Bricolage | 48.2 % |
+| Maison | 51.1 % |
+| Mode | 53.3 % |
+| Musique | 49.9 % |
+| Livres & Papeterie | 48.6 % |
+| Jeux & Loisirs | 49.6 % |
+| Objets d'art | 49.8 % |
+
+Hors cible :
+- carte vinyle_des_loups_des_steppes_bark_to_be_free : pose 55 %
+- carte 33tours_jazz_1 : pose 27 %
+- carte harmonica_chromatique_de_bluesman : victoire 55.4 %
+- carte vinyle_stevranos_vive_la_fet_a : victoire 43.6 %
+- carte guitare_classique_ancienne : pose 51 %
+- carte test_pressing_des_trolling_sons : victoire 55.4 %
+- carte test_pressing_des_trolling_sons : pose 55 %
+- carte violon_de_maitre_cremonais_1715 : victoire 42.1 %
+- carte cartouche_le_plombier_sauteur_8_bit : victoire 55.7 %
+- carte manette_megadrive : victoire 55.5 %
+- carte playbox_pocket : victoire 56.6 %
+- carte figurine_de_guerre_galactique_1978 : victoire 44.4 %
+- carte flipper_a_plateau_annees_60 : victoire 43.0 %
+- carte cartouche_stadium_events : victoire 43.8 %
+- carte paris_match_70s : pose 54 %
+- carte miserables_pleiade : victoire 41.7 %
+- carte le_petit_moustachu_edition_originale_1961 : pose 48 %
+- carte gutenberg_feuillet : victoire 40.0 %
+- carte veste_jean_delavee : victoire 56.9 %
+- carte blouson_cuir_vintage : pose 49 %
+- carte chapeau_feutre_50s : victoire 58.0 %
+- carte broche_emaillee_artdeco : victoire 57.5 %
+- carte broche_emaillee_artdeco : pose 40 %
+- carte sac_a_main_talaria : pose 50 %
+- carte la_petite_robe_noire_chaine_1925 : victoire 55.5 %
+- carte figurine_porcelaine : victoire 56.3 %
+- carte tabouret_bois_patine : pose 50 %
+- carte vase_en_cristal_baraka : victoire 44.8 %
+- carte boite_musique_ancienne : pose 55 %
+- carte lampe_bureau_artdeco : pose 49 %
+- carte aquarelle_paysage_anonyme : victoire 55.5 %
+- carte terre_cuite_buste : pose 54 %
+- carte bronze_animalier : victoire 43.1 %
+- carte vase_galle_signe : pose 48 %
+- carte marteau_menuisier : victoire 56.3 %
+- carte etabli_pliant_ancien : pose 48 %
+- carte pince_etirer_cuivre : victoire 57.3 %
+- carte scie_egoine_de_charpentier : victoire 43.9 %
+- carte boite_d_outils_de_manufacture_signee : victoire 45.0 %
+- carte rabot_d_ebeniste_a_semelle_modele_605 : victoire 42.4 %
+- carte coffret_ebeniste_xixe : victoire 42.5 %
+- premier joueur : 64.8 %
+- agressif contre contrôle : 75.9 %
+
+### Ce que la campagne 2 démontre (et qui déclenche la retouche d'IA)
+
+C'est l'expérience décisive : la règle 6 ne peut pas atteindre sa cible.
+
+| Carte | Retouche | Pose avant → après |
+|---|---|---|
+| le_petit_moustachu | +1 au total attaque + PV | 33 % → 48 % |
+| lampe_bureau_artdeco | +1 au total attaque + PV | 36 % → 49 % |
+| guitare_classique_ancienne | +1 au total attaque + PV | 37 % → 51 % |
+| 33tours_jazz_1 | total inchangé (1 PV → 1 attaque) | 37 % → **27 %** |
+| paris_match_70s | total inchangé (1 PV → 1 attaque) | 55 % → 54 % |
+| vinyle_des_loups | total inchangé (1 PV → 1 attaque) | 56 % → 55 % |
+
+Et, sans qu'on y ait touché, les autres cartes de coût 3 **reculent** :
+blouson 58 → 49 %, sac à main 58 → 50 %, tabouret 58 → 50 %, établi 56 → 48 %,
+vase Gallé 56 → 48 %. Le total de mesures hors cible passe de 34 à 43.
+
+Trois faits :
+
+1. **À budget constant, déplacer un point ne change rien au taux de pose** (les
+   trois dernières lignes). Le taux de pose ne dépend donc pas des stats.
+2. **Ce qui le fait bouger, c'est le total `attaque + PV`**, parce que c'est la
+   clé de tri de `phasePose` à coût égal — donc le budget *amputé du prix du
+   texte*. Une carte à effet cher est structurellement reléguée en fin de main.
+3. **Le taux de pose est à somme nulle dans un palier de coût** : l'étal ne
+   tient que 4 objets, l'énergie est bornée ; faire monter une carte de coût 3
+   en fait descendre une autre d'autant.
+
+Aucune retouche de carte ne peut donc régler la pose : c'est une politique
+d'IA. Le contrôleur l'a prévu — la suite est une retouche d'IA, pas de carte.
+
+## Campagne 3 — graine 4, cartes v2, IA retouchée
+
+### Retouche d'IA (itération 3) — `phasePose`
+
+Avant : poser à répétition la carte la plus chère payable, départagée à coût
+égal par `attaque + PV`.
+
+Après : à chaque pose, chercher le **meilleur lot** parmi les sous-ensembles de
+la main (`meilleurLot`, 128 au plus puisque la main tient en 7 cartes) —
+
+- celui qui **dépense le plus d'énergie** (la version gloutonne laissait
+  perdre de l'énergie : boîte à outils à 3 plutôt que deux cartes à 2) ;
+- à égalité, celui qui **vaut le plus cher en budget** (`attaque + PV + prix du
+  texte`, §5.1 — le texte cesse d'être invisible) ;
+- **moins 1 point par carte posée** : une place d'étal sur quatre est une
+  ressource rare. Sans cette taxe, empiler des petites cartes bat toujours une
+  grosse (le budget par point d'énergie décroît : 3 · 2,5 · 2,33 · 2,25 · 2,2)
+  et l'IA noie son étal.
+
+Ni la limite d'étal (4), ni la limite de main, ni aucune règle du §3 n'ont
+bougé. Quatre variantes ont été mesurées à la graine 4 avant de trancher :
+
+| Variante de `phasePose` | Premier joueur | Agressif c. contrôle | Pose moyenne | Cartes sous 60 % de pose |
+|---|---|---|---|---|
+| v2 (gloutonne, `attaque + PV`) | 64,8 %¹ | 75,9 %¹ | — | 14 |
+| max énergie, puis budget brut | 62,9 % | 68,2 % | 74,2 % | ~20 (tout le coût 3 et le coût 4) |
+| max énergie, puis moins de cartes | 65,9 % | 70,5 % | 70,6 % | 5 |
+| **max énergie, puis budget − 1 par place** | **64,6 %** | **71,1 %** | **71,8 %** | **3** |
+
+¹ à la graine 3 (campagne 2).
+
+La deuxième variante gagne sur les mesures globales mais laisse tout le milieu
+de courbe sous la cible ; la quatrième est retenue parce qu'elle ne laisse que
+trois cartes de coût 3 juste sous la barre (60 %), à portée d'un allongement
+des parties.
+
+Graine 4 · 20000 parties
+
+| Mesure | Valeur |
+|---|---|
+| Premier joueur | 64.6 % |
+| Manches (moyenne / max) | 8.9 / 21 |
+| Nuls / épuisées | 0.0 % / 0.0 % |
+| Agressif contre contrôle | 71.1 % |
+
+| Catégorie | Victoires |
+|---|---|
+| Bricolage | 48.7 % |
+| Maison | 50.2 % |
+| Mode | 53.9 % |
+| Musique | 49.1 % |
+| Livres & Papeterie | 48.8 % |
+| Jeux & Loisirs | 49.7 % |
+| Objets d'art | 50.2 % |
+
+Hors cible :
+- carte vinyle_stevranos_vive_la_fet_a : victoire 43.7 %
+- carte violon_de_maitre_cremonais_1715 : victoire 42.3 %
+- carte playbox_pocket : victoire 55.3 %
+- carte figurine_de_guerre_galactique_1978 : victoire 44.8 %
+- carte flipper_a_plateau_annees_60 : victoire 44.4 %
+- carte miserables_pleiade : victoire 43.0 %
+- carte le_petit_moustachu_edition_originale_1961 : pose 60 %
+- carte gutenberg_feuillet : victoire 40.7 %
+- carte veste_jean_delavee : victoire 56.1 %
+- carte chapeau_feutre_50s : victoire 57.5 %
+- carte broche_emaillee_artdeco : victoire 58.3 %
+- carte la_petite_robe_noire_chaine_1925 : victoire 58.2 %
+- carte bronze_animalier : victoire 44.7 %
+- carte vase_galle_signe : pose 60 %
+- carte marteau_menuisier : victoire 55.0 %
+- carte boite_outils_complete : pose 60 %
+- carte pince_etirer_cuivre : victoire 56.6 %
+- carte scie_egoine_de_charpentier : victoire 44.9 %
+- carte rabot_d_ebeniste_a_semelle_modele_605 : victoire 44.0 %
+- carte coffret_ebeniste_xixe : victoire 44.2 %
+- premier joueur : 64.6 %
+- agressif contre contrôle : 71.1 %
+

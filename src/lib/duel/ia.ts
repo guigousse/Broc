@@ -1,4 +1,5 @@
 import { statsDuel } from "@/data/duel/cartesDuel";
+import { prixTexte } from "@/data/duel/budget";
 import { actionAChoix, type Action } from "@/data/duel/types";
 import { ETAL_MAX, adverse, type Cible, type EtatPartie, type ObjetEnJeu } from "@/lib/duel/etat";
 import { cibleRequise, ciblesDeChoix } from "@/lib/duel/effets";
@@ -36,18 +37,48 @@ export function choisirCibleDeChoix(e: EtatPartie, id: string): Cible | undefine
   return { type: "objet", uid: [...adv].sort((a, b) => valeur(b) - valeur(a))[0].uid };
 }
 
+/**
+ * Le budget complet d'une carte (§5.1), prix du texte compris. Juger sur `attaque + pv` seul
+ * revient à ignorer le texte, et laisse dormir en main toutes les cartes dont l'effet coûte
+ * cher : à la campagne 2 du rapport d'équilibrage, elles plafonnaient à 33 % de pose quelles
+ * que soient leurs stats.
+ */
+function budgetEnMain(id: string): number {
+  const s = statsDuel(id);
+  return s.attaque + s.pv + prixTexte(s.texte);
+}
+
+/**
+ * Le meilleur lot posable ce tour : celui qui **dépense le plus d'énergie**, à égalité celui qui
+ * vaut le plus cher — une place d'étal comptant pour 1 point, puisqu'il n'y en a que quatre.
+ * Sans cette taxe, empiler quatre petites cartes bat toujours une grosse (le budget par point
+ * d'énergie décroît avec le coût) et l'IA noie son étal. Recherche exhaustive : la main tient en
+ * 7 cartes, donc 128 sous-ensembles. Rendu trié par coût décroissant.
+ */
+export function meilleurLot(main: readonly string[], energie: number, places: number): string[] {
+  const couts = main.map((id) => statsDuel(id).cout);
+  let meilleur: number[] = [], meilleureDepense = -1, meilleureValeur = -1;
+  for (let masque = 0; masque < 1 << main.length; masque++) {
+    const indices: number[] = [];
+    let depense = 0;
+    for (let i = 0; i < main.length; i++) if (masque & (1 << i)) { indices.push(i); depense += couts[i]; }
+    if (indices.length > places || depense > energie) continue;
+    const valeur = indices.reduce((s, i) => s + budgetEnMain(main[i]), 0) - indices.length;
+    if (depense > meilleureDepense || (depense === meilleureDepense && valeur > meilleureValeur)) {
+      meilleur = indices; meilleureDepense = depense; meilleureValeur = valeur;
+    }
+  }
+  return meilleur.map((i) => main[i]).sort((a, b) => statsDuel(b).cout - statsDuel(a).cout);
+}
+
 function phasePose(e: EtatPartie): EtatPartie {
   for (;;) {
     const j = e.joueurs[e.actif];
     if (j.etal.length >= ETAL_MAX) return e;
-    const jouables = j.main
-      .filter((id) => statsDuel(id).cout <= j.energie)
-      .sort((a, b) => {
-        const sa = statsDuel(a), sb = statsDuel(b);
-        return sb.cout - sa.cout || sb.attaque + sb.pv - (sa.attaque + sa.pv);
-      });
-    if (jouables.length === 0) return e;
-    const r = poser(e, jouables[0], choisirCibleDeChoix(e, jouables[0]));
+    // Recalculé après chaque pose : un effet peut avoir rendu de l'énergie ou vidé une place.
+    const lot = meilleurLot(j.main, j.energie, ETAL_MAX - j.etal.length);
+    if (lot.length === 0) return e;
+    const r = poser(e, lot[0], choisirCibleDeChoix(e, lot[0]));
     if (!r.ok) return e;
     e = r.etat;
   }

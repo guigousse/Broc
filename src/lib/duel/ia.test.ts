@@ -1,14 +1,48 @@
 import { describe, expect, it } from "vitest";
 import { creerRng } from "@/lib/duel/rng";
 import { nouvellePartie } from "@/lib/duel/partie";
-import { jouerTour } from "@/lib/duel/ia";
+import { jouerTour, meilleurLot } from "@/lib/duel/ia";
 import { avecMain, avecObjet, DECK_A, DECK_B } from "@/lib/duel/__test__/helpers";
 
 const base = () => nouvellePartie(DECK_A, DECK_B, creerRng(1));
 const MARTEAU = "carte.marteau_menuisier"; // 2/1, coût 1
 const SCIE = "carte.scie_egoine_de_charpentier"; // 5/4, coût 4
 const AQUARELLE = "carte.aquarelle_paysage_anonyme"; // 1/2
-const TABOURET = "carte.tabouret_bois_patine"; // 2/4 Barrage
+const TABOURET = "carte.tabouret_bois_patine"; // 2/4 Barrage, coût 3
+const MASQUE = "carte.masque_tribal_decoratif"; // 3/4 sans texte, coût 3
+const BOITE_OUTILS = "carte.boite_outils_complete"; // 3/4 sans texte, coût 3
+const VESTE = "carte.veste_jean_delavee"; // 2/2 Ruse, coût 2
+const PLAYBOX = "carte.playbox_pocket"; // 2/2 Prompt, coût 2
+const CHAPEAU = "carte.chapeau_feutre_50s"; // coût 1
+const VIOLON = "carte.violon_de_maitre_cremonais_1715"; // légendaire, coût 5
+
+describe("meilleurLot", () => {
+  it("dépense toute l'énergie plutôt que la seule carte la plus chère", () => {
+    // Gloutonne, l'IA poserait la boîte à outils (3) et laisserait 1 énergie perdue.
+    expect(meilleurLot([BOITE_OUTILS, VESTE, PLAYBOX], 4, 4).sort()).toEqual([VESTE, PLAYBOX].sort());
+  });
+
+  it("ne dépasse jamais les places libres de l'étal", () => {
+    expect(meilleurLot([BOITE_OUTILS, VESTE, PLAYBOX], 4, 1)).toEqual([BOITE_OUTILS]);
+  });
+
+  it("à coût égal, ne relègue plus une carte au texte coûteux derrière une carte vanille", () => {
+    // Tabouret (2/4 Barrage) et masque (3/4) coûtent 3 et valent le même budget : à énergie
+    // égale, c'est l'ordre de la main qui tranche, pas le total attaque + PV.
+    expect(meilleurLot([TABOURET, MASQUE], 3, 4)).toEqual([TABOURET]);
+    expect(meilleurLot([MASQUE, TABOURET], 3, 4)).toEqual([MASQUE]);
+  });
+
+  it("la taxe de place empêche d'empiler des petites cartes à la place d'une grosse", () => {
+    // 1 + 1 + 1 + 2 dépense 5 comme le violon, et vaut plus cher en budget brut (14 contre 12) ;
+    // les quatre places d'étal coûtent 4 points, le violon n'en coûte qu'un.
+    expect(meilleurLot([VIOLON, MARTEAU, AQUARELLE, CHAPEAU, VESTE], 5, 4)).toEqual([VIOLON]);
+  });
+
+  it("ne rend rien quand rien n'est payable", () => {
+    expect(meilleurLot([BOITE_OUTILS, VIOLON], 2, 4)).toEqual([]);
+  });
+});
 
 describe("IA", () => {
   it("pose la carte la plus chère qu'elle peut payer, puis finit son tour", () => {
