@@ -31,7 +31,9 @@ interface AlbumShellProps {
   titre: string;
   /** Affiche `titre` au centre de la ligne d'en-tête. */
   titreVisible?: boolean;
-  compteur: { possedees: number; total: number };
+  /** Sans lui, pas de compteur dans l'en-tête : l'album de timbres rend le
+   *  sien à gauche de sa pagination (recette 2026-09-02). */
+  compteur?: { possedees: number; total: number };
   doublons?: number;
   onRecycler?: () => void;
   children: ReactNode;
@@ -89,7 +91,10 @@ const titreStyle: CSSProperties = {
   right: 0,
   textAlign: "center",
   fontFamily: "var(--font-display)",
-  fontSize: 13,
+  // Plus gras et plus grand (recette 2026-09-02) : c'est le titre de la
+  // scène, pas une mention de coin.
+  fontSize: 17,
+  fontWeight: 700,
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: "var(--brass-300)",
@@ -108,6 +113,9 @@ const actions: CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 8,
+  // À droite même quand il est seul sur la ligne (timbres : le compteur est
+  // parti à gauche de la pagination, le titre est en absolu).
+  marginLeft: "auto",
 };
 
 const recyclerBtn: CSSProperties = {
@@ -124,25 +132,29 @@ const recyclerBtn: CSSProperties = {
   cursor: "pointer",
 };
 
-/** L'icône de recyclage nue + le chiffre des doublons (0 compris). */
+/** L'icône de recyclage nue + le chiffre des doublons (0 compris), en gras
+ *  et bien visible (recette 2026-09-02). */
 const recyclerIconeBtn: CSSProperties = {
   minWidth: "var(--tap-min)",
   minHeight: "var(--tap-min)",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: 5,
+  gap: 6,
   border: "none",
   background: "transparent",
   color: "var(--brass-300)",
   fontFamily: "var(--font-mono)",
-  fontSize: 12,
+  fontSize: 15,
+  fontWeight: 700,
   cursor: "pointer",
 };
 
+/** Cadre réduit (recette 2026-09-02) : la croix reste la cible, son carré ne
+ *  doit pas peser autant qu'un bouton d'action. */
 const croixBtn: CSSProperties = {
-  minWidth: "var(--tap-min)",
-  minHeight: "var(--tap-min)",
+  width: 32,
+  height: 32,
   border: "1px solid var(--brass-500)",
   background: "transparent",
   color: "var(--brass-300)",
@@ -168,12 +180,14 @@ export function AlbumShell({
   return (
     <div style={panneau} role="dialog" aria-label={titre}>
       <div style={ligneActions}>
-        <span style={compteurStyle}>
-          {tr(d.albums.compteur, {
-            n: compteur.possedees,
-            total: compteur.total,
-          })}
-        </span>
+        {compteur && (
+          <span style={compteurStyle}>
+            {tr(d.albums.compteur, {
+              n: compteur.possedees,
+              total: compteur.total,
+            })}
+          </span>
+        )}
         {titreVisible && <span style={titreStyle}>{titre}</span>}
         <div style={actions}>
           {onRecycler && (
@@ -239,7 +253,7 @@ export function RecyclerBouton({
         >
           {icone ? (
             <>
-              <Recycle size={16} strokeWidth={1.6} aria-hidden />
+              <Recycle size={22} strokeWidth={2.4} aria-hidden />
               <span>{doublons}</span>
             </>
           ) : (

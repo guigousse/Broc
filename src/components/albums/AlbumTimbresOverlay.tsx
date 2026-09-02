@@ -85,9 +85,9 @@ const SEUIL_VERTICAL_BAC_PX = 12;
  *  1,3 et tient TOUJOURS dans la hauteur restante — sur iPad ou en fenêtre
  *  large, le flex l'écrasait en hauteur (1416 × 559 px, timbres plus hauts
  *  que les lignes — 2026-08-31). Recompté à la refonte du 2026-09-02 (titre
- *  dans l'en-tête, bandeau sans libellé, pagination compacte) : la page y a
- *  gagné ce que le chrome a perdu. */
-const HORS_PAGE_PX = 212;
+ *  dans l'en-tête, bandeau sans libellé qui mange le padding bas du panneau,
+ *  pagination compacte) : la page y a gagné ce que le chrome a perdu. */
+const HORS_PAGE_PX = 200;
 
 /** La page seule : pleine largeur sur téléphone, bornée par la hauteur
  *  disponible et centrée sur les grands écrans. Parenthèses OBLIGATOIRES
@@ -191,8 +191,9 @@ const BAC_GAP_PX = 10;
  *  (marges négatives), son padding ramène les timbres au bord du contenu. */
 const BAC_PADDING_X_PX = 12;
 
-/** Le bas du panneau, poussé contre la TabBar (`marginTop: auto`) : bandeau
- *  « En vrac » puis ligne pagination + Recycler (refonte 2026-09-02). */
+/** Le bas du panneau, poussé contre la TabBar (`marginTop: auto`) : ligne
+ *  compteur + pagination + Recycler d'abord, puis le bandeau « En vrac »
+ *  collé à la TabBar (2ᵉ passe de recette 2026-09-02). */
 const basWrap: CSSProperties = {
   marginTop: "auto",
   display: "flex",
@@ -202,11 +203,13 @@ const basWrap: CSSProperties = {
 /** « En vrac » en BANDEAU pleine largeur, même matière que la bande de
  *  sélection des vinyles du gramophone (bois sombre, ombre interne) — plus
  *  la boîte anthracite arrondie ni son libellé (refonte 2026-09-02). Le nom
- *  reste porté par l'`aria-label`. */
+ *  reste porté par l'`aria-label`. Ses marges négatives ANNULENT le padding
+ *  du panneau sur les trois côtés : il touche les bords ET la TabBar. */
 const bacWrap: CSSProperties = {
-  marginTop: 10,
+  marginTop: 6,
   marginLeft: -BAC_PADDING_X_PX,
   marginRight: -BAC_PADDING_X_PX,
+  marginBottom: -12,
   display: "flex",
   alignItems: "center",
   gap: BAC_GAP_PX,
@@ -283,8 +286,8 @@ function transformCalque(x: number, y: number): string {
   return `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
 }
 
-/** Pagination au centre, Recycler (icône + chiffre) posé à sa droite : la
- *  ligne du bas, juste au-dessus de la TabBar. */
+/** Pagination au centre, compteur « x/50 » à sa gauche, Recycler (icône +
+ *  chiffre) à sa droite : la ligne entre l'album et le bandeau « En vrac ». */
 const ligneBas: CSSProperties = {
   position: "relative",
   marginTop: 4,
@@ -298,6 +301,18 @@ const recyclerCoin: CSSProperties = {
   right: 0,
   top: "50%",
   transform: "translateY(-50%)",
+};
+
+const compteurCoin: CSSProperties = {
+  position: "absolute",
+  left: 0,
+  top: "50%",
+  transform: "translateY(-50%)",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  letterSpacing: "0.08em",
+  color: "var(--brass-300)",
+  whiteSpace: "nowrap",
 };
 
 const paginationBar: CSSProperties = {
@@ -681,7 +696,6 @@ export function AlbumTimbresOverlay({
       onClose={onClose}
       titre={d.albums.albumTitre}
       titreVisible
-      compteur={{ possedees: nbPossedees(album), total }}
     >
       <div style={colonne}>
         <div
@@ -737,6 +751,20 @@ export function AlbumTimbresOverlay({
         </div>
       </div>
       <div style={basWrap}>
+        <div style={ligneBas}>
+          <span style={compteurCoin}>
+            {tr(d.albums.compteur, { n: nbPossedees(album), total })}
+          </span>
+          <Pagination page={page} onChange={setPage} d={d} />
+          <div style={recyclerCoin}>
+            <RecyclerBouton
+              icone
+              titre={d.albums.albumTitre}
+              doublons={doublons(album)}
+              onRecycler={recycler}
+            />
+          </div>
+        </div>
         <div
           ref={bacRef}
           data-testid="bac"
@@ -778,17 +806,6 @@ export function AlbumTimbresOverlay({
               </button>
             );
           })}
-        </div>
-        <div style={ligneBas}>
-          <Pagination page={page} onChange={setPage} d={d} />
-          <div style={recyclerCoin}>
-            <RecyclerBouton
-              icone
-              titre={d.albums.albumTitre}
-              doublons={doublons(album)}
-              onRecycler={recycler}
-            />
-          </div>
         </div>
       </div>
       {/* Portail sur le body : le panneau porte un `backdrop-filter`, qui
