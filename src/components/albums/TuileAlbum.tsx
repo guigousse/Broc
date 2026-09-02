@@ -9,7 +9,12 @@ import { useLangue } from "@/lib/i18n/LangueContext";
    `casesSpeciales`). Avant achat au Bazar : cadenassée, un cadenas laiton,
    inerte. Après achat : icône de l'album + compteur `d.albums.compteur`
    (même gabarit « {n} / {total} » qu'`AlbumShell`) + pastille « nouveau »
-   tant qu'une pièce reste non consultée. */
+   tant qu'une pièce reste non consultée.
+
+   Deux rendus après achat : `sticker` (l'album a son art → il se présente
+   COMME LES AUTRES ITEMS de la grille, sticker nu sur la planche, badges en
+   surimpression — recette 2026-09-02) ou la boîte sombre d'origine (le
+   classeur, encore en placeholder lucide). */
 
 const tuile: CSSProperties = {
   aspectRatio: "1 / 1",
@@ -25,6 +30,39 @@ const tuile: CSSProperties = {
   placeItems: "center",
   cursor: "pointer",
   color: "var(--brass-300)",
+};
+
+/** La case façon `CollectionGrid` : transparente, le sticker respire dans
+ *  ses 12 % de marge — mêmes valeurs que `cellStyle` là-bas. */
+const tuileSticker: CSSProperties = {
+  aspectRatio: "1 / 1",
+  position: "relative",
+  width: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
+  border: "none",
+  background: "transparent",
+  padding: "12%",
+  display: "grid",
+  placeItems: "center",
+  cursor: "pointer",
+};
+
+/** Compteur lisible sur la planche de bois : encre sombre, halo papier —
+ *  même famille que la pastille « * » de `CollectionGrid`. */
+const compteurSticker: CSSProperties = {
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 2,
+  textAlign: "center",
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: "0.04em",
+  color: "var(--forest-800)",
+  textShadow: "0 0 2px var(--paper-100), 0 0 4px var(--paper-100)",
+  pointerEvents: "none",
 };
 
 const compteurStyle: CSSProperties = {
@@ -63,6 +101,8 @@ interface TuileAlbumProps {
   total: number;
   nouveau: boolean;
   onTap: () => void;
+  /** L'album a son art : case transparente façon grille, sticker nu. */
+  sticker?: boolean;
 }
 
 export function TuileAlbum({
@@ -73,6 +113,7 @@ export function TuileAlbum({
   total,
   nouveau,
   onTap,
+  sticker = false,
 }: TuileAlbumProps) {
   const { d, tr } = useLangue();
   const compteur = tr(d.albums.compteur, { n: possedees, total });
@@ -96,11 +137,11 @@ export function TuileAlbum({
       type="button"
       data-testid="tuile-album"
       aria-label={`${titre} — ${compteur}`}
-      style={tuile}
+      style={sticker ? tuileSticker : tuile}
       onClick={onTap}
     >
       {icon}
-      <span style={compteurStyle}>{compteur}</span>
+      <span style={sticker ? compteurSticker : compteurStyle}>{compteur}</span>
       {nouveau && (
         <span style={newBadge} aria-label={d.albums.nouveau}>
           *

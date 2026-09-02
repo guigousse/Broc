@@ -12,6 +12,7 @@ import { CollectionGrid, type CaseSpeciale } from "@/components/CollectionGrid";
 import { CollectionDetailOverlay } from "@/components/mobile/CollectionDetailOverlay";
 import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { ItemSticker } from "@/components/ui/ItemSticker";
 import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { useToast } from "@/components/ui/Toast";
 import { useGame, useGameActions } from "@/context/GameContext";
@@ -157,14 +158,16 @@ export default function CollectionPage() {
     const albums = albumsDe(state);
     const iconesAlbum: Record<AlbumId, ReactNode> = {
       classeur: <Album size={28} strokeWidth={1.75} />,
-      // L'album de timbres a son art (2026-09-02, style Lindner).
+      // L'album de timbres a son art (2026-09-02, style Lindner) : le MÊME
+      // sticker die-cut que les objets de la grille (contour blanc, droit).
       timbres: (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src="/bazar/albums/album-timbres.webp"
-          alt=""
-          draggable={false}
-          style={{ height: 40, width: "auto" }}
+        <ItemSticker
+          templateId="album-timbres"
+          categorie={CATEGORIE_ALBUM.timbres}
+          srcOverride="/bazar/albums/album-timbres.webp"
+          fill
+          tilt={false}
+          eager
         />
       ),
     };
@@ -189,6 +192,7 @@ export default function CollectionPage() {
               total={piecesDe(albumId).length}
               nouveau={album.nouvelles.length > 0}
               onTap={() => setAlbumOuvert(albumId)}
+              sticker={albumId === "timbres"}
             />
           ),
         },
