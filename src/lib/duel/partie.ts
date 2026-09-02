@@ -21,6 +21,7 @@ function commencerTour(e: EtatPartie): void {
   for (const o of j.etal) o.aAttaque = false;
   piocher(e, e.actif, 1);
   for (const o of [...j.etal]) declencher(e, e.actif, o.uid, "debutTour");
+  nettoyerCasse(e);
   verifierFin(e);
 }
 
@@ -69,22 +70,29 @@ export function attaquer(etat: EtatPartie, uid: number, cible: Cible): Resultat 
   const legale = ciblesLegales(etat, uid).some((c) => c.type === cible.type && (c.type === "vitrine" || c.uid === (cible as { uid: number }).uid));
   if (!legale) return { ok: false, raison: "cibleIllegale", etat };
   const e = cloner(etat);
-  let attaquant = trouverObjet(e, uid)!.objet;
-  attaquant.aAttaque = true;
+  const avantDeclenchement = trouverObjet(e, uid)!.objet; // la légalité vient d'être vérifiée : il existe forcément ici
+  avantDeclenchement.aAttaque = true;
   declencher(e, e.actif, uid, "attaque");
-  attaquant = trouverObjet(e, uid)!.objet; // ses stats ont pu changer
+  // Ses stats (voire sa présence) ont pu changer : on relit sans supposer qu'il existe encore.
+  const attaquant = trouverObjet(e, uid)?.objet;
   if (cible.type === "vitrine") {
-    e.joueurs[adverse(e.actif)].vitrine -= attaquant.attaque;
-    e.journal.push(`J${e.actif} ${attaquant.id} → vitrine ${attaquant.attaque}`);
+    if (attaquant) {
+      e.joueurs[adverse(e.actif)].vitrine -= attaquant.attaque;
+      e.journal.push(`J${e.actif} ${attaquant.id} → vitrine ${attaquant.attaque}`);
+    }
   } else {
-    const defenseur = trouverObjet(e, cible.uid)!.objet;
-    const dA = degatsDAttaque(attaquant, defenseur);
-    const dD = degatsDAttaque(defenseur, attaquant);
-    e.journal.push(`J${e.actif} ${attaquant.id} ⇄ ${defenseur.id} (${dA}/${dD})`);
-    blesserObjet(e, defenseur.uid, dA);
-    blesserObjet(e, attaquant.uid, dD);
-    nettoyerCasse(e);
+    const defenseur = trouverObjet(e, cible.uid)?.objet;
+    if (attaquant && defenseur) {
+      // Simultané (spec §3.3) : les deux dégâts et les deux déclencheurs « blesse » sont
+      // résolus avant tout nettoyage — même celui d'un attaquant tombé à ≤ 0 PV.
+      const dA = degatsDAttaque(attaquant, defenseur);
+      const dD = degatsDAttaque(defenseur, attaquant);
+      e.journal.push(`J${e.actif} ${attaquant.id} ⇄ ${defenseur.id} (${dA}/${dD})`);
+      blesserObjet(e, defenseur.uid, dA);
+      blesserObjet(e, attaquant.uid, dD);
+    }
   }
+  nettoyerCasse(e);
   verifierFin(e);
   return { ok: true, etat: e };
 }
@@ -110,6 +118,7 @@ export function poser(etat: EtatPartie, id: string, cible?: Cible): Resultat {
   joueur.etal.push(objet);
   e.journal.push(`J${e.actif} pose ${id}`);
   declencher(e, e.actif, objet.uid, "pose", cible);
+  nettoyerCasse(e);
   verifierFin(e);
   return { ok: true, etat: e };
 }

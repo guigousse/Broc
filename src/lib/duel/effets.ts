@@ -77,12 +77,16 @@ export function appliquerAction(e: EtatPartie, j: 0 | 1, uid: number, a: Action,
   }
 }
 
-/** Déclenche les actions de l'objet `uid` (propriétaire `j`) pour `declencheur`, puis nettoie les casses. Mute `e`. */
+/**
+ * Déclenche les actions de l'objet `uid` (propriétaire `j`) pour `declencheur`. Ne nettoie PAS
+ * les casses (spec §3.3 « simultanément ») : c'est à l'appelant public (poser/attaquer/
+ * commencerTour/finirTour) d'appeler `nettoyerCasse` une seule fois, après sa séquence
+ * d'actions complète. Mute `e`.
+ */
 export function declencher(e: EtatPartie, j: 0 | 1, uid: number, declencheur: Declencheur, cible?: Cible): void {
   const t = trouverObjet(e, uid);
   if (!t) return;
   for (const a of actionsDe(t.objet.id, declencheur)) appliquerAction(e, j, uid, a, cible);
-  nettoyerCasse(e);
 }
 
 /** Retire les objets à 0 PV et déclenche leurs effets `casse`, jusqu'à stabilité. Mute `e`. */
