@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { X } from "lucide-react";
 import { RoueCategories } from "@/components/albums/RoueCategories";
 import { ficheBackdrop } from "@/components/ui/FicheObjet";
-import { libelleMotCle } from "@/lib/duel/libelles";
+import { dictDuel, libelleMotCle } from "@/lib/duel/libelles";
 import { useLangue } from "@/lib/i18n/LangueContext";
 
 const MOTS_CLES = [
@@ -28,7 +28,7 @@ const feuille: CSSProperties = {
   borderRadius: 10,
   padding: "18px 18px 24px",
   boxSizing: "border-box",
-  fontFamily: "var(--font-body)",
+  fontFamily: "var(--font-serif)",
   fontSize: 14,
   lineHeight: 1.45,
   position: "relative",
@@ -57,7 +57,7 @@ const motCle: CSSProperties = { margin: "0 0 6px" };
 export function LivretReglesSheet({ onClose }: { onClose: () => void }) {
   const { d } = useLangue();
   const D = d.duel;
-  const R = d.duel as unknown as Record<string, string>;
+  const R = dictDuel(d);
   return (
     <div
       style={backdrop}

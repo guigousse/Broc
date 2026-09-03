@@ -9,7 +9,7 @@ import { libelleCategorie } from "@/lib/i18n/libelles";
  * dictionnaire, d'où ce cast local, centralisé ici pour les 3 fonctions
  * qui en ont besoin.
  */
-function dictDuel(d: DictionnaireUI): Record<string, string> {
+export function dictDuel(d: DictionnaireUI): Record<string, string> {
   return d.duel as unknown as Record<string, string>;
 }
 

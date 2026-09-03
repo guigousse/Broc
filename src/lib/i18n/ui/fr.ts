@@ -1008,7 +1008,7 @@ export const fr = {
     mc_cri_nom: "Cri",
     mc_barrage_regle: "Tant qu'il est en jeu, les attaques adverses doivent le viser.",
     mc_prompt_regle: "Peut attaquer le tour où il est posé.",
-    mc_solide_regle: "Chaque dégât reçu est réduit de 1.",
+    mc_solide_regle: "Chaque dégât reçu est réduit de 1 (jamais sous 0).",
     mc_fragile_regle: "Perd 1 PV en fin de tour de son propriétaire.",
     mc_ruse_regle: "Ne peut pas être ciblé avant le prochain tour de son propriétaire.",
     mc_cri_regle: "Effet à la pose.",
@@ -1040,7 +1040,7 @@ export const fr = {
     et: " et ",
     // livret
     livretTitre: "Règles du duel",
-    livretMiseEnPlace: "Deux joueurs, 20 points de vitrine chacun. Un deck de 20 cartes, une seule copie de chaque, 2 légendaires au plus. On pioche 4 cartes ; le second joueur en pioche 5.",
+    livretMiseEnPlace: "Deux joueurs, 20 points de vitrine chacun. Un deck de 20 cartes, une seule copie de chaque, 2 légendaires au plus. On pioche 4 cartes ; le second joueur en pioche 5 et dispose d'1 énergie de plus à son premier tour.",
     livretTour: "À votre tour : le plafond d'énergie monte de 1 (jusqu'à 5) et se recharge ; vous piochez 1 carte (deck vide : 1, puis 2, puis 3 dégâts… ; main limitée à 7) ; vous posez des objets en payant leur coût, 4 au plus sur l'étal ; chaque objet posé avant ce tour peut attaquer une fois.",
     livretAttaque: "Une attaque vise la vitrine adverse ou un objet adverse. S'il y a un Barrage en face, il faut le viser. Contre un objet, les deux se blessent de leur attaque en même temps. Un objet à 0 PV part à la casse. Les dégâts restent marqués.",
     livretRoue: "Chaque catégorie en casse une autre : un objet inflige 1 dégât de plus à un objet de la catégorie qu'il domine, même en riposte. Rien contre la vitrine.",
