@@ -99,7 +99,11 @@ const face: CSSProperties = {
   gap: 4,
 };
 
-const visuelFace: CSSProperties = { width: "70%", flex: "1 1 auto", minHeight: 0 };
+const visuelFace: CSSProperties = {
+  width: "70%",
+  flex: "1 1 auto",
+  minHeight: 0,
+};
 
 const nomFace: CSSProperties = {
   fontSize: 9,
@@ -153,7 +157,9 @@ function compteEtNouveaute(
 ): { total: number; nouveau: boolean } {
   const id = pieces[index];
   const dejaAvant = quantitesAvant[id] ?? 0;
-  const dejaDansCePaquet = pieces.slice(0, index).filter((p) => p === id).length;
+  const dejaDansCePaquet = pieces
+    .slice(0, index)
+    .filter((p) => p === id).length;
   const total = dejaAvant + dejaDansCePaquet + 1;
   return { total, nouveau: total === 1 };
 }
@@ -165,7 +171,9 @@ export function OuverturePaquetOverlay({
   onClose,
 }: OuverturePaquetOverlayProps) {
   const { d, tr, locale } = useLangue();
-  const [revele, setRevele] = useState(() => (prefersReducedMotion() ? pieces.length : 0));
+  const [revele, setRevele] = useState(() =>
+    prefersReducedMotion() ? pieces.length : 0,
+  );
 
   // Auto-avance : 800 ms SANS TAP retourne la carte suivante — pas une
   // cadence fixe depuis le montage. L'effet est keyé sur `revele` : chaque
@@ -185,13 +193,24 @@ export function OuverturePaquetOverlay({
   const avancer = () => setRevele((r) => Math.min(pieces.length, r + 1));
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={d.albums.ouverture} style={backdrop}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={d.albums.ouverture}
+      style={backdrop}
+    >
       <div style={rangee}>
         {pieces.map((id, i) => {
           const retournee = i < revele;
           const piece = getPiece(id);
-          const { total, nouveau } = compteEtNouveaute(pieces, quantitesAvant, i);
-          const couleur = piece ? getRarityColors(piece.rarete).outer : "var(--brass-300)";
+          const { total, nouveau } = compteEtNouveaute(
+            pieces,
+            quantitesAvant,
+            i,
+          );
+          const couleur = piece
+            ? getRarityColors(piece.rarete).outer
+            : "var(--brass-300)";
           return (
             <div
               key={`${id}-${i}`}
@@ -225,7 +244,9 @@ export function OuverturePaquetOverlay({
                     {nomObjet({ templateId: id, nom: piece.nom }, locale)}
                   </span>
                   <span style={badge(nouveau, couleur)}>
-                    {nouveau ? d.albums.nouveau : tr(d.albums.doublon, { n: total })}
+                    {nouveau
+                      ? d.albums.nouveau
+                      : tr(d.albums.doublon, { n: total })}
                   </span>
                 </div>
               )}

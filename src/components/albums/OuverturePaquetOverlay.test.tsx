@@ -5,7 +5,13 @@
  * contexte par défaut est français (cf. `LangueContext.tsx`).
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { OuverturePaquetOverlay } from "./OuverturePaquetOverlay";
 
 afterEach(() => {
@@ -19,7 +25,11 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
     const onClose = vi.fn();
     render(
       <OuverturePaquetOverlay
-        pieces={["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"]}
+        pieces={[
+          "carte.marteau_menuisier",
+          "carte.marteau_menuisier",
+          "carte.risk_1992",
+        ]}
         quantitesAvant={{ "carte.risk_1992": 1 }}
         onVoirAlbum={onVoir}
         onClose={onClose}
@@ -46,7 +56,11 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
     vi.useFakeTimers();
     render(
       <OuverturePaquetOverlay
-        pieces={["timbre.renard_roux", "timbre.lynx_boreal", "timbre.ours_des_pyrenees"]}
+        pieces={[
+          "timbre.renard_roux",
+          "timbre.lynx_boreal",
+          "timbre.ours_des_pyrenees",
+        ]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
         onClose={() => {}}
@@ -66,7 +80,9 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
       vi.advanceTimersByTime(800);
     });
     expect(
-      screen.getAllByTestId("carte-paquet").every((c) => c.dataset.retournee === "1"),
+      screen
+        .getAllByTestId("carte-paquet")
+        .every((c) => c.dataset.retournee === "1"),
     ).toBe(true);
     vi.useRealTimers();
   });
@@ -75,7 +91,11 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
     vi.useFakeTimers();
     render(
       <OuverturePaquetOverlay
-        pieces={["timbre.renard_roux", "timbre.lynx_boreal", "timbre.ours_des_pyrenees"]}
+        pieces={[
+          "timbre.renard_roux",
+          "timbre.lynx_boreal",
+          "timbre.ours_des_pyrenees",
+        ]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
         onClose={() => {}}
@@ -112,7 +132,11 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
     const onClose = vi.fn();
     render(
       <OuverturePaquetOverlay
-        pieces={["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"]}
+        pieces={[
+          "carte.marteau_menuisier",
+          "carte.marteau_menuisier",
+          "carte.risk_1992",
+        ]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
         onClose={onClose}
@@ -136,14 +160,20 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
     })) as unknown as typeof window.matchMedia;
     render(
       <OuverturePaquetOverlay
-        pieces={["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"]}
+        pieces={[
+          "carte.marteau_menuisier",
+          "carte.marteau_menuisier",
+          "carte.risk_1992",
+        ]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
         onClose={() => {}}
       />,
     );
     expect(
-      screen.getAllByTestId("carte-paquet").every((c) => c.dataset.retournee === "1"),
+      screen
+        .getAllByTestId("carte-paquet")
+        .every((c) => c.dataset.retournee === "1"),
     ).toBe(true);
     window.matchMedia = original;
   });
@@ -151,7 +181,11 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
   it("le voile porte le rôle dialog et le libellé d'ouverture", () => {
     render(
       <OuverturePaquetOverlay
-        pieces={["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"]}
+        pieces={[
+          "carte.marteau_menuisier",
+          "carte.marteau_menuisier",
+          "carte.risk_1992",
+        ]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
         onClose={() => {}}
