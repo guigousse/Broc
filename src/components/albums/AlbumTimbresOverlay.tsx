@@ -21,7 +21,7 @@ import { PieceVisuel } from "@/components/pieces/PieceVisuel";
 import {
   bandeDeLigne,
   positionDepuisPointeur,
-  yDeLigne,
+  yDeTimbre,
   HAUTEUR_PAGE_RATIO,
   TAILLE_TIMBRE,
   type Ligne,
@@ -137,8 +137,11 @@ function bandeauStyle(ligne: Ligne): CSSProperties {
     top: `${b.top * 100}%`,
     height: `${b.hauteur * 100}%`,
     backgroundColor: BANDEAU_FOND,
+    // Deux couches : le reflet du plastique en haut, et la BUTÉE en bas —
+    // la bande un peu plus claire où le timbre repose et où la bande de
+    // plastique est collée (recette 2026-09-03).
     backgroundImage:
-      "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0))",
+      "linear-gradient(0deg, rgba(255,255,255,0.22) 0, rgba(255,255,255,0.22) 4px, rgba(255,255,255,0) 4px), linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0))",
     borderTop: "1px solid rgba(255, 255, 255, 0.38)",
     borderRadius: 2,
     boxShadow: BANDEAU_OMBRE,
@@ -177,7 +180,7 @@ function timbrePoseStyle(
     ...resetBouton,
     position: "absolute",
     left: `${x * 100}%`,
-    top: `${yDeLigne(ligne) * 100}%`,
+    top: `${yDeTimbre(ligne) * 100}%`,
     width: `${TAILLE_TIMBRE * 100}%`,
     aspectRatio: "1",
     transform: "translate(-50%, -50%)",
@@ -601,7 +604,7 @@ export function AlbumTimbresOverlay({
       glisserPuisCommiter(
         {
           x: rectPage.left + placePage.x * rectPage.width,
-          y: rectPage.top + yDeLigne(placePage.ligne) * rectPage.height,
+          y: rectPage.top + yDeTimbre(placePage.ligne) * rectPage.height,
         },
         () => poserTimbre(id, page, placePage.ligne, placePage.x),
       );

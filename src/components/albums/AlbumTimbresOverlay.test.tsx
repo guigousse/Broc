@@ -114,7 +114,9 @@ describe("AlbumTimbresOverlay", () => {
       within(screen.getByTestId("bac")).getAllByTestId("timbre-bac"),
     ).toHaveLength(2);
     const pose = screen.getByTestId("timbre-pose");
-    expect(pose.style.top).toBe("50%"); // ligne 2
+    // Ligne 2 (centre 50 %) + décalage visuel de 1,2 % : posé sur la butée
+    // du bandeau (recette 2026-09-03).
+    expect(pose.style.top).toBe("51.2%");
   });
 
   it("lâcher un timbre du bac sur la page appelle poserTimbre avec la ligne aimantée", () => {
@@ -478,7 +480,8 @@ describe("AlbumTimbresOverlay — dépôt", () => {
     fireEvent.pointerUp(t, { clientX: 150, clientY: 200, pointerId: 1 });
     const calque = screen.getByTestId("timbre-fantome");
     expect(calque.style.transition).toContain("transform");
-    expect(calque.style.transform).toContain("translate3d(150px, 195px"); // ligne 2 → y = 0,5 × 390
+    // ligne 2 → y = (0,5 + 0,012) × 390 ≈ 199,7 (décalage visuel vers la butée)
+    expect(calque.style.transform).toContain("translate3d(150px, 199.68px");
     expect(t.style.opacity).toBe("0"); // l'original reste effacé pendant le glissé
     expect(mocks.poserTimbre).not.toHaveBeenCalled();
     act(() => {

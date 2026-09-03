@@ -29,6 +29,14 @@ export function yDeLigne(ligne: Ligne): number {
   return (ligne + 0.5) / 5;
 }
 
+/** Où le timbre est DESSINÉ : légèrement sous le centre de sa ligne, posé
+ *  sur la butée du bandeau (recette 2026-09-03). Décalage purement visuel —
+ *  l'aimantation du geste (`ligneLaPlusProche`) reste sur les centres. */
+export const TIMBRE_DECALAGE = 0.012;
+export function yDeTimbre(ligne: Ligne): number {
+  return yDeLigne(ligne) + TIMBRE_DECALAGE;
+}
+
 /** Le bandeau translucide d'une ligne (vrai album à bandes) : commence SOUS
  *  le centre du timbre et descend un peu sous son bord bas, sans mordre la
  *  ligne suivante — il ne recouvre que le tiers bas du timbre, le plastique
