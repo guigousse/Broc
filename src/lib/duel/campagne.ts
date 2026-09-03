@@ -17,6 +17,9 @@ export interface Mesures {
   manchesMoyenne: number;
   manchesMax: number;
   nuls: number;
+  /** Parties tranchées par une vitrine tombée à 0 sous une pioche manquée (spec §6.4). */
+  fatigue: number;
+  /** Parties stoppées par le garde-fou de boucle (`MANCHES_MAX`), jamais par les règles. */
   epuisees: number;
   /** Taux de victoire du deck agressif contre le deck contrôle. */
   agressifVsControle: number;
@@ -62,6 +65,7 @@ export interface Cumul {
   manches: number;
   manchesMax: number;
   nuls: number;
+  fatigue: number;
   epuisees: number;
   aggroV: number;
   aggroN: number;
@@ -80,6 +84,7 @@ export function mesuresDepuis(c: Cumul, nParties: number): Mesures {
     manchesMoyenne: nParties ? c.manches / nParties : 0,
     manchesMax: c.manchesMax,
     nuls: nParties ? c.nuls / nParties : 0,
+    fatigue: nParties ? c.fatigue / nParties : 0,
     epuisees: nParties ? c.epuisees / nParties : 0,
     agressifVsControle: c.aggroN ? c.aggroV / c.aggroN : 0.5,
   };
@@ -89,7 +94,7 @@ export function mesuresDepuis(c: Cumul, nParties: number): Mesures {
 export function campagne({ graine, nParties }: { graine: number; nParties: number }): Mesures {
   const rng = creerRng(graine);
   const cartes: Record<string, MesureCarte> = Object.fromEntries(CARTES.map((c) => [c.id, { parties: 0, victoires: 0, pioches: 0, poses: 0 }]));
-  let premier = 0, decidees = 0, manches = 0, manchesMax = 0, nuls = 0, epuisees = 0, aggroV = 0, aggroN = 0;
+  let premier = 0, decidees = 0, manches = 0, manchesMax = 0, nuls = 0, fatigue = 0, epuisees = 0, aggroV = 0, aggroN = 0;
   for (let i = 0; i < nParties; i++) {
     const famille = i % 4 < 2 ? "aleatoire" : i % 4 === 2 ? "bicolore" : "courbe";
     let deckA: string[], deckB: string[];
@@ -110,6 +115,7 @@ export function campagne({ graine, nParties }: { graine: number; nParties: numbe
     if (r.epuisee) epuisees++;
     else if (r.vainqueur === null) nuls++;
     else { decidees++; if (r.vainqueur === 0) premier++; }
+    if (r.fatigue) fatigue++;
     for (const [j, deck] of [deckA, deckB].entries()) {
       for (const id of deck) {
         const m = cartes[id];
@@ -123,7 +129,7 @@ export function campagne({ graine, nParties }: { graine: number; nParties: numbe
       if (estVictoireAggro(r.vainqueur, deckA)) aggroV++;
     }
   }
-  return mesuresDepuis({ cartes, decidees, premier, manches, manchesMax, nuls, epuisees, aggroV, aggroN }, nParties);
+  return mesuresDepuis({ cartes, decidees, premier, manches, manchesMax, nuls, fatigue, epuisees, aggroV, aggroN }, nParties);
 }
 
 export function horsCible(m: Mesures): string[] {
@@ -140,7 +146,7 @@ export function horsCible(m: Mesures): string[] {
   if (m.premierJoueur >= CIBLES.premierJoueurMax || m.premierJoueur <= 1 - CIBLES.premierJoueurMax) l.push(`premier joueur : ${(m.premierJoueur * 100).toFixed(1)} %`);
   if (m.manchesMoyenne < CIBLES.manchesMin || m.manchesMoyenne > CIBLES.manchesMax) l.push(`manches moyennes : ${m.manchesMoyenne.toFixed(1)}`);
   if (m.manchesMax > CIBLES.mancheDure) l.push(`partie la plus longue : ${m.manchesMax} manches`);
-  if (m.nuls + m.epuisees > CIBLES.nulsMax) l.push(`nuls + épuisées : ${((m.nuls + m.epuisees) * 100).toFixed(1)} %`);
+  if (m.nuls + m.fatigue > CIBLES.nulsMax) l.push(`nuls + fatigue : ${((m.nuls + m.fatigue) * 100).toFixed(1)} %`);
   if (m.agressifVsControle < CIBLES.courbeMin || m.agressifVsControle > CIBLES.courbeMax) l.push(`agressif contre contrôle : ${(m.agressifVsControle * 100).toFixed(1)} %`);
   return l;
 }
@@ -152,7 +158,7 @@ export function formaterRapport(m: Mesures, graine: number): string {
     "| Mesure | Valeur |", "|---|---|",
     `| Premier joueur | ${pc(m.premierJoueur)} |`,
     `| Manches (moyenne / max) | ${m.manchesMoyenne.toFixed(1)} / ${m.manchesMax} |`,
-    `| Nuls / épuisées | ${pc(m.nuls)} / ${pc(m.epuisees)} |`,
+    `| Nuls / fatigue / épuisées (garde de boucle) | ${pc(m.nuls)} / ${pc(m.fatigue)} / ${pc(m.epuisees)} |`,
     `| Agressif contre contrôle | ${pc(m.agressifVsControle)} |`, "",
     "| Catégorie | Victoires |", "|---|---|",
     ...Object.entries(m.categories).map(([c, t]) => `| ${c} | ${pc(t)} |`), "",

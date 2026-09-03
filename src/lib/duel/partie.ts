@@ -1,11 +1,10 @@
 import { melanger } from "@/lib/duel/rng";
 import { statsDuel } from "@/data/duel/cartesDuel";
-import type { MotCleActif } from "@/data/duel/types";
 import {
   ETAL_MAX, MAIN_INITIALE, PLAFOND_MAX, VITRINE_INITIALE, adverse, cloner, sousRuse, trouverObjet,
   type Cible, type EtatPartie, type Joueur, type ObjetEnJeu, type Resultat,
 } from "@/lib/duel/etat";
-import { degatsDAttaque, piocher, verifierFin } from "@/lib/duel/operations";
+import { degatsDAttaque, motsClesDe, piocher, verifierFin } from "@/lib/duel/operations";
 import { blesserObjet, cibleRequise, ciblesDeChoix, declencher, nettoyerCasse } from "@/lib/duel/effets";
 
 function joueurInitial(deck: string[]): Joueur {
@@ -115,8 +114,7 @@ export function poser(etat: EtatPartie, id: string, cible?: Cible): Resultat {
   const joueur = e.joueurs[e.actif];
   joueur.main.splice(i, 1);
   joueur.energie -= s.cout;
-  const motsCles: MotCleActif[] = s.texte && s.texte.type !== "cri" && s.texte.type !== "effet" ? [s.texte.type] : [];
-  const objet: ObjetEnJeu = { uid: e.prochainUid++, id, attaque: s.attaque, pv: s.pv, motsCles, poseAuTour: e.tour, aAttaque: false };
+  const objet: ObjetEnJeu = { uid: e.prochainUid++, id, attaque: s.attaque, pv: s.pv, motsCles: motsClesDe(id), poseAuTour: e.tour, aAttaque: false };
   joueur.etal.push(objet);
   e.journal.push(`J${e.actif} pose ${id}`);
   declencher(e, e.actif, objet.uid, "pose", cible);

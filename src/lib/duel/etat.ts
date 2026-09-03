@@ -5,7 +5,11 @@ export const PLAFOND_MAX = 5;
 export const MAIN_MAX = 7;
 export const ETAL_MAX = 4;
 export const MAIN_INITIALE = 4;
-/** Garde-fou de boucle : au-delà, la partie est « épuisée ». */
+/**
+ * Garde-fou de boucle : au-delà, la partie est « épuisée ». 60 manches = 120 tours de joueur (la
+ * spec §6.6 dit 60 tours ; la borne réelle est plus large, jamais approchée : max observé 21
+ * manches).
+ */
 export const MANCHES_MAX = 60;
 
 export interface ObjetEnJeu {
@@ -56,10 +60,6 @@ export function cloner(e: EtatPartie): EtatPartie {
 
 export function adverse(j: 0 | 1): 0 | 1 {
   return j === 0 ? 1 : 0;
-}
-
-export function joueurActif(e: EtatPartie): Joueur {
-  return e.joueurs[e.actif];
 }
 
 export function manche(e: EtatPartie): number {

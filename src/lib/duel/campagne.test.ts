@@ -12,7 +12,7 @@ function cumul(partiel: Partial<Cumul> = {}): Cumul {
   const cartes: Record<string, MesureCarte> = Object.fromEntries(
     CARTES.map((c) => [c.id, { parties: 0, victoires: 0, pioches: 0, poses: 0 }]),
   );
-  return { cartes, decidees: 0, premier: 0, manches: 0, manchesMax: 0, nuls: 0, epuisees: 0, aggroV: 0, aggroN: 0, ...partiel };
+  return { cartes, decidees: 0, premier: 0, manches: 0, manchesMax: 0, nuls: 0, fatigue: 0, epuisees: 0, aggroV: 0, aggroN: 0, ...partiel };
 }
 
 describe("campagne", () => {
@@ -23,6 +23,8 @@ describe("campagne", () => {
     for (const c of Object.values(m.cartes)) expect(c.victoires).toBeLessThanOrEqual(c.parties);
     expect(m.premierJoueur).toBeGreaterThanOrEqual(0);
     expect(m.premierJoueur).toBeLessThanOrEqual(1);
+    expect(m.fatigue).toBeGreaterThanOrEqual(0);
+    expect(m.fatigue).toBeLessThanOrEqual(1);
     expect(Object.keys(m.categories)).toHaveLength(7);
     const texte = formaterRapport(m, 1);
     expect(texte).toContain("| Carte |");
@@ -36,11 +38,13 @@ describe("campagne", () => {
 
 describe("mesures — dénominateurs", () => {
   it("premier joueur et agressif/contrôle ne divisent que par les parties décidées", () => {
-    // 100 parties jouées, 80 décidées (10 nulles, 10 épuisées) : 48 victoires du premier joueur.
-    const m = mesuresDepuis(cumul({ decidees: 80, premier: 48, nuls: 10, epuisees: 10, aggroN: 20, aggroV: 9 }), 100);
+    // 100 parties jouées, 80 décidées (10 nulles, 10 épuisées, 5 tranchées par la fatigue) : 48
+    // victoires du premier joueur.
+    const m = mesuresDepuis(cumul({ decidees: 80, premier: 48, nuls: 10, fatigue: 5, epuisees: 10, aggroN: 20, aggroV: 9 }), 100);
     expect(m.premierJoueur).toBeCloseTo(48 / 80, 10); // et surtout pas 48 / 100
     expect(m.agressifVsControle).toBeCloseTo(9 / 20, 10);
     expect(m.nuls).toBeCloseTo(0.1, 10);
+    expect(m.fatigue).toBeCloseTo(0.05, 10);
     expect(m.epuisees).toBeCloseTo(0.1, 10);
   });
 

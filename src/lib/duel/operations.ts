@@ -1,7 +1,15 @@
 import { domine } from "@/data/duel/roue";
 import { getPiece } from "@/data/pieces";
+import { statsDuel } from "@/data/duel/cartesDuel";
+import type { MotCleActif } from "@/data/duel/types";
 import type { CategorieObjet } from "@/types/game";
 import { MAIN_MAX, trouverObjet, type EtatPartie, type ObjetEnJeu } from "@/lib/duel/etat";
+
+/** Le seul mot-clé actif d'une carte (une commune en porte au plus un), ou aucun. */
+export function motsClesDe(id: string): MotCleActif[] {
+  const t = statsDuel(id).texte;
+  return t && t.type !== "cri" && t.type !== "effet" ? [t.type] : [];
+}
 
 /** Mute `e` (déjà cloné par l'appelant public). */
 export function piocher(e: EtatPartie, j: 0 | 1, n: number): void {
@@ -12,6 +20,9 @@ export function piocher(e: EtatPartie, j: 0 | 1, n: number): void {
       joueur.echecsPioche += 1;
       joueur.vitrine -= joueur.echecsPioche;
       e.journal.push(`J${j} fatigue ${joueur.echecsPioche}`);
+      // Mesuré par `jouerPartie` (ResultatPartie.fatigue) : distingue une partie tranchée par la
+      // pioche épuisée d'une partie « épuisée » par le garde-fou de boucle (spec §6.4).
+      if (joueur.vitrine <= 0) e.journal.push(`J${j} fatigue fatale`);
     } else if (joueur.main.length >= MAIN_MAX) {
       joueur.casse.push(id);
       e.journal.push(`J${j} brûle ${id}`);

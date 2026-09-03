@@ -99,4 +99,18 @@ describe("cartesDuel — garde du set", () => {
   it("statsDuel lance sur un id inconnu", () => {
     expect(() => statsDuel("carte.inexistante")).toThrow();
   });
+
+  it("un effet `blesse` ne porte jamais de dégâts à un objet adverse (boucle blesse → blesse)", () => {
+    // blesserObjet déclenche « blesse » après un dégât ; un effet blesse qui viserait à son tour
+    // objetAdverse ou tousObjetsAdverses rebouclerait sur blesserObjet. La garde de récursion
+    // (effets.ts declencher) protège le moteur, mais aucune carte ne doit exploiter cette boucle.
+    for (const c of CARTES) {
+      const t = statsDuel(c.id).texte;
+      if (t?.type !== "effet" || t.declencheur !== "blesse") continue;
+      for (const a of t.actions) {
+        if (a.type !== "degats") continue;
+        expect(["objetAdverse", "tousObjetsAdverses"], c.id).not.toContain(a.cible);
+      }
+    }
+  });
 });

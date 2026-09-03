@@ -26,22 +26,22 @@ export function ciblesDeChoix(e: EtatPartie, j: 0 | 1): number[] {
 }
 
 /** Dégâts hors attaque : Solide s'applique, pas la roue ; déclenche `blesse`. Mute `e`. */
-export function blesserObjet(e: EtatPartie, uid: number, n: number): void {
+export function blesserObjet(e: EtatPartie, uid: number, n: number, profondeur = 0): void {
   const t = trouverObjet(e, uid);
   if (!t) return;
   const reel = infligerDegats(e, uid, n);
-  if (reel > 0) declencher(e, t.joueur, uid, "blesse");
+  if (reel > 0) declencher(e, t.joueur, uid, "blesse", undefined, profondeur);
 }
 
-export function appliquerAction(e: EtatPartie, j: 0 | 1, uid: number, a: Action, cible?: Cible): void {
+export function appliquerAction(e: EtatPartie, j: 0 | 1, uid: number, a: Action, cible?: Cible, profondeur = 0): void {
   const moi = e.joueurs[j];
   const lui = e.joueurs[adverse(j)];
   const cibleUid = cible?.type === "objet" && ciblesDeChoix(e, j).includes(cible.uid) ? cible.uid : null;
   switch (a.type) {
     case "degats":
       if (a.cible === "vitrineAdverse") lui.vitrine -= a.valeur;
-      else if (a.cible === "tousObjetsAdverses") for (const o of [...lui.etal]) blesserObjet(e, o.uid, a.valeur);
-      else if (cibleUid !== null) blesserObjet(e, cibleUid, a.valeur);
+      else if (a.cible === "tousObjetsAdverses") for (const o of [...lui.etal]) blesserObjet(e, o.uid, a.valeur, profondeur + 1);
+      else if (cibleUid !== null) blesserObjet(e, cibleUid, a.valeur, profondeur + 1);
       break;
     case "soinVitrine":
       moi.vitrine = Math.min(VITRINE_INITIALE, moi.vitrine + a.valeur);
@@ -82,14 +82,26 @@ export function appliquerAction(e: EtatPartie, j: 0 | 1, uid: number, a: Action,
  * les casses (spec §3.3 « simultanément ») : c'est à l'appelant public (poser/attaquer/
  * commencerTour/finirTour) d'appeler `nettoyerCasse` une seule fois, après sa séquence
  * d'actions complète. Mute `e`.
+ *
+ * `profondeur` compte les allers-retours `blesse` → dégâts → `blesse` (voir `blesserObjet` et le
+ * cas `degats` d'`appliquerAction`) : la garde de données (cartesDuel.test.ts) interdit à tout
+ * effet `blesse` de porter des dégâts à un objet adverse, donc aucune carte du jeu ne boucle
+ * aujourd'hui — cette garde est là pour qu'une carte future mal réglée ne fasse jamais tourner le
+ * moteur en rond. Au-delà de 8, on arrête silencieusement (aucune exception) et on le journalise.
  */
-export function declencher(e: EtatPartie, j: 0 | 1, uid: number, declencheur: Declencheur, cible?: Cible): void {
+export function declencher(e: EtatPartie, j: 0 | 1, uid: number, declencheur: Declencheur, cible?: Cible, profondeur = 0): void {
+  if (profondeur > 8) { e.journal.push("garde blesse"); return; }
   const t = trouverObjet(e, uid);
   if (!t) return;
-  for (const a of actionsDe(t.objet.id, declencheur)) appliquerAction(e, j, uid, a, cible);
+  for (const a of actionsDe(t.objet.id, declencheur)) appliquerAction(e, j, uid, a, cible, profondeur);
 }
 
-/** Retire les objets à 0 PV et déclenche leurs effets `casse`, jusqu'à stabilité. Mute `e`. */
+/**
+ * Retire les objets à 0 PV et déclenche leurs effets `casse`, jusqu'à stabilité. Mute `e`.
+ * `garde < 20` est une seconde ceinture inatteignable : chaque passage retire au moins 1 des
+ * ≤ 8 objets en jeu (ETAL_MAX 4 × 2 joueurs) et rien n'entre en jeu pendant la boucle (aucune
+ * action `casse` ne pose d'objet), donc 8 passages suffisent toujours à vider l'étal.
+ */
 export function nettoyerCasse(e: EtatPartie): void {
   for (let garde = 0; garde < 20; garde++) {
     const casses = retirerCasses(e);

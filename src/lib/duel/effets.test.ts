@@ -4,7 +4,7 @@ import { attaquer, finirTour, nouvellePartie, poser } from "@/lib/duel/partie";
 import { MAIN_MAX, trouverObjet } from "@/lib/duel/etat";
 import { appliquerAction, blesserObjet, cibleRequise } from "@/lib/duel/effets";
 import { avecMain, avecObjet, DECK_A, DECK_B } from "@/lib/duel/__test__/helpers";
-import { statsDuel } from "@/data/duel/cartesDuel";
+import { CARTES_DUEL, statsDuel } from "@/data/duel/cartesDuel";
 
 const base = () => nouvellePartie(DECK_A, DECK_B, creerRng(1));
 const LOUPS = "carte.vinyle_des_loups_des_steppes_bark_to_be_free"; // Cri pioche
@@ -23,6 +23,7 @@ const STADIUM = "carte.cartouche_stadium_events"; // pose : 1 à tous + pioche 1
 const DESSIN = "carte.dessin_surrealiste_aux_montres_molles_signe"; // pose : 2 à tous (Objets d'art)
 const MOUSTACHU = "carte.le_petit_moustachu_edition_originale_1961"; // pose : 2 à un objet
 const TERRE_CUITE = "carte.terre_cuite_buste"; // 1/2 Solide (Objets d'art)
+const BOITE_OUTILS = "carte.boite_outils_complete"; // 3/4, sans mot-clé (Bricolage, dominé par Objets d'art)
 const BOITE_MANUF = "carte.boite_d_outils_de_manufacture_signee"; // casse : 2 à tous
 const SCIE = "carte.scie_egoine_de_charpentier"; // 5/4
 const VESTE = "carte.veste_jean_delavee"; // 2/2 Ruse
@@ -158,12 +159,15 @@ describe("effets uniques", () => {
   });
 
   it("dégâts d'effet : Solide s'applique, pas la roue (malgré la domination Objets d'art → Bricolage)", () => {
+    // BOITE_OUTILS (Bricolage, 4 PV, sans mot-clé) discrimine vraiment le bonus de roue : à 2
+    // dégâts (sans bonus) il reste à 2 PV, à 3 (si le bonus s'appliquait à tort) il tomberait à 1.
     let s = avecObjet(avecMain(base(), 0, [DESSIN], 5), 1, TERRE_CUITE);
     const terreCuite = s.uid;
-    s = avecObjet(s.etat, 1, MARTEAU);
+    s = avecObjet(s.etat, 1, BOITE_OUTILS);
+    const boiteOutils = s.uid;
     const r = poser(s.etat, DESSIN);
     expect(trouverObjet(r.etat, terreCuite)?.objet.pv).toBe(1); // 2 − 1 Solide
-    expect(trouverObjet(r.etat, s.uid)).toBeNull(); // le marteau (Bricolage, non Solide) casse sous 2, pas 3
+    expect(trouverObjet(r.etat, boiteOutils)?.objet.pv).toBe(2); // 4 − 2, pas 4 − 3
   });
 
   it("chaîne de casses : un objet cassé par un effet de casse déclenche à son tour", () => {
@@ -202,5 +206,33 @@ describe("appliquerAction (unitaire)", () => {
     const avant = e.joueurs[0].energie;
     appliquerAction(e, 0, 0, { type: "energie", valeur: 2 });
     expect(e.joueurs[0].energie).toBe(avant + 2);
+  });
+});
+
+describe("garde de récursion blesse → blesse", () => {
+  it("un ping-pong blesse → tousObjetsAdverses → blesse construit à la main termine (garde à 8)", () => {
+    // La garde de données (cartesDuel.test.ts) interdit ce texte à toute vraie carte du jeu :
+    // deux cartes de test injectées le temps du test reproduisent la boucle que la garde de
+    // profondeur (effets.ts declencher) doit couper.
+    const PING = "carte.__test_ping__";
+    const PONG = "carte.__test_pong__";
+    const texteBoucle = {
+      type: "effet" as const,
+      declencheur: "blesse" as const,
+      actions: [{ type: "degats" as const, cible: "tousObjetsAdverses" as const, valeur: 1 }],
+      prix: 1,
+    };
+    CARTES_DUEL[PING] = { cout: 1, attaque: 1, pv: 3, texte: texteBoucle };
+    CARTES_DUEL[PONG] = { cout: 1, attaque: 1, pv: 3, texte: texteBoucle };
+    try {
+      let s = avecObjet(base(), 0, PING);
+      const a = s.uid;
+      s = avecObjet(s.etat, 1, PONG);
+      appliquerAction(s.etat, 0, a, { type: "degats", cible: "tousObjetsAdverses", valeur: 1 });
+      expect(s.etat.journal).toContain("garde blesse");
+    } finally {
+      delete CARTES_DUEL[PING];
+      delete CARTES_DUEL[PONG];
+    }
   });
 });

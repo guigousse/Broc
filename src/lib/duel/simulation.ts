@@ -15,6 +15,8 @@ export interface ResultatPartie {
   vainqueur: 0 | 1 | null;
   manches: number;
   epuisee: boolean;
+  /** La vitrine d'un joueur a atteint 0 par une pioche manquée (pas par le combat) — spec §6.4. */
+  fatigue: boolean;
   /**
    * Nombre de joueurs (0, 1 ou 2) ayant pioché la carte au moins une fois (pioche initiale
    * comprise), au plus une fois par joueur et par partie.
@@ -39,19 +41,23 @@ export function jouerPartie(p: ParametresPartie): ResultatPartie {
   };
   noterPioches(e);
   let epuisee = false;
+  let fatigue = false;
   let journalLu = 0;
   while (!e.fini) {
     if (manche(e) > MANCHES_MAX) { epuisee = true; break; }
     e = jouerTour(e, e.actif === 0 ? p.profilA : p.profilB);
     // Les poses se comptent au journal (un objet posé puis cassé dans le même tour n'est plus
     // sur l'étal), au plus une fois par joueur et par partie (une carte reprise en main par
-    // retourEnMain puis reposée ne recompte pas).
+    // retourEnMain puis reposée ne recompte pas). La fatigue fatale se lit de la même façon.
     for (const ligne of e.journal.slice(journalLu)) {
       const m = /^J(\d) pose (.+)$/.exec(ligne);
-      if (!m) continue;
-      const j = Number(m[1]) as 0 | 1;
-      const id = m[2];
-      if (!vuesPose[j].has(id)) { vuesPose[j].add(id); compter(poses, id); }
+      if (m) {
+        const j = Number(m[1]) as 0 | 1;
+        const id = m[2];
+        if (!vuesPose[j].has(id)) { vuesPose[j].add(id); compter(poses, id); }
+        continue;
+      }
+      if (/^J\d fatigue fatale$/.test(ligne)) fatigue = true;
     }
     journalLu = e.journal.length;
     noterPioches(e);
@@ -60,6 +66,7 @@ export function jouerPartie(p: ParametresPartie): ResultatPartie {
     vainqueur: epuisee ? null : e.fini!.vainqueur,
     manches: epuisee ? Math.min(manche(e), MANCHES_MAX) : manche(e),
     epuisee,
+    fatigue,
     pioches,
     poses,
   };

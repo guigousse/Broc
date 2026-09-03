@@ -84,6 +84,13 @@ function phasePose(e: EtatPartie): EtatPartie {
   }
 }
 
+/**
+ * `tue`/`echangeGagnant` jugent sur l'attaque imprimée, avant que le déclencheur `attaque` ne
+ * l'ait éventuellement modifiée (ex. sac_a_main_talaria, +1 attaque à soi) : l'IA choisit sa
+ * cible avant de savoir si l'effet se déclenchera. Heuristique acceptée, pas un bug — un calcul
+ * exact demanderait de simuler le déclencheur pour chaque cible candidate.
+ */
+
 /** `o` tue `cible` en un coup ? */
 function tue(o: ObjetEnJeu, cible: ObjetEnJeu): boolean {
   return degatsDAttaque(o, cible) - (cible.motsCles.includes("solide") ? 1 : 0) >= cible.pv;
