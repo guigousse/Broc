@@ -1,0 +1,356 @@
+{
+  "commentaire": "Planches 3×3 (en 3:4 : les cellules sortent en 3:4, ratio de la fenêtre du gabarit) pour generate-cartes.mjs. Ordre = ordre des pochettes (src/data/cartes.ts). La rareté par case choisit le gabarit. Sujets = les objets source TOONIFIÉS, décrits sans marque ni personnage protégé.",
+  "style": "Each panel is a bold flat cartoon MASCOT: the object PERSONIFIED as an adorable tiny monster — two big friendly round eyes, a small happy smile, and when it fits, tiny stubby arms and feet — playful kawaii style, thick dark-brown outlines, cel shading, warm vintage palette, the character centered and large on a plain soft cream background.",
+  "sheets": [
+    {
+      "nom": "planche1",
+      "cases": [
+        {
+          "id": "carte.vinyle_des_loups_des_steppes_bark_to_be_free",
+          "rarete": "commun",
+          "sujet": "a vinyl record half out of a sleeve showing a howling wolf silhouette",
+          "serie": "Musique"
+        },
+        {
+          "id": "carte.vinyle_grand_max_des_combines",
+          "rarete": "commun",
+          "sujet": "a vinyl record with a tropical island sunset sleeve",
+          "serie": "Musique"
+        },
+        {
+          "id": "carte.33tours_jazz_1",
+          "rarete": "commun",
+          "sujet": "a jazz vinyl record with a trumpet on the sleeve",
+          "serie": "Musique"
+        },
+        {
+          "id": "carte.harmonica_chromatique_de_bluesman",
+          "rarete": "commun",
+          "sujet": "a chromatic blues harmonica",
+          "serie": "Musique"
+        },
+        {
+          "id": "carte.vinyle_stevranos_vive_la_fet_a",
+          "rarete": "commun",
+          "sujet": "a festive vinyl record sleeve with confetti and streamers",
+          "serie": "Musique"
+        },
+        {
+          "id": "carte.guitare_classique_ancienne",
+          "rarete": "rare",
+          "sujet": "an old classical guitar with worn varnish",
+          "serie": "Musique"
+        },
+        {
+          "id": "carte.test_pressing_des_trolling_sons",
+          "rarete": "rare",
+          "sujet": "a white-label test pressing vinyl record",
+          "serie": "Musique"
+        },
+        {
+          "id": "carte.violon_de_maitre_cremonais_1715",
+          "rarete": "legendaire",
+          "sujet": "an antique master violin with glowing amber varnish and its bow",
+          "serie": "Musique"
+        },
+        {
+          "id": "carte.cartouche_le_plombier_sauteur_8_bit",
+          "rarete": "commun",
+          "sujet": "a grey 8-bit video game cartridge with a plain blank label",
+          "serie": "Jeux & Loisirs"
+        }
+      ]
+    },
+    {
+      "nom": "planche2",
+      "cases": [
+        {
+          "id": "carte.manette_megadrive",
+          "rarete": "commun",
+          "sujet": "a black 16-bit game controller with three buttons",
+          "serie": "Jeux & Loisirs"
+        },
+        {
+          "id": "carte.playbox_pocket",
+          "rarete": "commun",
+          "sujet": "a chunky grey handheld game console with a small green screen",
+          "serie": "Jeux & Loisirs"
+        },
+        {
+          "id": "carte.risk_1992",
+          "rarete": "commun",
+          "sujet": "a vintage strategy board game box with a world map on the lid",
+          "serie": "Jeux & Loisirs"
+        },
+        {
+          "id": "carte.figurine_de_guerre_galactique_1978",
+          "rarete": "rare",
+          "sujet": "a small retro sci-fi action figure in a black cape, on its display stand",
+          "serie": "Jeux & Loisirs"
+        },
+        {
+          "id": "carte.flipper_a_plateau_annees_60",
+          "rarete": "rare",
+          "sujet": "a 1960s tabletop pinball machine with colorful playfield",
+          "serie": "Jeux & Loisirs"
+        },
+        {
+          "id": "carte.cartouche_stadium_events",
+          "rarete": "legendaire",
+          "sujet": "a golden 8-bit sports video game cartridge, gleaming",
+          "serie": "Jeux & Loisirs"
+        },
+        {
+          "id": "carte.monte_cristo",
+          "rarete": "commun",
+          "sujet": "a thick classic adventure novel with an ornate red and gold cover",
+          "serie": "Livres & Papeterie"
+        },
+        {
+          "id": "carte.les_aventures_de_titou_cap_sur_la_lune",
+          "rarete": "commun",
+          "sujet": "a vintage comic album with a red rocket flying to the moon on the cover",
+          "serie": "Livres & Papeterie"
+        },
+        {
+          "id": "carte.paris_match_70s",
+          "rarete": "commun",
+          "sujet": "a stack of 1970s news magazines",
+          "serie": "Livres & Papeterie"
+        }
+      ]
+    },
+    {
+      "nom": "planche3",
+      "cases": [
+        {
+          "id": "carte.miserables_pleiade",
+          "rarete": "commun",
+          "sujet": "a prestigious leather-bound classic novel with gilded page edges",
+          "serie": "Livres & Papeterie"
+        },
+        {
+          "id": "carte.conte_de_l_aviateur_et_de_l_enfant_roi_edition",
+          "rarete": "rare",
+          "sujet": "a 1943 illustrated storybook with a starry night sky cover",
+          "serie": "Livres & Papeterie"
+        },
+        {
+          "id": "carte.le_petit_moustachu_edition_originale_1961",
+          "rarete": "rare",
+          "sujet": "a vintage book with a bowler hat and a cane on the cover",
+          "serie": "Livres & Papeterie"
+        },
+        {
+          "id": "carte.gutenberg_feuillet",
+          "rarete": "legendaire",
+          "sujet": "an ancient printed manuscript page in a protective gilded frame",
+          "serie": "Livres & Papeterie"
+        },
+        {
+          "id": "carte.veste_jean_delavee",
+          "rarete": "commun",
+          "sujet": "a faded denim jacket",
+          "serie": "Mode"
+        },
+        {
+          "id": "carte.blouson_cuir_vintage",
+          "rarete": "commun",
+          "sujet": "a vintage brown leather jacket",
+          "serie": "Mode"
+        },
+        {
+          "id": "carte.chapeau_feutre_50s",
+          "rarete": "commun",
+          "sujet": "a 1950s felt fedora hat",
+          "serie": "Mode"
+        },
+        {
+          "id": "carte.robe_50s_pinup",
+          "rarete": "commun",
+          "sujet": "a 1950s polka-dot pin-up dress on a hanger",
+          "serie": "Mode"
+        },
+        {
+          "id": "carte.broche_emaillee_artdeco",
+          "rarete": "rare",
+          "sujet": "an enamelled Art Deco brooch with geometric patterns",
+          "serie": "Mode"
+        }
+      ]
+    },
+    {
+      "nom": "planche4",
+      "cases": [
+        {
+          "id": "carte.sac_a_main_talaria",
+          "rarete": "rare",
+          "sujet": "an elegant vintage designer handbag with a golden clasp",
+          "serie": "Mode"
+        },
+        {
+          "id": "carte.la_petite_robe_noire_chaine_1925",
+          "rarete": "legendaire",
+          "sujet": "an iconic 1925 little black dress on a dress form",
+          "serie": "Mode"
+        },
+        {
+          "id": "carte.figurine_porcelaine",
+          "rarete": "commun",
+          "sujet": "a small porcelain figurine of a dancer",
+          "serie": "Maison"
+        },
+        {
+          "id": "carte.service_the_faience",
+          "rarete": "commun",
+          "sujet": "a faience tea set with pot and cups",
+          "serie": "Maison"
+        },
+        {
+          "id": "carte.tabouret_bois_patine",
+          "rarete": "commun",
+          "sujet": "a patinated wooden stool",
+          "serie": "Maison"
+        },
+        {
+          "id": "carte.vase_en_cristal_baraka",
+          "rarete": "commun",
+          "sujet": "a sparkling cut-crystal vase",
+          "serie": "Maison"
+        },
+        {
+          "id": "carte.boite_musique_ancienne",
+          "rarete": "rare",
+          "sujet": "an antique music box with a tiny dancing ballerina",
+          "serie": "Maison"
+        },
+        {
+          "id": "carte.lampe_bureau_artdeco",
+          "rarete": "rare",
+          "sujet": "an Art Deco desk lamp with a green glass shade",
+          "serie": "Maison"
+        },
+        {
+          "id": "carte.uf_joaillier_imperial_en_email_replique",
+          "rarete": "legendaire",
+          "sujet": "a jewelled imperial enamel egg on a golden stand",
+          "serie": "Maison"
+        }
+      ]
+    },
+    {
+      "nom": "planche5",
+      "cases": [
+        {
+          "id": "carte.aquarelle_paysage_anonyme",
+          "rarete": "commun",
+          "sujet": "a small framed watercolor landscape painting",
+          "serie": "Objets d'art"
+        },
+        {
+          "id": "carte.terre_cuite_buste",
+          "rarete": "commun",
+          "sujet": "a small terracotta bust on a plinth",
+          "serie": "Objets d'art"
+        },
+        {
+          "id": "carte.masque_tribal_decoratif",
+          "rarete": "commun",
+          "sujet": "a decorative carved wooden tribal mask",
+          "serie": "Objets d'art"
+        },
+        {
+          "id": "carte.bronze_animalier",
+          "rarete": "commun",
+          "sujet": "a bronze sculpture of a stag",
+          "serie": "Objets d'art"
+        },
+        {
+          "id": "carte.vase_galle_signe",
+          "rarete": "rare",
+          "sujet": "an Art Nouveau cameo glass vase with floral motifs",
+          "serie": "Objets d'art"
+        },
+        {
+          "id": "carte.dessin_surrealiste_aux_montres_molles_signe",
+          "rarete": "rare",
+          "sujet": "a framed surrealist drawing with drooping melting clocks",
+          "serie": "Objets d'art"
+        },
+        {
+          "id": "carte.marteau_menuisier",
+          "rarete": "commun",
+          "sujet": "a carpenter's hammer with a wooden handle",
+          "serie": "Bricolage"
+        },
+        {
+          "id": "carte.boite_outils_complete",
+          "rarete": "commun",
+          "sujet": "an open toolbox full of tools",
+          "serie": "Bricolage"
+        },
+        {
+          "id": "carte.etabli_pliant_ancien",
+          "rarete": "commun",
+          "sujet": "an old folding wooden workbench",
+          "serie": "Bricolage"
+        }
+      ]
+    },
+    {
+      "nom": "planche6",
+      "cases": [
+        {
+          "id": "carte.pince_etirer_cuivre",
+          "rarete": "commun",
+          "sujet": "a copper stretching plier",
+          "serie": "Bricolage"
+        },
+        {
+          "id": "carte.scie_egoine_de_charpentier",
+          "rarete": "commun",
+          "sujet": "a carpenter's handsaw",
+          "serie": "Bricolage"
+        },
+        {
+          "id": "carte.boite_d_outils_de_manufacture_signee",
+          "rarete": "rare",
+          "sujet": "a fine manufacture toolbox with brass corners, open",
+          "serie": "Bricolage"
+        },
+        {
+          "id": "carte.rabot_d_ebeniste_a_semelle_modele_605",
+          "rarete": "rare",
+          "sujet": "a cabinetmaker's metal hand plane",
+          "serie": "Bricolage"
+        },
+        {
+          "id": "carte.coffret_ebeniste_xixe",
+          "rarete": "rare",
+          "sujet": "a 19th-century cabinetmaker's tool chest with fine tools inside",
+          "serie": "Bricolage"
+        },
+        {
+          "id": null,
+          "rarete": "commun",
+          "sujet": "a brass pocket watch"
+        },
+        {
+          "id": null,
+          "rarete": "commun",
+          "sujet": "a ship in a bottle"
+        },
+        {
+          "id": null,
+          "rarete": "commun",
+          "sujet": "an old camera with leather case"
+        },
+        {
+          "id": null,
+          "rarete": "commun",
+          "sujet": "a gramophone with a brass horn"
+        }
+      ]
+    }
+  ]
+}
