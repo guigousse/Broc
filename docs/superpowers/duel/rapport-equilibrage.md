@@ -153,6 +153,23 @@ Hors cible :
 Itération 2 : règle 6 (pose < 60 %) sur les six cartes les moins posées de la
 campagne 1, en gardant le budget exact.
 
+**Écart assumé à l'ordre de priorité du plan.** La campagne 1 laissait
+17 cartes hors de la fourchette 45–55 % de victoires (10 sous 45 %, 7 au-dessus
+de 55 %) : par l'ordre des règles, l'itération aurait dû prendre six d'entre
+elles — les plus extrêmes étaient Gutenberg à 41,0 %, le chapeau de feutre à
+57,0 %, la broche à 56,4 %, la petite robe noire à 56,0 %, la pince à 56,9 % et
+le violon à 43,4 % — et ne toucher à la règle 6 qu'une fois les taux de
+victoire rentrés. Le choix a été de dépenser cette itération en **expérience
+diagnostique** : deux des six retouches gagnent un point de budget, quatre
+déplacent un point à budget constant, ce qui isole exactement la variable dont
+dépend le taux de pose. Sans cette mesure, la retouche d'IA de l'itération 3
+n'aurait été qu'une intuition — et le contrôleur exigeait la preuve que les
+règles 4 à 6 ne peuvent pas atteindre la cible de pose avant d'autoriser une
+retouche d'IA. Le coût de l'écart est d'une itération sur douze, et les
+17 taux de victoire ont été traités dès l'itération 4, une fois l'IA figée —
+ce qui valait mieux : les retouches faites avant le changement d'IA auraient
+été mesurées contre une politique de pose qui n'existe plus.
+
 ### Retouches (itération 2)
 
 | Carte | Avant → après | Règle |
@@ -521,6 +538,12 @@ et le taux de nuls.
 
 Trois campagnes de 20 000 parties, **sans aucune retouche entre elles**.
 
+Les mesures de diagnostic citées plus bas (parties en miroir, découpage par
+famille de decks, balayage des répartitions d'une carte) ne sont pas produites
+par `duel:campagne` : ce sont trois outils jetables, gardés dans le bloc-notes
+de session pour être rejouables — `diag-miroir.ts`, `diag-familles.ts` et
+`diag-repartitions.sh` (voir la fin du rapport).
+
 Graine 101 · 20000 parties
 
 | Mesure | Valeur |
@@ -756,16 +779,18 @@ deux (le §4.3 l'autorise : « les légendaires **au plus** deux »).
 ### 4. Gutenberg à 44,3 % — le même effet de bord, à 0,5 point
 
 Feuillet de Gutenberg, légendaire de coût 4, *à la pose, piochez 2 cartes*.
-Buffé deux fois par la règle 5 (prix 3 → 2 → 1, le plancher), puis toutes les
-répartitions de ses 9 points de stats ont été mesurées à la graine 101 :
+Buffé deux fois par la règle 5 (prix 3 → 2 → 1, le plancher). À coût 4,
+légendaire, prix 1, son budget vaut 9 points ; les PV plafonnant à 8 et
+l'attaque à 6, cela fait **six** répartitions légales, et **les six** ont été
+mesurées à la graine 101, sur 20 000 parties chacune :
 
-| Stats | 6/3 | 5/4 | **4/5** | 3/6 |
-|---|---|---|---|---|
-| Victoires | 43,3 %¹ | 44,4 % | **44,3 %** | 43,5 % |
+| Stats | 1/8 | 2/7 | 3/6 | **4/5** | 5/4 | 6/3 |
+|---|---|---|---|---|---|---|
+| Victoires | 37,4 % | 41,0 % | 43,5 % | **44,3 %** | 44,4 % | 43,2 % |
 
-¹ à la graine 7.
-
-Le plateau est à 44,4 % : aucune répartition légale n'atteint 45 %. Par
+La courbe monte jusqu'à un plateau à 44,3-44,4 % (4/5 et 5/4) puis redescend :
+**aucune des six répartitions légales n'atteint 45 %**, et l'écart entre les
+deux meilleures (0,1 point) est dans le bruit de mesure. Par
 famille : 46,4 % en aléatoire, 47,3 % en bicolore, **35,8 %** par courbe — le
 même effet de bord qu'au point 2, sur une carte de coût 4. La carte est dans la
 cible dès qu'on sort de la famille « par courbe » (et elle y est déjà à la
@@ -786,3 +811,18 @@ cher, mais c'est le plancher du §5.2.
 | v5 | 6 | 6 | 2 cartes, règles 4 et 5 |
 | v6 | 7 | 7 | 2 cartes, règles 4 et 5 |
 
+## Outils de mesure
+
+| Outil | Ce qu'il mesure | Lancement |
+|---|---|---|
+| `scripts/duel-campagne.ts` (versionné) | la campagne du §6.4 | `npm run duel:campagne -- --graine <n> --parties 20000` |
+| `diag-familles.ts` | par famille de decks (aléatoire / bicolore / par courbe) : avantage du premier joueur, durée, taux de victoire moyen par palier de coût, et trois cartes suivies | `npx tsx <bloc-notes>/diag-familles.ts 12000` |
+| `diag-miroir.ts` | partie en miroir (même deck et même profil des deux côtés) : avantage du premier joueur, par profil et par durée de partie | `npx tsx <bloc-notes>/diag-miroir.ts` |
+| `diag-repartitions.sh` | balaye les répartitions attaque/PV d'une carte à budget constant, en vérifiant le test de garde à chaque pas et en remettant `cartesDuel.ts` de git à la fin | `<bloc-notes>/diag-repartitions.sh gutenberg_feuillet 101 1/8 2/7 3/6 4/5 5/4 6/3` |
+
+Les trois outils de diagnostic vivent dans le bloc-notes de la session
+(`/private/tmp/claude-501/-Users-guillaume-dev-Projet-Broc-V2/90ced555-b692-4fb6-9f12-e71c12abccef/scratchpad`),
+avec les sorties brutes de toutes les campagnes (`c0.md` … `c7.md`, `v101.md`,
+`v202.md`, `v303.md`). Ils sont volontairement hors dépôt : ce sont des
+instruments de la boucle d'équilibrage, pas du code du jeu. Chaque campagne,
+elle, se reproduit à l'identique depuis le dépôt à sa graine.
