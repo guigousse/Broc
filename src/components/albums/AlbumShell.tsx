@@ -248,6 +248,9 @@ const recyclerCoin: CSSProperties = {
   right: 0,
   top: "50%",
   transform: "translateY(-50%)",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 2,
 };
 
 interface LigneBasAlbumProps {
@@ -258,6 +261,8 @@ interface LigneBasAlbumProps {
   onRecycler: () => void;
   /** La pagination de l'album, au centre. */
   children: ReactNode;
+  /** Un bouton (ou plus) affiché avant le Recycler, dans le même coin. */
+  avantRecycler?: ReactNode;
 }
 
 export function LigneBasAlbum({
@@ -266,6 +271,7 @@ export function LigneBasAlbum({
   doublons,
   onRecycler,
   children,
+  avantRecycler,
 }: LigneBasAlbumProps) {
   const { d, tr } = useLangue();
   return (
@@ -278,6 +284,7 @@ export function LigneBasAlbum({
       </span>
       {children}
       <div style={recyclerCoin}>
+        {avantRecycler}
         <RecyclerBouton
           icone
           titre={titre}
