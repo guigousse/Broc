@@ -86,6 +86,7 @@ import {
 import { acheterAlbum, acheterPaquet, appliquerPaquet } from "@/lib/bazar/albums";
 import {
   albumsDe,
+  deplacerCarte as deplacerCarteAlbum,
   marquerConsultee as marquerConsulteeAlbum,
   poserTimbre as poserTimbreAlbum,
   recyclerDoublons,
@@ -352,6 +353,8 @@ interface GameActionsValue {
   ) => void;
   /** Retire un timbre posé, le renvoie au bac « en vrac ». */
   rendreTimbreAuBac: (id: string) => void;
+  /** Déplace une carte du classeur vers un slot (0..53) — échange si occupé. */
+  deplacerCarte: (id: string, slot: number) => void;
 }
 
 type GameContextValue = GameStateValue & GameActionsValue;
@@ -2300,6 +2303,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const deplacerCarte = useCallback((id: string, slot: number) => {
+    setState((prev) =>
+      prev ? { ...prev, albums: deplacerCarteAlbum(albumsDe(prev), id, slot) } : prev,
+    );
+  }, []);
+
   const stateValue = useMemo<GameStateValue>(
     () => ({ state, isHydrated, etatSauvegarde }),
     [state, isHydrated, etatSauvegarde],
@@ -2374,6 +2383,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerPieceConsultee,
       poserTimbre,
       rendreTimbreAuBac,
+      deplacerCarte,
     }),
     [
       nouvellePartie,
@@ -2441,6 +2451,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerPieceConsultee,
       poserTimbre,
       rendreTimbreAuBac,
+      deplacerCarte,
     ],
   );
 

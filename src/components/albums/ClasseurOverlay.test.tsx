@@ -8,6 +8,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -37,6 +38,7 @@ const { mocks } = vi.hoisted(() => ({
   mocks: {
     recyclerDoublonsAlbum: vi.fn(() => 2),
     marquerPieceConsultee: vi.fn(),
+    deplacerCarte: vi.fn(),
     toast: vi.fn(),
   },
 }));
@@ -47,6 +49,7 @@ vi.mock("@/context/GameContext", () => ({
     state: { albums },
     recyclerDoublonsAlbum: mocks.recyclerDoublonsAlbum,
     marquerPieceConsultee: mocks.marquerPieceConsultee,
+    deplacerCarte: mocks.deplacerCarte,
     poserTimbre: vi.fn(),
     rendreTimbreAuBac: vi.fn(),
   }),
@@ -60,12 +63,18 @@ vi.mock("@/components/ui/Toast", () => ({
 afterEach(cleanup);
 
 describe("ClasseurOverlay", () => {
-  it("affiche 9 pochettes par page, le compteur et le badge ×N", () => {
+  // Placement manuel (2026-09-03) : les cartes possédées occupent leur
+  // pochette (par défaut celle de leur `ordre`), les 7 autres cases de la
+  // page sont des pochettes VIDES délimitées.
+  it("affiche 2 cartes + 7 pochettes vides, le compteur et le badge ×N", () => {
     render(<ClasseurOverlay open onClose={() => {}} />);
     expect(screen.getByText("2 / 50")).toBeTruthy();
     expect(document.querySelectorAll('[data-testid="pochette"]')).toHaveLength(
-      9,
+      2,
     );
+    expect(
+      document.querySelectorAll('[data-testid="pochette-vide"]'),
+    ).toHaveLength(7);
     expect(screen.getByText("×2")).toBeTruthy();
   });
 
@@ -127,11 +136,90 @@ describe("ClasseurOverlay", () => {
     );
   });
 
-  it("tap sur une carte possédée ouvre la fiche et marque la pièce consultée", () => {
+  it("tap (sans mouvement) sur une carte ouvre la fiche et marque la pièce consultée", () => {
     render(<ClasseurOverlay open onClose={() => {}} />);
-    fireEvent.click(screen.getAllByTestId("pochette")[0]);
+    const carte = screen.getAllByTestId("pochette")[0];
+    fireEvent.pointerDown(carte, { clientX: 50, clientY: 50, pointerId: 1 });
+    fireEvent.pointerUp(carte, { clientX: 52, clientY: 51, pointerId: 1 });
     expect(mocks.marquerPieceConsultee).toHaveBeenCalled();
     expect(screen.getByTestId("fiche-visuel")).toBeTruthy();
+  });
+});
+
+/* ── Placement manuel des cartes (recette 2026-09-03) ─────────────────────
+   La carte suit le doigt (calque en portail), va PILE dans la pochette
+   visée (jamais entre deux), et un lâcher hors grille la renvoie chez elle. */
+describe("ClasseurOverlay — glisser une carte vers un slot", () => {
+  /** Donne un rect à chacune des 9 cases : 3 colonnes × 3 lignes de 100px. */
+  function poserRects() {
+    const cases = document.querySelectorAll(
+      '[data-testid="pochette"], [data-testid="pochette-vide"]',
+    );
+    cases.forEach((el, i) => {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      (el as HTMLElement).getBoundingClientRect = () =>
+        ({
+          left: col * 100,
+          top: row * 100,
+          right: col * 100 + 100,
+          bottom: row * 100 + 100,
+          width: 100,
+          height: 100,
+          x: col * 100,
+          y: row * 100,
+          toJSON: () => ({}),
+        }) as DOMRect;
+    });
+  }
+
+  it("lâcher sur une pochette vide appelle deplacerCarte avec son slot, à l'arrivée du calque", () => {
+    vi.useFakeTimers();
+    mocks.deplacerCarte.mockClear();
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    poserRects();
+    const carte = screen.getAllByTestId("pochette")[0]; // slot 0 (p0, ordre 0)
+    fireEvent.pointerDown(carte, { clientX: 50, clientY: 50, pointerId: 1 });
+    fireEvent.pointerMove(carte, { clientX: 250, clientY: 150, pointerId: 1 });
+    expect(screen.getByTestId("carte-fantome")).toBeTruthy();
+    fireEvent.pointerUp(carte, { clientX: 250, clientY: 150, pointerId: 1 });
+    expect(mocks.deplacerCarte).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
+    // (250, 150) = colonne 2, ligne 1 → case 5 de la page 0.
+    expect(mocks.deplacerCarte).toHaveBeenCalledWith(p0, 5);
+    expect(screen.queryByTestId("carte-fantome")).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("lâcher HORS de la grille renvoie la carte chez elle, sans deplacerCarte", () => {
+    vi.useFakeTimers();
+    mocks.deplacerCarte.mockClear();
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    poserRects();
+    const carte = screen.getAllByTestId("pochette")[0];
+    fireEvent.pointerDown(carte, { clientX: 50, clientY: 50, pointerId: 1 });
+    fireEvent.pointerMove(carte, { clientX: 600, clientY: 600, pointerId: 1 });
+    fireEvent.pointerUp(carte, { clientX: 600, clientY: 600, pointerId: 1 });
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
+    expect(mocks.deplacerCarte).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("carte-fantome")).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("un geste interrompu (pointercancel) efface le calque sans déplacer", () => {
+    mocks.deplacerCarte.mockClear();
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    poserRects();
+    const carte = screen.getAllByTestId("pochette")[0];
+    fireEvent.pointerDown(carte, { clientX: 50, clientY: 50, pointerId: 1 });
+    fireEvent.pointerMove(carte, { clientX: 250, clientY: 150, pointerId: 1 });
+    fireEvent.pointerCancel(carte, { pointerId: 1 });
+    expect(screen.queryByTestId("carte-fantome")).toBeNull();
+    expect(mocks.deplacerCarte).not.toHaveBeenCalled();
   });
 });
 

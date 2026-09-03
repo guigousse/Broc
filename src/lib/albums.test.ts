@@ -1,6 +1,8 @@
 // src/lib/albums.test.ts
 import { describe, expect, it } from "vitest";
 import {
+  deplacerCarte,
+  slotsDuClasseur,
   acheterPiece, ajouterPiece, albumsDe, doublons, initAlbums, marquerConsultee, nbPossedees,
   ouvrirPaquet, piecePossedee, poserTimbre, premierePlaceLibre, recyclerDoublons, rendreAuBac,
   tirerPiece, TAILLE_PAQUET,
@@ -136,5 +138,56 @@ describe("acheterPiece", () => {
     expect(r.state.budget).toBe(92);
     expect(r.state.albums!.timbres.pieces["timbre.renard_roux"]).toBe(1);
     expect(r.state.inventaireJoueur).toHaveLength(0);
+  });
+});
+
+/* ── Placement manuel du classeur (recette 2026-09-03) ── */
+describe("slotsDuClasseur / deplacerCarte", () => {
+  const cartes = piecesDe("classeur");
+  const c0 = cartes[0].id; // ordre 0
+  const c1 = cartes[1].id; // ordre 1
+
+  function albumsAvecCartes(slots?: Record<string, number>) {
+    const base = initAlbums();
+    return {
+      ...base,
+      classeur: { achete: true, pieces: { [c0]: 1, [c1]: 1 }, nouvelles: [], ...(slots ? { slots } : {}) },
+    };
+  }
+
+  it("sans `slots` (vieille save) : chaque carte occupe l'emplacement de son ordre", () => {
+    const slots = slotsDuClasseur(albumsAvecCartes().classeur);
+    expect(slots[c0]).toBe(0);
+    expect(slots[c1]).toBe(1);
+  });
+
+  it("une carte jamais déplacée dont l'ordre est pris par une autre glisse au premier libre", () => {
+    // c1 déplacée sur le slot 0 (l'ordre de c0) : c0, sans entrée, dérive.
+    const slots = slotsDuClasseur(albumsAvecCartes({ [c1]: 0 }).classeur);
+    expect(slots[c1]).toBe(0);
+    expect(slots[c0]).toBe(1); // 0 pris → suivant libre
+  });
+
+  it("deplacerCarte pose la carte pile sur le slot demandé et matérialise le reste", () => {
+    const suite = deplacerCarte(albumsAvecCartes(), c0, 17);
+    expect(suite.classeur.slots).toEqual({ [c0]: 17, [c1]: 1 });
+  });
+
+  it("slot occupé par une autre carte : ÉCHANGE", () => {
+    const suite = deplacerCarte(albumsAvecCartes(), c0, 1);
+    expect(suite.classeur.slots).toEqual({ [c0]: 1, [c1]: 0 });
+  });
+
+  it("slot hors bornes, carte non possédée ou id de timbre : inchangé", () => {
+    const albums = albumsAvecCartes();
+    expect(deplacerCarte(albums, c0, -1)).toBe(albums);
+    expect(deplacerCarte(albums, c0, 54)).toBe(albums);
+    expect(deplacerCarte(albums, cartes[10].id, 3)).toBe(albums);
+    expect(deplacerCarte(albums, "timbre.renard_roux", 3)).toBe(albums);
+  });
+
+  it("déplacer une carte sur son propre slot : inchangé", () => {
+    const albums = albumsAvecCartes();
+    expect(deplacerCarte(albums, c0, 0)).toBe(albums);
   });
 });

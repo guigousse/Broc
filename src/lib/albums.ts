@@ -1,9 +1,11 @@
 // src/lib/albums.ts
-import type { AlbumsState, AlbumState, GameState, Objet, PlacementTimbre, Rarete } from "@/types/game";
+import type { AlbumClasseurState, AlbumsState, AlbumState, GameState, Objet, PlacementTimbre, Rarete } from "@/types/game";
 import { CATEGORIE_ALBUM, albumDe, getPiece, piecesDe, type AlbumId, type PieceCollection } from "@/data/pieces";
 
 export const NB_LIGNES_ALBUM = 5;
 export const NB_PAGES_ALBUM = 2;
+/** 6 pages × 9 pochettes : les 50 cartes + 4 emplacements « à venir ». */
+export const NB_SLOTS_CLASSEUR = 54;
 export const TAILLE_PAQUET = 3;
 export const POIDS_RARETE: Record<Rarete, number> = { commun: 70, rare: 25, legendaire: 5 };
 
@@ -30,7 +32,7 @@ export function albumsDe(state: Pick<GameState, "albums">): AlbumsState {
   return state.albums ?? initAlbums();
 }
 
-function patchAlbum(albums: AlbumsState, id: AlbumId, patch: Partial<AlbumsState["timbres"]>): AlbumsState {
+function patchAlbum(albums: AlbumsState, id: AlbumId, patch: Partial<AlbumsState["timbres"] & AlbumClasseurState>): AlbumsState {
   return id === "classeur"
     ? { ...albums, classeur: { ...albums.classeur, ...patch } }
     : { ...albums, timbres: { ...albums.timbres, ...patch } };
@@ -111,6 +113,49 @@ export function poserTimbre(albums: AlbumsState, id: string, page: 0 | 1, ligne:
     placements: { ...albums.timbres.placements, [id]: { page, ligne, x: xb } },
     ordreZ: [...albums.timbres.ordreZ.filter((z) => z !== id), id],
   });
+}
+
+/* ── Placement manuel du classeur (recette 2026-09-03) ─────────────────────
+   Les cartes vont PILE dans un slot (pas de placement libre comme les
+   timbres), mais le joueur choisit lequel. `slots` est ADDITIF : absent, la
+   carte occupe l'emplacement de son `ordre` (le comportement historique). */
+
+/** Où est chaque carte possédée : `slots` explicites, complétés par l'ordre
+ *  du catalogue pour les cartes jamais déplacées (et les vieilles saves). */
+export function slotsDuClasseur(classeur: AlbumClasseurState): Record<string, number> {
+  const slots: Record<string, number> = {};
+  const occupes = new Set<number>();
+  for (const [id, slot] of Object.entries(classeur.slots ?? {})) {
+    if (!classeur.pieces[id] || !getPiece(id)) continue;
+    slots[id] = slot;
+    occupes.add(slot);
+  }
+  for (const id of Object.keys(classeur.pieces)) {
+    if (id in slots) continue;
+    const piece = getPiece(id);
+    if (!piece) continue;
+    // L'emplacement historique de la carte, sinon le premier libre.
+    let slot = piece.ordre;
+    while (occupes.has(slot)) slot = (slot + 1) % NB_SLOTS_CLASSEUR;
+    slots[id] = slot;
+    occupes.add(slot);
+  }
+  return slots;
+}
+
+/** Déplace une carte vers `slot` (0..53). Slot occupé par une autre carte →
+ *  ÉCHANGE. Le résultat matérialise `slots` en entier : plus aucune
+ *  dérivation implicite ne peut le contredire ensuite. */
+export function deplacerCarte(albums: AlbumsState, id: string, slot: number): AlbumsState {
+  if (albumDe(id) !== "classeur" || !albums.classeur.pieces[id] || !getPiece(id)) return albums;
+  if (!Number.isInteger(slot) || slot < 0 || slot >= NB_SLOTS_CLASSEUR) return albums;
+  const slots = slotsDuClasseur(albums.classeur);
+  const depuis = slots[id];
+  const occupant = Object.keys(slots).find((autre) => slots[autre] === slot);
+  if (occupant === id) return albums;
+  const suivants = { ...slots, [id]: slot };
+  if (occupant) suivants[occupant] = depuis;
+  return patchAlbum(albums, "classeur", { slots: suivants });
 }
 
 export function rendreAuBac(albums: AlbumsState, id: string): AlbumsState {

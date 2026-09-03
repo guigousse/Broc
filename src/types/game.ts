@@ -513,6 +513,15 @@ export interface AlbumState {
   /** Pièces obtenues pas encore consultées dans l'album (pastille « nouveau »). */
   nouvelles: string[];
 }
+export interface AlbumClasseurState extends AlbumState {
+  /**
+   * ADDITIF (2026-09-03) : carte → emplacement (0..53) choisi par le joueur
+   * (placement manuel, aimanté au slot). Absent (vieille save, ou jamais
+   * déplacé) : chaque carte occupe l'emplacement de son `ordre` — lire via
+   * `slotsDuClasseur`, jamais ce champ directement.
+   */
+  slots?: Record<string, number>;
+}
 export interface PlacementTimbre {
   page: 0 | 1;
   ligne: 0 | 1 | 2 | 3 | 4;
@@ -526,7 +535,7 @@ export interface AlbumTimbresState extends AlbumState {
   ordreZ: string[];
 }
 export interface AlbumsState {
-  classeur: AlbumState;
+  classeur: AlbumClasseurState;
   timbres: AlbumTimbresState;
 }
 
