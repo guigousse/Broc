@@ -99,7 +99,13 @@ const colonne: CSSProperties = {
 };
 
 /** Anthracite → noir, comme les feuilles cartonnées d'un album Lindner. */
-const FOND_ALBUM = "linear-gradient(180deg, #2b2b2f 0%, #1c1c1f 100%)";
+/** Grain de papier par-dessus l'anthracite (recette 2026-09-03) : bruit SVG
+ *  `feTurbulence` en blanc très faible, répété en tuile — la feuille
+ *  cartonnée d'un vrai album n'est jamais parfaitement lisse. */
+const GRAIN_SVG = encodeURIComponent(
+  `<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.08 0'/></filter><rect width='100%' height='100%' filter='url(#g)'/></svg>`,
+);
+const FOND_ALBUM = `url("data:image/svg+xml,${GRAIN_SVG}"), linear-gradient(180deg, #2b2b2f 0%, #1c1c1f 100%)`;
 
 const pageWrap: CSSProperties = {
   position: "relative",
