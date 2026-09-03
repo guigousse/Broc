@@ -12,6 +12,7 @@ describe("libelleTexteDuel", () => {
         const t = CARTES_DUEL[c.id].texte;
         const s = libelleTexteDuel(t, d);
         expect(s).not.toMatch(/\{\w+\}/);
+        expect(s, c.id).not.toMatch(/undefined/);
         if (t) expect(s.length, c.id).toBeGreaterThan(0);
         else expect(s).toBe("");
       }
@@ -28,6 +29,9 @@ describe("libelleTexteDuel", () => {
     );
     expect(libelleTexteDuel(CARTES_DUEL["carte.cartouche_stadium_events"].texte, d)).toBe(
       "À la pose, 1 dégât à tous les objets adverses et piochez 1 carte.",
+    );
+    expect(libelleTexteDuel(CARTES_DUEL["carte.rabot_d_ebeniste_a_semelle_modele_605"].texte, d)).toBe(
+      "Quand il attaque, 1 dégât à la vitrine adverse.",
     );
   });
 });

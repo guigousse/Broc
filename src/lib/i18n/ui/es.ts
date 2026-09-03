@@ -965,7 +965,7 @@ export const es: DictionnaireUI = {
     ac_pioche_un: "roba 1 carta", ac_pioche: "roba {n} cartas", ac_energie: "+{n} energía este turno",
     ac_gain_soi_attaque: "gana +{n} de ataque", ac_gain_soi_pv: "gana +{n} PV",
     ac_gain_allies_attaque: "tus objetos ganan +{n} de ataque", ac_gain_allies_pv: "tus objetos ganan +{n} PV",
-    ac_gain_categorie_attaque: "tus objetos {categorie} ganan +{n} de ataque", ac_gain_categorie_pv: "tus objetos {categorie} ganan +{n} PV",
+    ac_gain_categorie_attaque: "tus objetos de {categorie} ganan +{n} de ataque", ac_gain_categorie_pv: "tus objetos de {categorie} ganan +{n} PV",
     ac_retourEnMain: "devuelve un objeto enemigo a la mano de su propietario", ac_volMotCle: "roba la palabra clave de un objeto enemigo",
     et: " y ",
     livretTitre: "Reglas del duelo",

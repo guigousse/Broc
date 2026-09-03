@@ -3,10 +3,18 @@ import type { DictionnaireUI } from "@/lib/i18n/ui";
 import { tr } from "@/lib/i18n/ui";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 
+/**
+ * `d.duel` en indexation dynamique par clé composée (`ac_degats_${cible}`,
+ * `mc_${type}`, etc.) : tsc refuse ces accès sur le type strict du
+ * dictionnaire, d'où ce cast local, centralisé ici pour les 3 fonctions
+ * qui en ont besoin.
+ */
+function dictDuel(d: DictionnaireUI): Record<string, string> {
+  return d.duel as unknown as Record<string, string>;
+}
+
 function libelleAction(a: Action, d: DictionnaireUI): string {
-  // Indexation dynamique par clé composée (`ac_degats_${cible}`, etc.) : tsc
-  // refuse ces accès sur le type strict de `d.duel`, d'où ce cast local.
-  const D = d.duel as unknown as Record<string, string>;
+  const D = dictDuel(d);
   switch (a.type) {
     case "degats":
       return a.valeur === 1
@@ -33,14 +41,13 @@ function libelleAction(a: Action, d: DictionnaireUI): string {
 }
 
 export function libelleMotCle(type: MotCle["type"], d: DictionnaireUI): string {
-  const D = d.duel as unknown as Record<string, string>;
-  return D[`mc_${type}`];
+  return dictDuel(d)[`mc_${type}`];
 }
 
 /** Le texte imprimé d'une carte : "" sans texte, un mot-clé nu, "Cri : action", ou "Déclencheur, action et action." */
 export function libelleTexteDuel(texte: TexteDuel | undefined, d: DictionnaireUI): string {
   if (!texte) return "";
-  const D = d.duel as unknown as Record<string, string>;
+  const D = dictDuel(d);
   if (texte.type === "cri") {
     const action: Action =
       texte.variante === "pioche"

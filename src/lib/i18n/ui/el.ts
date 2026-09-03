@@ -971,7 +971,7 @@ export const el: DictionnaireUI = {
     mc_solide_regle: "Κάθε ζημιά που δέχεται μειώνεται κατά 1.",
     mc_fragile_regle: "Χάνει 1 ΠΖ στο τέλος του γύρου του ιδιοκτήτη του.",
     mc_ruse_regle: "Δεν μπορεί να στοχευτεί πριν από τον επόμενο γύρο του ιδιοκτήτη του.",
-    mc_cri_regle: "Ενέργεια όταν παίζεται.",
+    mc_cri_regle: "Εφέ όταν παίζεται.",
     dc_pose: "Όταν παίζεται", dc_casse: "Όταν σπάει", dc_debutTour: "Στην αρχή του γύρου σας", dc_attaque: "Όταν επιτίθεται", dc_blesse: "Όταν δέχεται ζημιά",
     ac_degats_objetAdverse_un: "1 ζημιά σε ένα αντίπαλο αντικείμενο",
     ac_degats_objetAdverse: "{n} ζημιές σε ένα αντίπαλο αντικείμενο",
