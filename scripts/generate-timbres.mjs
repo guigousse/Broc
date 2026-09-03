@@ -69,7 +69,6 @@ function svgGabarit() {
   <g mask="url(#m)">
     <rect width="100" height="100" fill="#f2e8d2"/>
     <rect x="1.2" y="1.2" width="97.6" height="97.6" fill="none" stroke="#e3d5b8" stroke-width="0.7"/>
-    <rect x="12.1" y="12.1" width="75.8" height="75.8" fill="none" stroke="#a9834f" stroke-width="1.1"/>
   </g>
 </svg>`;
 }
