@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { FicheObjet, ficheBackdrop } from "@/components/ui/FicheObjet";
+import { LigneDuel } from "@/components/albums/LigneDuel";
 import { PieceVisuel } from "@/components/pieces/PieceVisuel";
 import { CATEGORIE_ALBUM, getPiece, type ThemeTimbre } from "@/data/pieces";
 import { nomObjet } from "@/lib/i18n/contenu";
@@ -52,7 +53,12 @@ function libelleTheme(theme: ThemeTimbre, d: DictionnaireUI): string {
   }
 }
 
-export function FichePiece({ id, quantite, onClose, children }: FichePieceProps) {
+export function FichePiece({
+  id,
+  quantite,
+  onClose,
+  children,
+}: FichePieceProps) {
   const { d, tr, locale } = useLangue();
   const piece = getPiece(id);
   if (!piece) return null;
@@ -84,6 +90,7 @@ export function FichePiece({ id, quantite, onClose, children }: FichePieceProps)
           {tr(d.albums.serie, { serie })}
           {quantite > 1 && <> · {tr(d.albums.doublon, { n: quantite })}</>}
         </div>
+        {piece.album === "classeur" && <LigneDuel id={id} />}
         {children}
       </FicheObjet>
     </div>
