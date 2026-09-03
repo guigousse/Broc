@@ -1,7 +1,9 @@
 // src/lib/albums.test.ts
 import { describe, expect, it } from "vitest";
 import {
+  cartesEnVrac,
   deplacerCarte,
+  rendreCarteAuBac,
   slotsDuClasseur,
   acheterPiece, ajouterPiece, albumsDe, doublons, initAlbums, marquerConsultee, nbPossedees,
   ouvrirPaquet, piecePossedee, poserTimbre, premierePlaceLibre, recyclerDoublons, rendreAuBac,
@@ -161,11 +163,35 @@ describe("slotsDuClasseur / deplacerCarte", () => {
     expect(slots[c1]).toBe(1);
   });
 
-  it("une carte jamais déplacée dont l'ordre est pris par une autre glisse au premier libre", () => {
-    // c1 déplacée sur le slot 0 (l'ordre de c0) : c0, sans entrée, dérive.
-    const slots = slotsDuClasseur(albumsAvecCartes({ [c1]: 0 }).classeur);
+  it("`slots` matérialisé : une carte absente est EN VRAC, pas dérivée", () => {
+    const classeur = albumsAvecCartes({ [c1]: 0 }).classeur;
+    const slots = slotsDuClasseur(classeur);
     expect(slots[c1]).toBe(0);
-    expect(slots[c0]).toBe(1); // 0 pris → suivant libre
+    expect(c0 in slots).toBe(false);
+    expect(cartesEnVrac(classeur)).toEqual([c0]);
+  });
+
+  it("sans `slots`, rien n'est en vrac (toutes posées par ordre)", () => {
+    expect(cartesEnVrac(albumsAvecCartes().classeur)).toEqual([]);
+  });
+
+  it("ajouterPiece matérialise `slots` : la NOUVELLE carte arrive en vrac, les anciennes restent posées", () => {
+    const suite = ajouterPiece(albumsAvecCartes(), cartes[2].id);
+    expect(suite.classeur.slots).toEqual({ [c0]: 0, [c1]: 1 });
+    expect(cartesEnVrac(suite.classeur)).toEqual([cartes[2].id]);
+  });
+
+  it("poser une carte du vrac sur un slot occupé : l'occupante part en vrac", () => {
+    const albums = albumsAvecCartes({ [c1]: 3 }); // c0 en vrac
+    const suite = deplacerCarte(albums, c0, 3);
+    expect(suite.classeur.slots).toEqual({ [c0]: 3 });
+    expect(cartesEnVrac(suite.classeur)).toEqual([c1]);
+  });
+
+  it("rendreCarteAuBac retire la carte de son slot", () => {
+    const suite = rendreCarteAuBac(albumsAvecCartes(), c0);
+    expect(suite.classeur.slots).toEqual({ [c1]: 1 });
+    expect(cartesEnVrac(suite.classeur)).toEqual([c0]);
   });
 
   it("deplacerCarte pose la carte pile sur le slot demandé et matérialise le reste", () => {

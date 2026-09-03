@@ -39,6 +39,7 @@ const { mocks } = vi.hoisted(() => ({
     recyclerDoublonsAlbum: vi.fn(() => 2),
     marquerPieceConsultee: vi.fn(),
     deplacerCarte: vi.fn(),
+    rendreCarteAuBac: vi.fn(),
     toast: vi.fn(),
   },
 }));
@@ -50,6 +51,7 @@ vi.mock("@/context/GameContext", () => ({
     recyclerDoublonsAlbum: mocks.recyclerDoublonsAlbum,
     marquerPieceConsultee: mocks.marquerPieceConsultee,
     deplacerCarte: mocks.deplacerCarte,
+    rendreCarteAuBac: mocks.rendreCarteAuBac,
     poserTimbre: vi.fn(),
     rendreTimbreAuBac: vi.fn(),
   }),
@@ -144,6 +146,14 @@ describe("ClasseurOverlay", () => {
     expect(mocks.marquerPieceConsultee).toHaveBeenCalled();
     expect(screen.getByTestId("fiche-visuel")).toBeTruthy();
   });
+
+  it("le bouton Règles ouvre le livret", () => {
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Règles" }));
+    expect(
+      screen.getByRole("heading", { name: "Règles du duel" }),
+    ).toBeTruthy();
+  });
 });
 
 /* ── Placement manuel des cartes (recette 2026-09-03) ─────────────────────
@@ -193,9 +203,10 @@ describe("ClasseurOverlay — glisser une carte vers un slot", () => {
     vi.useRealTimers();
   });
 
-  it("lâcher HORS de la grille renvoie la carte chez elle, sans deplacerCarte", () => {
+  it("lâcher HORS du classeur range la carte posée dans le bandeau (rendreCarteAuBac)", () => {
     vi.useFakeTimers();
     mocks.deplacerCarte.mockClear();
+    mocks.rendreCarteAuBac.mockClear();
     render(<ClasseurOverlay open onClose={() => {}} />);
     poserRects();
     const carte = screen.getAllByTestId("pochette")[0];
@@ -206,7 +217,31 @@ describe("ClasseurOverlay — glisser une carte vers un slot", () => {
       vi.advanceTimersByTime(160);
     });
     expect(mocks.deplacerCarte).not.toHaveBeenCalled();
+    expect(mocks.rendreCarteAuBac).toHaveBeenCalledWith(p0);
     expect(screen.queryByTestId("carte-fantome")).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("une carte en vrac apparaît dans le bandeau, et se glisse vers une pochette", () => {
+    vi.useFakeTimers();
+    mocks.deplacerCarte.mockClear();
+    // `slots` matérialisé : p0 posée en 0, p1 EN VRAC.
+    albums.classeur.slots = { [p0]: 0 };
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    poserRects();
+    const bac = screen.getByTestId("bac-cartes");
+    expect(bac).toBeTruthy();
+    const enVrac = screen.getAllByTestId("carte-bac");
+    expect(enVrac).toHaveLength(1);
+    fireEvent.pointerDown(enVrac[0], { clientX: 150, clientY: 700, pointerId: 1 });
+    fireEvent.pointerMove(enVrac[0], { clientX: 150, clientY: 150, pointerId: 1 });
+    fireEvent.pointerUp(enVrac[0], { clientX: 150, clientY: 150, pointerId: 1 });
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
+    // (150, 150) = colonne 1, ligne 1 → case 4 de la page 0.
+    expect(mocks.deplacerCarte).toHaveBeenCalledWith(p1, 4);
+    delete albums.classeur.slots;
     vi.useRealTimers();
   });
 

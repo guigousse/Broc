@@ -45,7 +45,15 @@ export function ajouterPiece(albums: AlbumsState, id: string): AlbumsState {
   if (!a || !getPiece(id)) return albums;
   const album = albums[a];
   const qte = album.pieces[id] ?? 0;
+  // Première carte de classeur depuis le placement manuel (2026-09-03) :
+  // matérialiser `slots` AVANT d'ajouter — les cartes d'avant restent posées
+  // (dérivation par ordre), la nouvelle arrive SANS slot, donc en vrac.
+  const materialisation =
+    a === "classeur" && qte === 0 && !albums.classeur.slots
+      ? { slots: slotsDuClasseur(albums.classeur) }
+      : {};
   return patchAlbum(albums, a, {
+    ...materialisation,
     pieces: { ...album.pieces, [id]: qte + 1 },
     nouvelles: qte === 0 ? [...album.nouvelles, id] : album.nouvelles,
   });
@@ -117,44 +125,66 @@ export function poserTimbre(albums: AlbumsState, id: string, page: 0 | 1, ligne:
 
 /* ── Placement manuel du classeur (recette 2026-09-03) ─────────────────────
    Les cartes vont PILE dans un slot (pas de placement libre comme les
-   timbres), mais le joueur choisit lequel. `slots` est ADDITIF : absent, la
-   carte occupe l'emplacement de son `ordre` (le comportement historique). */
+   timbres), mais le joueur choisit lequel. Une carte SANS slot vit dans le
+   bandeau « En vrac » sous le classeur, comme un timbre dans son bac.
 
-/** Où est chaque carte possédée : `slots` explicites, complétés par l'ordre
- *  du catalogue pour les cartes jamais déplacées (et les vieilles saves). */
+   `slots` est ADDITIF, et son ABSENCE a un sens : une save d'avant le
+   placement manuel voit toutes ses cartes posées à l'emplacement de leur
+   `ordre` (le comportement historique — rien ne bouge sous ses pieds).
+   MATÉRIALISÉ (premier déplacement, ou première carte ajoutée depuis), il
+   devient la vérité complète : une carte qui n'y figure pas est en vrac —
+   c'est là qu'arrivent les nouvelles cartes. */
+
+/** Où est chaque carte POSÉE. `slots` absent (vieille save jamais touchée) :
+ *  toutes les cartes possédées, chacune à l'emplacement de son `ordre`. */
 export function slotsDuClasseur(classeur: AlbumClasseurState): Record<string, number> {
-  const slots: Record<string, number> = {};
-  const occupes = new Set<number>();
-  for (const [id, slot] of Object.entries(classeur.slots ?? {})) {
-    if (!classeur.pieces[id] || !getPiece(id)) continue;
-    slots[id] = slot;
-    occupes.add(slot);
+  if (classeur.slots) {
+    return Object.fromEntries(
+      Object.entries(classeur.slots).filter(([id]) => classeur.pieces[id] && getPiece(id)),
+    );
   }
+  const slots: Record<string, number> = {};
   for (const id of Object.keys(classeur.pieces)) {
-    if (id in slots) continue;
     const piece = getPiece(id);
-    if (!piece) continue;
-    // L'emplacement historique de la carte, sinon le premier libre.
-    let slot = piece.ordre;
-    while (occupes.has(slot)) slot = (slot + 1) % NB_SLOTS_CLASSEUR;
-    slots[id] = slot;
-    occupes.add(slot);
+    if (piece) slots[id] = piece.ordre;
   }
   return slots;
 }
 
-/** Déplace une carte vers `slot` (0..53). Slot occupé par une autre carte →
- *  ÉCHANGE. Le résultat matérialise `slots` en entier : plus aucune
- *  dérivation implicite ne peut le contredire ensuite. */
+/** Les cartes possédées SANS slot — le bandeau « En vrac », dans l'ordre du
+ *  catalogue. Vide tant que `slots` n'est pas matérialisé. */
+export function cartesEnVrac(classeur: AlbumClasseurState): string[] {
+  const slots = slotsDuClasseur(classeur);
+  return piecesDe("classeur")
+    .map((p) => p.id)
+    .filter((id) => classeur.pieces[id] && !(id in slots));
+}
+
+/** Pose une carte (du vrac ou d'un autre slot) PILE sur `slot` (0..53).
+ *  Slot occupé par une autre carte : ÉCHANGE — l'occupante prend le slot
+ *  d'origine, ou part en vrac si la carte venait du vrac. Matérialise
+ *  `slots` en entier. */
 export function deplacerCarte(albums: AlbumsState, id: string, slot: number): AlbumsState {
   if (albumDe(id) !== "classeur" || !albums.classeur.pieces[id] || !getPiece(id)) return albums;
   if (!Number.isInteger(slot) || slot < 0 || slot >= NB_SLOTS_CLASSEUR) return albums;
   const slots = slotsDuClasseur(albums.classeur);
-  const depuis = slots[id];
+  const depuis = slots[id] as number | undefined;
+  if (depuis === slot) return albums;
   const occupant = Object.keys(slots).find((autre) => slots[autre] === slot);
-  if (occupant === id) return albums;
   const suivants = { ...slots, [id]: slot };
-  if (occupant) suivants[occupant] = depuis;
+  if (occupant) {
+    if (depuis === undefined) delete suivants[occupant];
+    else suivants[occupant] = depuis;
+  }
+  return patchAlbum(albums, "classeur", { slots: suivants });
+}
+
+/** Retire une carte posée : elle rejoint le bandeau « En vrac ». */
+export function rendreCarteAuBac(albums: AlbumsState, id: string): AlbumsState {
+  const slots = slotsDuClasseur(albums.classeur);
+  if (!(id in slots)) return albums;
+  const { [id]: _retire, ...suivants } = slots;
+  void _retire;
   return patchAlbum(albums, "classeur", { slots: suivants });
 }
 
