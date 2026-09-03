@@ -154,21 +154,31 @@ Itération 2 : règle 6 (pose < 60 %) sur les six cartes les moins posées de la
 campagne 1, en gardant le budget exact.
 
 **Écart assumé à l'ordre de priorité du plan.** La campagne 1 laissait
-17 cartes hors de la fourchette 45–55 % de victoires (10 sous 45 %, 7 au-dessus
-de 55 %) : par l'ordre des règles, l'itération aurait dû prendre six d'entre
-elles — les plus extrêmes étaient Gutenberg à 41,0 %, le chapeau de feutre à
-57,0 %, la broche à 56,4 %, la petite robe noire à 56,0 %, la pince à 56,9 % et
-le violon à 43,4 % — et ne toucher à la règle 6 qu'une fois les taux de
-victoire rentrés. Le choix a été de dépenser cette itération en **expérience
-diagnostique** : deux des six retouches gagnent un point de budget, quatre
-déplacent un point à budget constant, ce qui isole exactement la variable dont
-dépend le taux de pose. Sans cette mesure, la retouche d'IA de l'itération 3
-n'aurait été qu'une intuition — et le contrôleur exigeait la preuve que les
-règles 4 à 6 ne peuvent pas atteindre la cible de pose avant d'autoriser une
-retouche d'IA. Le coût de l'écart est d'une itération sur douze, et les
-17 taux de victoire ont été traités dès l'itération 4, une fois l'IA figée —
-ce qui valait mieux : les retouches faites avant le changement d'IA auraient
-été mesurées contre une politique de pose qui n'existe plus.
+17 cartes hors de la fourchette 45–55 % de victoires — **9 sous 45 %**
+(Gutenberg 41,0 ; les Misérables 43,3 ; le violon 43,4 ; le rabot 43,8 ; le
+coffret d'ébéniste 43,8 ; le vinyle Stevranos 44,0 ; le flipper 44,0 ; Stadium
+Events 44,7 ; le bronze animalier 44,7) et **8 au-dessus de 55 %** (le chapeau
+de feutre 57,0 ; la pince 56,9 ; la broche 56,4 ; la petite robe noire 56,0 ;
+la figurine de porcelaine 55,6 ; le marteau 55,6 ; Playbox 55,4 ; la veste en
+jean 55,3). Par l'ordre des règles, l'itération aurait dû prendre les six plus
+extrêmes — **distance à la borne la plus proche de la fourchette** (45 ou 55),
+ce qui classe comme `|taux − 50| − 5` : Gutenberg (4,0), le chapeau de feutre
+(2,0), la pince (1,9), les Misérables (1,7), le violon (1,6) et la broche
+(1,4) ; la petite robe noire, à 1,0 — à égalité avec le vinyle Stevranos et le
+flipper — arrive derrière le rabot et le coffret (1,2 chacun). Puis ne toucher
+à la règle 6 qu'une fois les taux de victoire rentrés. Le choix a été de
+dépenser cette itération en **expérience diagnostique** : dans le tableau
+ci-dessous, trois des six retouches gagnent un point de budget (le prix de
+l'effet baisse de 1) et trois déplacent un point à budget constant, ce qui
+isole exactement la variable dont dépend le taux de pose. Sans cette mesure,
+la retouche d'IA de l'itération 3 n'aurait été qu'une intuition — et le
+contrôleur exigeait la preuve que les règles 4 à 6 ne peuvent pas atteindre la
+cible de pose avant d'autoriser une retouche d'IA. Le coût de l'écart est
+d'une itération sur douze, et le traitement des taux de victoire a commencé
+dès l'itération 4, une fois l'IA figée : 14 retouches sur 8 de ces 17 cartes
+en quatre itérations, les 9 autres étant rentrées d'elles-mêmes. Ce qui valait
+mieux : les retouches faites avant le changement d'IA auraient été mesurées
+contre une politique de pose qui n'existe plus.
 
 ### Retouches (itération 2)
 
