@@ -560,7 +560,7 @@ Graine 101 · 20000 parties
 |---|---|
 | Premier joueur | 66.3 % |
 | Manches (moyenne / max) | 9.2 / 21 |
-| Nuls / épuisées | 0.0 % / 0.0 % |
+| Nuls / fatigue / épuisées (garde de boucle) | 0.0 % / 3.0 % / 0.0 % |
 | Agressif contre contrôle | 60.6 % |
 
 | Catégorie | Victoires |
@@ -577,6 +577,7 @@ Hors cible :
 - carte gutenberg_feuillet : victoire 44.3 %
 - carte la_petite_robe_noire_chaine_1925 : victoire 55.7 %
 - premier joueur : 66.3 %
+- nuls + fatigue : 3.1 %
 - agressif contre contrôle : 60.6 %
 
 Graine 202 · 20000 parties
@@ -585,7 +586,7 @@ Graine 202 · 20000 parties
 |---|---|
 | Premier joueur | 66.4 % |
 | Manches (moyenne / max) | 9.2 / 21 |
-| Nuls / épuisées | 0.0 % / 0.0 % |
+| Nuls / fatigue / épuisées (garde de boucle) | 0.0 % / 2.9 % / 0.0 % |
 | Agressif contre contrôle | 61.1 % |
 
 | Catégorie | Victoires |
@@ -602,6 +603,7 @@ Hors cible :
 - carte gutenberg_feuillet : victoire 44.7 %
 - carte la_petite_robe_noire_chaine_1925 : victoire 55.8 %
 - premier joueur : 66.4 %
+- nuls + fatigue : 2.9 %
 - agressif contre contrôle : 61.1 %
 
 Graine 303 · 20000 parties
@@ -610,7 +612,7 @@ Graine 303 · 20000 parties
 |---|---|
 | Premier joueur | 66.3 % |
 | Manches (moyenne / max) | 9.2 / 21 |
-| Nuls / épuisées | 0.0 % / 0.0 % |
+| Nuls / fatigue / épuisées (garde de boucle) | 0.0 % / 3.0 % / 0.0 % |
 | Agressif contre contrôle | 60.6 % |
 
 | Catégorie | Victoires |
@@ -626,6 +628,7 @@ Graine 303 · 20000 parties
 Hors cible :
 - carte la_petite_robe_noire_chaine_1925 : victoire 55.7 %
 - premier joueur : 66.3 %
+- nuls + fatigue : 3.0 %
 - agressif contre contrôle : 60.6 %
 
 ### Les 50 cartes aux trois graines
@@ -689,14 +692,14 @@ Hors cible :
 |---|---|
 | Taux de victoire d'une carte, 45–55 % | **49 cartes sur 50** aux trois graines (la petite robe noire à 55,7 / 55,8 / 55,7 % ; Gutenberg à 44,3 / 44,7 % aux graines 101 et 202, dans la cible à la 303) |
 | Taux de pose ≥ 60 % | **50 sur 50**, aux trois graines |
-| Taux de victoire d'une catégorie, 45–55 % | **7 sur 7**, entre 48,5 et 52,3 % |
+| Taux de victoire d'une catégorie, 45–55 % | **7 sur 7**, entre 48,5 et 52,3 % (le taux d'une catégorie est la moyenne non pondérée des taux de ses cartes, pas une moyenne pondérée par le nombre de parties) |
 | Durée moyenne 8 à 14 manches, aucune > 25 | **9,2 manches**, 21 au plus |
-| Nuls + parties épuisées < 2 % | **0,0 %** |
+| Nuls + parties épuisées < 2 % | **0,0 %** — mais ne mesurait que le garde-fou de boucle (`epuisee`, 60 manches), jamais atteint ; la pioche épuisée fatale (« fatigue »), qui décide bien des parties, n'était pas mesurée. Corrigé dans la revue finale : **nuls + fatigue résiste** (2,9 à 3,1 %), voir ci-dessous |
 | Avantage du premier joueur < 55 % | **66,3 % — résiste** |
 | Agressif contre contrôle 45–55 % | **60,6 à 61,1 % — résiste** |
 
 La condition d'arrêt du plan (`horsCible` vide sur trois graines) **n'est pas
-atteinte** : deux mesures globales résistent, plus une carte. Sept itérations
+atteinte** : trois mesures globales résistent, plus une carte. Sept itérations
 sur les douze autorisées ont été consommées ; les cinq restantes n'ont pas été
 dépensées parce que **les règles de décision n'ont plus de coup légal** sur ce
 qui reste. Le détail suit.
@@ -808,6 +811,30 @@ graine 303). Piocher 2 cartes vaut peu dans un format où la ressource rare est
 l'énergie et la place d'étal, pas la carte en main : le prix 1 est encore trop
 cher, mais c'est le plancher du §5.2.
 
+### 5. Nuls + fatigue (2,9 à 3,1 %) — révélé par la revue finale, pas par une retouche
+
+Jusqu'à la revue finale, `epuisee` (le garde-fou de boucle, 60 manches) était
+la seule chose mesurée sous ce nom, et il n'a jamais été atteint (0,0 % aux
+trois graines, max observé 21 manches) : la cible « nuls + épuisées < 2 % »
+semblait donc tenue depuis la campagne 0. Mais une partie peut aussi se
+terminer par la **pioche épuisée** : un deck de 20 cartes, une pioche par tour
+après la main de départ, une partie qui dure en moyenne 9,2 manches (18 tours
+de joueur) — un joueur peut légitimement vider son deck avant la fin, et
+chaque pioche manquée suivante inflige 1, 2, 3… dégâts à sa vitrine jusqu'à
+zéro. Ce n'était mesuré nulle part avant que `ResultatPartie.fatigue`
+n'existe : le taux réel, 2,9 à 3,1 % selon la graine, dépasse la cible de 2 %.
+
+Ce n'est pas un bug — une partie tranchée par la pioche épuisée est une fin de
+partie légitime, prévue par les règles du §3.2, pas un artefact du moteur. La
+cible de 2 % (§6.4) a très probablement été écrite en pensant au garde-fou de
+boucle (un vrai défaut, s'il se produisait) plutôt qu'à ce mode de fin normal.
+Aucune règle du plan ne prévoit de retouche pour ce cas.
+
+**Décision qui revient à Guillaume** : assouplir la cible « nuls + fatigue »,
+ou juger que 3 % de parties tranchées par l'épuisement du deck est un problème
+de rythme (deck trop court, ou partie trop longue pour lui) justifiant une
+retouche du §3 — hors du périmètre carte par carte de ce rapport.
+
 ## Journal des versions de cartes
 
 | Version | Itération | Campagne | Retouches |
@@ -820,6 +847,12 @@ cher, mais c'est le plancher du §5.2.
 | v4 | 5 | 5 | 4 cartes, règles 4 et 5 |
 | v5 | 6 | 6 | 2 cartes, règles 4 et 5 |
 | v6 | 7 | 7 | 2 cartes, règles 4 et 5 |
+
+**Vocabulaire en réserve** : les actions `volMotCle` et `energie` (types §4.3)
+existent dans le moteur et le type `Action`, mais aucune des 50 cartes de v6
+ne les utilise — elles sont volontairement gardées de côté pour un futur
+chantier de cartes jouables (au-delà du set de démonstration actuel), pas
+oubliées ni mortes.
 
 ## Outils de mesure
 

@@ -36,9 +36,15 @@ n'est branché à aucun écran.
 
 - Deux joueurs, 20 points de vie chacun (leur **vitrine**).
 - Chaque joueur mélange son deck de 20 cartes et pioche 4 cartes.
-- Le second joueur pioche une 5ᵉ carte. **Paramètre d'équilibrage** : si
-  l'avantage du premier joueur reste hors cible, la compensation devient
-  « 1 énergie supplémentaire au premier tour du second joueur ».
+- Le second joueur pioche une 5ᵉ carte **et** dispose d'1 énergie
+  supplémentaire à son premier tour.
+
+**Amendement 2026-09-03** : le paramètre d'équilibrage d'origine offrait le
+choix entre les deux compensations (5ᵉ carte, ou +1 énergie) ; la campagne les
+a mesurées séparément puis **cumulées** (rapport d'équilibrage, « les trois
+variantes »), et c'est le cumul qui est retenu ci-dessus — c'est la variante
+la plus proche de 50 % pour le premier joueur, sans toutefois l'atteindre
+(l'avantage du premier joueur résiste, voir le rapport, « Ce qui résiste »).
 
 ### 3.2 Le tour, dans cet ordre
 
@@ -106,7 +112,7 @@ match nul.
 | **Prompt** | Peut attaquer le tour où il est posé. |
 | **Solide** | Chaque dégât reçu est réduit de 1 (minimum 0). |
 | **Fragile** | Perd 1 PV en fin de tour de son propriétaire. |
-| **Ruse** | Ne peut pas être ciblé le tour où il est posé. |
+| **Ruse** | Ne peut pas être ciblé avant le prochain tour de son propriétaire. |
 | **Cri** | Effet à la pose, parmi trois variantes : *piochez 1 carte* ; *1 dégât à un objet adverse au choix* ; *rendez 2 PV à votre vitrine*. |
 
 Précisions de résolution :
@@ -116,6 +122,12 @@ Précisions de résolution :
 - Solide s'applique à tout dégât (attaque, riposte, Cri, effet) ; la perte
   de PV de Fragile n'est pas un dégât, Solide ne la réduit pas.
 - Un objet tombé à 0 PV par Fragile part à la casse comme par une blessure.
+
+**Amendement 2026-09-03** (Ruse) : la formulation initiale (« le tour où il
+est posé ») ne couvrait que la moitié de la protection réellement codée
+(`sousRuse`) — celle-ci dure aussi tout le tour adverse qui suit la pose, pas
+seulement le tour de pose lui-même. La table ci-dessus reflète maintenant le
+code.
 
 Une dizaine de communes sont « vanille » (sans texte), avec de meilleures
 stats en compensation.
