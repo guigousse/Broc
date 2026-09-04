@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { BAZAR_LAYOUT, CLES_ARTICLES, type BazarObjetKey } from "./bazarLayout";
+import {
+  BAZAR_LAYOUT,
+  CLES_ARTICLES,
+  DESSOUS_PLANCHE_HAUT_PCT,
+  JOUR_SOUS_PLANCHE_PCT,
+  boiteSousPlanche,
+  type BazarObjetKey,
+} from "./bazarLayout";
 import { qgPct, QG_LAYOUT } from "@/components/mobile/qg/layout";
 import { CHAT_BALADEUR_ORDER } from "@/lib/chatBaladeur";
 
@@ -223,5 +230,41 @@ describe("BAZAR_LAYOUT", () => {
     for (const cle of ["case4", "case5", "case6", ...CLES_ARTICLES] as BazarObjetKey[]) {
       expect(BAZAR_LAYOUT.objets[cle]).toBeDefined();
     }
+  });
+
+  // ── La boîte sous la planche du haut (2026-09-04) ─────────────────────────
+  //
+  // Le classeur et l'album se posent sur la planche du bas ; leur visuel ne
+  // doit PAS monter derrière celle du haut. La boîte est dérivée du décor, et
+  // c'est elle que la scène passe en `aspect-ratio`.
+  describe("boiteSousPlanche", () => {
+    it("a une hauteur = dessous de la planche du haut − jour − arête de la case", () => {
+      const { hauteurPct } = boiteSousPlanche("case5");
+      expect(hauteurPct).toBeCloseTo(
+        DESSOUS_PLANCHE_HAUT_PCT - JOUR_SOUS_PLANCHE_PCT - BAZAR_LAYOUT.objets.case5.bottom,
+        6,
+      );
+      // ~8 % d'espace mesuré entre les deux planches : la boîte tient dedans.
+      expect(hauteurPct).toBeGreaterThan(6);
+      expect(hauteurPct).toBeLessThan(8.1);
+    });
+
+    it("convertit la largeur de la case en % de la HAUTEUR de scène", () => {
+      // 22 unités sur 300 d'un panorama 2752/1536 fois plus large que haut.
+      const { largeurPct } = boiteSousPlanche("case5");
+      expect(largeurPct).toBeCloseTo((22 / 300) * (2752 / 1536) * 100, 6);
+    });
+
+    it("est plus large que haute pour les trois cases du bas — le carré d'avant ne tenait pas", () => {
+      for (const cle of ["case4", "case5", "case6"] as const) {
+        const { largeurPct, hauteurPct } = boiteSousPlanche(cle);
+        expect({ cle, ok: hauteurPct > 0 && largeurPct > hauteurPct }).toEqual({ cle, ok: true });
+      }
+    });
+
+    it("le dessous de la planche du haut est SOUS son arête (case1-3) et AU-DESSUS de la planche du bas", () => {
+      expect(DESSOUS_PLANCHE_HAUT_PCT).toBeLessThan(BAZAR_LAYOUT.objets.case1.bottom);
+      expect(DESSOUS_PLANCHE_HAUT_PCT).toBeGreaterThan(BAZAR_LAYOUT.objets.case5.bottom);
+    });
   });
 });

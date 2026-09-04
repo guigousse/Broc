@@ -1,3 +1,5 @@
+import { qgPct } from "@/components/mobile/qg/layout";
+
 /**
  * Coordonnées des objets de la scène du Bazar.
  *
@@ -132,6 +134,57 @@ export const BAZAR_LAYOUT = {
 } as const;
 
 export type BazarObjetKey = keyof typeof BAZAR_LAYOUT.objets;
+
+/**
+ * Le DESSOUS de la planche du haut, en % de la hauteur de scène. MESURÉ sur
+ * `fond-bazar.webp` (2026-09-04) : le trait sombre qui ferme la planche court
+ * à y = 552 sur 1536, soit 64,06 % depuis le bas — l'arête supérieure est à
+ * 65,9 % (cf. `case1-3`), la planche fait ~28 px d'épaisseur sur le fond.
+ * L'ombre portée qui suit (y 556..596) est du mur, pas du bois : un objet
+ * peut y monter.
+ */
+export const DESSOUS_PLANCHE_HAUT_PCT = 64.0;
+
+/**
+ * Le jour laissé entre le sommet d'un objet de la planche du bas et le
+ * dessous de la planche du haut, en % de la hauteur de scène (~0,5 % ≈ 4 px
+ * sur un iPhone 12). Un livre qui touche la planche au-dessus se lit comme
+ * coincé ; un demi-pour-cent suffit à le laisser respirer.
+ */
+export const JOUR_SOUS_PLANCHE_PCT = 0.5;
+
+/**
+ * La boîte dans laquelle un objet POSÉ sur la planche du bas doit tenir, en
+ * % de la hauteur de scène pour les deux dimensions : toute la largeur de sa
+ * case, et en hauteur ce qui sépare l'arête de sa case du dessous de la
+ * planche du haut, jour déduit.
+ *
+ * Pourquoi la largeur est aussi convertie en % de HAUTEUR : les deux nombres
+ * servent de `aspect-ratio` au visuel (`largeur / hauteur`), et un ratio
+ * exige la même unité des deux côtés. La case est large de `width` unités sur
+ * 300 (`qgPct`, la seule voie de conversion) d'un panorama dont la largeur
+ * vaut `panoramaAspect.w / h` fois sa hauteur ; c'est cette chaîne que la
+ * fonction déroule, une fois, ici.
+ *
+ * Née le 2026-09-04 pour le classeur de cartes et l'album de timbres : leur
+ * visuel était un CARRÉ large comme la case (22 unités ≈ 13 % de la hauteur
+ * de scène), or l'espace entre les deux planches n'en fait que 8 — sur
+ * l'iPhone de l'auteur, le livre montait derrière la planche du haut et ses
+ * étoiles. Un `aspect-ratio` dérivé du décor plutôt qu'une hauteur en px :
+ * la scène est dimensionnée par sa hauteur, tout ce qui y est posé se mesure
+ * en pour-cent d'elle.
+ */
+export function boiteSousPlanche(cle: "case4" | "case5" | "case6"): {
+  largeurPct: number;
+  hauteurPct: number;
+} {
+  const c = BAZAR_LAYOUT.objets[cle];
+  const { w, h } = BAZAR_LAYOUT.panoramaAspect;
+  // `qgPct` : un % de la LARGEUR de scène ; fois l'aspect, un % de sa hauteur.
+  const largeurPct = qgPct(c.width) * (w / h);
+  const hauteurPct = DESSOUS_PLANCHE_HAUT_PCT - JOUR_SOUS_PLANCHE_PCT - c.bottom;
+  return { largeurPct, hauteurPct };
+}
 
 /**
  * Toutes les clés du Bazar, dans l'ordre du dictionnaire. C'est la liste que

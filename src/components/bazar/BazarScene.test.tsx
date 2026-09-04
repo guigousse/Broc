@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent, within } from "@testing-library/react";
 import { BazarScene, ZONES_BAZAR } from "./BazarScene";
-import { BAZAR_LAYOUT } from "./bazarLayout";
+import { BAZAR_LAYOUT, boiteSousPlanche } from "./bazarLayout";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { JEUX_ARCADE } from "@/lib/bazar/arcade";
 import { ETAT_ARTICLE_BAZAR } from "@/lib/bazar/achat";
@@ -143,6 +143,25 @@ describe("BazarScene", () => {
     monter(ETAL, 25, { ok: true }, undefined, a);
     expect(screen.getByRole("button", { name: /paquet de 3 cartes/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /pochette de 3 timbres/i })).toBeTruthy();
+  });
+
+  // Le visuel de l'album ne doit pas monter derrière la planche du haut
+  // (retour device 2026-09-04) : sa boîte prend l'`aspect-ratio` dérivé du
+  // décor, pas le carré de la case, et l'image y est ancrée en bas.
+  it("le classeur et l'album prennent la boîte sous la planche, pas le carré de la case", () => {
+    monter();
+    for (const [nom, cle] of [
+      [/classeur de cartes/i, "case5"],
+      [/album de timbres/i, "case6"],
+    ] as const) {
+      const img = screen.getByRole("button", { name: nom }).querySelector("img") as HTMLImageElement;
+      const boite = img.parentElement as HTMLElement;
+      const { largeurPct, hauteurPct } = boiteSousPlanche(cle);
+      expect(boite.style.aspectRatio).toBe(`${largeurPct} / ${hauteurPct}`);
+      expect(boite.style.width).toBe("100%");
+      expect(img.style.objectFit).toBe("contain");
+      expect(img.style.objectPosition).toBe("bottom");
+    }
   });
 
   it("taper le classeur ouvre la fiche et l'achat envoie { type: 'album', album: 'classeur' }", () => {

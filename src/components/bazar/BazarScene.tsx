@@ -26,7 +26,7 @@ import {
   type ResultatAchatBazar,
 } from "./ArticleDetailBazar";
 import { PLAQUE_ETIQUETTE } from "./etiquette";
-import { BAZAR_LAYOUT, CLES_BAZAR, CLES_ARTICLES } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_BAZAR, CLES_ARTICLES, boiteSousPlanche } from "./bazarLayout";
 
 /** Les trois zones du Bazar : le coin arcade, le comptoir, les antiquités. */
 export const ZONES_BAZAR: PanoramaZone[] = [
@@ -201,9 +201,26 @@ export function BazarScene({
           // Les deux albums ont leur art (2026-09-02) : posés sur l'étagère
           // comme les objets du haut, le bas du livre sur l'arête de la case.
           // Les paquets/pochettes (après achat) restent en placeholder.
+          //
+          // La boîte du visuel n'est PAS le carré de la case (retour device
+          // 2026-09-04) : large comme la case, un carré fait ~13 % de la
+          // hauteur de scène, or l'espace entre les deux planches n'en fait
+          // que 8 — le livre montait derrière la planche du haut, jusque
+          // dans les étoiles de la vitrine. La boîte prend donc la hauteur
+          // qui sépare l'arête de la case du dessous de la planche, dérivée
+          // du décor (`boiteSousPlanche`) et exprimée en `aspect-ratio`
+          // parce que c'est la seule mesure que le visuel, dimensionné par sa
+          // largeur, sait tenir. L'image reste `contain` + ancrée en bas : un
+          // livre debout y garde ses proportions, plus étroit qu'avant.
+          const cle = i === 0 ? "case5" : "case6";
+          const boite = boiteSousPlanche(cle);
           const visuel = !achete ? (
             <span
-              style={{ display: "block", width: "100%", aspectRatio: "1 / 1" }}
+              style={{
+                display: "block",
+                width: "100%",
+                aspectRatio: `${boite.largeurPct} / ${boite.hauteurPct}`,
+              }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -226,7 +243,7 @@ export function BazarScene({
           return (
             <ArticleBazar
               key={album}
-              cle={i === 0 ? "case5" : "case6"}
+              cle={cle}
               visuel={visuel}
               libelle={libelle}
               onOuvrir={() =>
