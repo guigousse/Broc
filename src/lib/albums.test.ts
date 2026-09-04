@@ -60,12 +60,12 @@ describe("albums — état", () => {
   it("recyclerDoublons ramène chaque quantité à 1 et crédite la catégorie de l'album", () => {
     let a = initAlbums();
     for (let i = 0; i < 3; i++) a = ajouterPiece(a, "carte.marteau_menuisier");
-    a = ajouterPiece(a, "carte.risk_1992");
-    a = ajouterPiece(a, "carte.risk_1992");
+    a = ajouterPiece(a, "carte.boite_de_construction_metallique_no_3");
+    a = ajouterPiece(a, "carte.boite_de_construction_metallique_no_3");
     const { state, n } = recyclerDoublons(createMockGameState({ albums: a }), "classeur");
     expect(n).toBe(3);
     expect(state.piecesAmelioration["Jeux & Loisirs"]).toBe(3);
-    expect(state.albums!.classeur.pieces).toEqual({ "carte.marteau_menuisier": 1, "carte.risk_1992": 1 });
+    expect(state.albums!.classeur.pieces).toEqual({ "carte.marteau_menuisier": 1, "carte.boite_de_construction_metallique_no_3": 1 });
   });
 });
 

@@ -23,11 +23,11 @@ describe("libelleTexteDuel", () => {
     const d = DICTIONNAIRES.fr;
     expect(libelleTexteDuel({ type: "barrage" }, d)).toBe("Barrage");
     expect(libelleTexteDuel({ type: "cri", variante: "pioche" }, d)).toBe("Cri : piochez 1 carte");
-    expect(libelleTexteDuel(CARTES_DUEL["carte.gutenberg_feuillet"].texte, d)).toBe("À la pose, piochez 2 cartes.");
+    expect(libelleTexteDuel(CARTES_DUEL["carte.manuscrit_enlumine_xve"].texte, d)).toBe("À la pose, piochez 2 cartes.");
     expect(libelleTexteDuel(CARTES_DUEL["carte.violon_de_maitre_cremonais_1715"].texte, d)).toBe(
       "En début de votre tour, vos objets Musique gagnent +1 d'attaque.",
     );
-    expect(libelleTexteDuel(CARTES_DUEL["carte.cartouche_stadium_events"].texte, d)).toBe(
+    expect(libelleTexteDuel(CARTES_DUEL["carte.baby_foot_de_competition_minibon_homologue"].texte, d)).toBe(
       "À la pose, 1 dégât à tous les objets adverses et piochez 1 carte.",
     );
     expect(libelleTexteDuel(CARTES_DUEL["carte.rabot_d_ebeniste_a_semelle_modele_605"].texte, d)).toBe(

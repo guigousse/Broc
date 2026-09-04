@@ -7,11 +7,11 @@ import { avecMain, avecObjet, DECK_A, DECK_B } from "@/lib/duel/__test__/helpers
 const base = () => nouvellePartie(DECK_A, DECK_B, creerRng(1));
 const MARTEAU = "carte.marteau_menuisier"; // Bricolage 2/1
 const TABOURET = "carte.tabouret_bois_patine"; // Maison 2/4 Barrage
-const AQUARELLE = "carte.aquarelle_paysage_anonyme"; // Objets d'art 1/2
-const PINCE = "carte.pince_etirer_cuivre"; // Bricolage 3/1 Prompt
-const TERRE_CUITE = "carte.terre_cuite_buste"; // Objets d'art 1/2 Solide
+const VASE_DECO = "carte.vase_art_deco_bebert_germain"; // Objets d'art 1/2
+const ENCLUME = "carte.enclume_petit_modele"; // Bricolage 3/1 Prompt
+const TERRE_CUITE = "carte.boite_marqueterie_florentine"; // Objets d'art 1/2 Solide
 const MANETTE = "carte.manette_megadrive"; // Jeux 3/2 Fragile
-const VESTE = "carte.veste_jean_delavee"; // Mode 2/2 Ruse
+const BOTTES = "carte.bottes_camperos_cuir"; // Mode 2/2 Ruse
 const SCIE = "carte.scie_egoine_de_charpentier"; // Bricolage 5/4
 
 describe("attaquer", () => {
@@ -35,10 +35,10 @@ describe("attaquer", () => {
   });
 
   it("la riposte porte aussi le bonus de roue quand c'est le défenseur qui domine", () => {
-    let s = avecObjet(base(), 0, AQUARELLE); // Objets d'art 1/2 domine Bricolage
-    const aquarelle = s.uid;
+    let s = avecObjet(base(), 0, VASE_DECO); // Objets d'art 1/2 domine Bricolage
+    const vaseDeco = s.uid;
     s = avecObjet(s.etat, 1, SCIE); // Bricolage 5/4
-    const r = attaquer(s.etat, aquarelle, { type: "objet", uid: s.uid });
+    const r = attaquer(s.etat, vaseDeco, { type: "objet", uid: s.uid });
     expect(trouverObjet(r.etat, s.uid)?.objet.pv).toBe(4 - 2); // 1 + 1 de roue
   });
 
@@ -52,7 +52,7 @@ describe("attaquer", () => {
     const marteau = s.uid;
     s = avecObjet(s.etat, 1, TABOURET);
     const tabouret = s.uid;
-    s = avecObjet(s.etat, 1, AQUARELLE);
+    s = avecObjet(s.etat, 1, VASE_DECO);
     expect(attaquer(s.etat, marteau, { type: "vitrine" }).ok).toBe(false);
     expect(attaquer(s.etat, marteau, { type: "objet", uid: s.uid }).ok).toBe(false);
     expect(attaquer(s.etat, marteau, { type: "objet", uid: tabouret }).ok).toBe(true);
@@ -62,7 +62,7 @@ describe("attaquer", () => {
     const e = base();
     let s = avecObjet(e, 0, MARTEAU, e.tour);
     expect(attaquer(s.etat, s.uid, { type: "vitrine" }).ok).toBe(false);
-    s = avecObjet(e, 0, PINCE, e.tour);
+    s = avecObjet(e, 0, ENCLUME, e.tour);
     expect(attaquer(s.etat, s.uid, { type: "vitrine" }).ok).toBe(true);
   });
 
@@ -79,13 +79,13 @@ describe("attaquer", () => {
     let s = avecObjet(e, 0, MARTEAU);
     const marteau = s.uid;
     e = finirTour(s.etat).etat; // tour 2, joueur 1
-    s = avecObjet(e, 1, VESTE, e.tour);
-    const veste = s.uid;
+    s = avecObjet(e, 1, BOTTES, e.tour);
+    const bottes = s.uid;
     e = finirTour(s.etat).etat; // tour 3, joueur 0
-    expect(attaquer(e, marteau, { type: "objet", uid: veste }).ok).toBe(false);
+    expect(attaquer(e, marteau, { type: "objet", uid: bottes }).ok).toBe(false);
     expect(attaquer(e, marteau, { type: "vitrine" }).ok).toBe(true);
     e = finirTour(e).etat; e = finirTour(e).etat; // tour 5
-    expect(attaquer(e, marteau, { type: "objet", uid: veste }).ok).toBe(true);
+    expect(attaquer(e, marteau, { type: "objet", uid: bottes }).ok).toBe(true);
   });
 
   it("un objet d'attaque 0 ne peut pas attaquer", () => {
@@ -131,7 +131,7 @@ describe("poser", () => {
     expect(poser(r.etat, SCIE).ok).toBe(false); // coût 4 > 2
     expect(poser(r.etat, MARTEAU).ok).toBe(false); // plus en main
     e = avecMain(base(), 0, [MARTEAU], 5);
-    for (const id of [AQUARELLE, AQUARELLE, AQUARELLE, AQUARELLE]) e = avecObjet(e, 0, id).etat;
+    for (const id of [VASE_DECO, VASE_DECO, VASE_DECO, VASE_DECO]) e = avecObjet(e, 0, id).etat;
     expect(poser(e, MARTEAU).ok).toBe(false); // étal plein
   });
 

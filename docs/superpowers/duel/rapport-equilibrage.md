@@ -1,5 +1,21 @@
 # Duel de cartes — rapport d'équilibrage
 
+> **Note du 2026-09-04 — changement d'objets à stats constantes.** 24 cartes (dont 1 repli, voir ci-dessous) ont
+> changé d'objet source pour se prêter à l'illustration cartoon ; les 50 emplacements (coût/attaque/PV/effet,
+> rareté, série, ordre) sont inchangés, donc toutes les mesures de ce rapport restent valables. Les ids cités
+> ci-dessous sont les anciens ; correspondance ancien → nouveau :
+> `vinyle_des_loups_des_steppes_bark_to_be_free` → `radio_cassette_annees_80`, `vinyle_grand_max_des_combines` → `tourne_disque_a_courroie_vintage`,
+> `33tours_jazz_1` → `metronome_mecanique_a_pyramide`, `vinyle_stevranos_vive_la_fet_a` → `ukulele_soprano`, `test_pressing_des_trolling_sons` → `saxophone_alto_professionnel`,
+> `cartouche_le_plombier_sauteur_8_bit` → `ours_en_peluche_mohair_recent`, `playbox_pocket` → `yo_yo_duncan_alu` (repli : la locomotive demandée est rare),
+> `risk_1992` → `soldat_plomb_napoleonien`, `cartouche_stadium_events` → `baby_foot_de_competition_minibon_homologue`,
+> `monte_cristo` → `encrier_porcelaine_xixe`, `les_aventures_de_titou_cap_sur_la_lune` → `lampe_huile_biblio`, `paris_match_70s` → `stylo_waterman_vintage`,
+> `miserables_pleiade` → `coffret_loupes_lecture`, `conte_de_l_aviateur_et_de_l_enfant_roi_edition` → `stylo_plume_haut_de_gamme_a_l_etoile_blanche_d`,
+> `le_petit_moustachu_edition_originale_1961` → `encrier_argent_xixe`, `gutenberg_feuillet` → `manuscrit_enlumine_xve`,
+> `veste_jean_delavee` → `bottes_camperos_cuir`, `blouson_cuir_vintage` → `montre_doree_vintage`, `broche_emaillee_artdeco` → `veste_smoking_msg`,
+> `figurine_porcelaine` → `cafetiere_emaillee_50s`, `aquarelle_paysage_anonyme` → `vase_art_deco_bebert_germain`,
+> `dessin_surrealiste_aux_montres_molles_signe` → `petite_sculpture_rondin_planche`, `pince_etirer_cuivre` → `enclume_petit_modele`,
+> `coffret_ebeniste_xixe` → `machine_a_coudre_en_fonte_a_pedale_xixe`.
+
 Cibles (spec §6.4) : carte 45–55 % de victoires et ≥ 60 % de pose ; catégorie 45–55 % ; premier joueur < 55 % ; 8–14 manches en moyenne, aucune > 25 ; nuls + épuisées < 2 % ; agressif contre contrôle 45–55 %.
 
 Commande : `npm run duel:campagne -- --graine <n> --parties 20000`

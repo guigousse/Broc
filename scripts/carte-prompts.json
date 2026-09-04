@@ -1,356 +1,387 @@
 {
-  "commentaire": "Planches 3×3 (en 3:4 : les cellules sortent en 3:4, ratio de la fenêtre du gabarit) pour generate-cartes.mjs. Ordre = ordre des pochettes (src/data/cartes.ts). La rareté par case choisit le gabarit. Sujets = les objets source TOONIFIÉS, décrits sans marque ni personnage protégé.",
-  "style": "Each panel is a bold flat cartoon MASCOT: the object PERSONIFIED as an adorable tiny monster — two big friendly round eyes, a small happy smile, and when it fits, tiny stubby arms and feet — playful kawaii style, thick dark-brown outlines, cel shading, warm vintage palette, the character centered and large on a plain soft cream background.",
+  "commentaire": "Planches 3×3 en 4:3 (cellules PAYSAGE, ratio de la fenêtre d'illustration des fonds de carte, 2026-09-04) pour generate-cartes.mjs. Ordre = ordre des pochettes (src/data/cartes.ts). Rareté/série sont informatives ici : le cadre est un fond peint composé à l'écran par CarteDuel. Sujets = les objets source TOONIFIÉS, décrits sans marque ni personnage protégé. Depuis le 2026-09-04 soir : style « monstre né de l'objet » + décor contextuel (voir `style`), noms détournés dans src/data/cartes.ts.",
+  "style": "Each panel is a collectible-card creature illustration in the manner of a dark, dramatic monster trading card: the object has BECOME a small MONSTER with real menace and personality — sly, grumpy, hungry or mischievous, never cute. CRUCIAL: its eyes and mouth are EXISTING PARTS of the object reinterpreted, never a face pasted on a blank surface: a dial, a lens, a knob, a keyhole, a speaker or a button becomes an eye (one single eye, two, or several, whichever the object suggests); a drawer, a keyboard, a grille, a hinge, a lid, a bellows, a slot or a row of teeth-like parts becomes the mouth; handles, legs, straps, spouts or cables become limbs, claws or tails. The creature fills most of its panel, large and in the foreground, with rich detail: cracked wood, worn metal, glowing eyes, drool, sharp fangs where the object allows. Painterly illustration with clean dark outlines, cel shading, dramatic warm lighting and a vintage palette. Behind each creature, a CONTEXTUAL BACKGROUND SCENE that fits the object (an attic, a workshop, a stage, a parlour, a street at night...), painted softer and less contrasted than the creature so the creature stays the focus.",
   "sheets": [
     {
-      "nom": "planche1",
+      "nom": "p01",
       "cases": [
         {
-          "id": "carte.vinyle_des_loups_des_steppes_bark_to_be_free",
+          "id": "carte.radio_cassette_annees_80",
           "rarete": "commun",
-          "sujet": "a vinyl record half out of a sleeve showing a howling wolf silhouette",
+          "sujet": "an 80s boombox turned monster: its two round speakers are wide-open eyes, the cassette door is a mouth chewing a tape, the antenna a stinger; background: a graffiti-covered street corner at dusk",
           "serie": "Musique"
         },
         {
-          "id": "carte.vinyle_grand_max_des_combines",
+          "id": "carte.tourne_disque_a_courroie_vintage",
           "rarete": "commun",
-          "sujet": "a vinyl record with a tropical island sunset sleeve",
+          "sujet": "a vintage belt-drive turntable turned monster: ONE single vinyl record on the platter and no other record anywhere, with one big eye at the exact center of the record where the label is, the tonearm a jointed claw hovering over it, the lid half open like a jaw; background: a cluttered attic",
           "serie": "Musique"
         },
         {
-          "id": "carte.33tours_jazz_1",
+          "id": "carte.metronome_mecanique_a_pyramide",
           "rarete": "commun",
-          "sujet": "a jazz vinyl record with a trumpet on the sleeve",
+          "sujet": "a pyramid mechanical metronome turned monster: the swinging pendulum is its single tall eye on a stalk, the scale a row of teeth, tiny wooden feet; background: a piano teacher's parlour with sheet music",
           "serie": "Musique"
         },
         {
           "id": "carte.harmonica_chromatique_de_bluesman",
           "rarete": "commun",
-          "sujet": "a chromatic blues harmonica",
+          "sujet": "a chromatic harmonica turned monster: the row of holes is a long mouth full of square teeth, the slide button a single eye on the side; background: a smoky blues bar stage at night",
           "serie": "Musique"
-        },
+        }
+      ]
+    },
+    {
+      "nom": "p02",
+      "cases": [
         {
-          "id": "carte.vinyle_stevranos_vive_la_fet_a",
+          "id": "carte.ukulele_soprano",
           "rarete": "commun",
-          "sujet": "a festive vinyl record sleeve with confetti and streamers",
+          "sujet": "a koa ukulele turned monster: the sound hole is a round gaping mouth, two tuning pegs are stalk eyes, the strings are whiskers; background: a beach bonfire at sunset",
           "serie": "Musique"
         },
         {
           "id": "carte.guitare_classique_ancienne",
           "rarete": "rare",
-          "sujet": "an old classical guitar with worn varnish",
+          "sujet": "an old classical guitar turned monster: the sound hole is a single huge eye, the frets a long spine, the headstock a horned head, the body cracked like scales; background: a dusty music shop window",
           "serie": "Musique"
         },
         {
-          "id": "carte.test_pressing_des_trolling_sons",
+          "id": "carte.saxophone_alto_professionnel",
           "rarete": "rare",
-          "sujet": "a white-label test pressing vinyl record",
+          "sujet": "an alto saxophone turned monster: the bell is a gaping mouth, the pearl keys are a row of small eyes along the body, brass claws; background: a jazz club under a spotlight",
           "serie": "Musique"
         },
         {
           "id": "carte.violon_de_maitre_cremonais_1715",
           "rarete": "legendaire",
-          "sujet": "an antique master violin with glowing amber varnish and its bow",
+          "sujet": "an antique master violin turned monster: the two f-holes are narrowed eyes, the bridge a set of fangs, the scroll a curled horn, the bow a tail; background: a candlelit luthier's workshop in Cremona",
           "serie": "Musique"
+        }
+      ]
+    },
+    {
+      "nom": "p03",
+      "cases": [
+        {
+          "id": "carte.ours_en_peluche_mohair_recent",
+          "rarete": "commun",
+          "sujet": "a mohair teddy bear turned were-bear: one glass button eye and one torn socket, stitched grin with felt fangs, stuffing escaping from a seam; background: a moonlit child's bedroom",
+          "serie": "Jeux & Loisirs"
         },
         {
-          "id": "carte.cartouche_le_plombier_sauteur_8_bit",
+          "id": "carte.manette_megadrive",
           "rarete": "commun",
-          "sujet": "a grey 8-bit video game cartridge with a plain blank label",
+          "sujet": "a black 16-bit game controller turned monster: the three buttons are three eyes, the D-pad a fanged mouth, the cable a tail; background: a 90s living room with a bulky TV",
+          "serie": "Jeux & Loisirs"
+        },
+        {
+          "id": "carte.yo_yo_duncan_alu",
+          "rarete": "commun",
+          "sujet": "an aluminium competition yo-yo turned monster: each face of the yo-yo is a giant eye, the string a long tongue; background: a schoolyard at recess",
+          "serie": "Jeux & Loisirs"
+        },
+        {
+          "id": "carte.boite_de_construction_metallique_no_3",
+          "rarete": "commun",
+          "sujet": "a metal construction set box turned monster: the open lid is a jaw, riveted metal strips are teeth, two bolts are eyes; background: a boy's workshop desk with scattered nuts and bolts",
           "serie": "Jeux & Loisirs"
         }
       ]
     },
     {
-      "nom": "planche2",
+      "nom": "p04",
       "cases": [
         {
-          "id": "carte.manette_megadrive",
-          "rarete": "commun",
-          "sujet": "a black 16-bit game controller with three buttons",
-          "serie": "Jeux & Loisirs"
-        },
-        {
-          "id": "carte.playbox_pocket",
-          "rarete": "commun",
-          "sujet": "a chunky grey handheld game console with a small green screen",
-          "serie": "Jeux & Loisirs"
-        },
-        {
-          "id": "carte.risk_1992",
-          "rarete": "commun",
-          "sujet": "a vintage strategy board game box with a world map on the lid",
-          "serie": "Jeux & Loisirs"
-        },
-        {
-          "id": "carte.figurine_de_guerre_galactique_1978",
+          "id": "carte.borne_arcade_mini",
           "rarete": "rare",
-          "sujet": "a small retro sci-fi action figure in a black cape, on its display stand",
+          "sujet": "a mini arcade cabinet turned one-eyed monster: the screen is its single glowing eye, the coin slot a grinning mouth, the joystick a horn; background: a neon-lit arcade hall",
           "serie": "Jeux & Loisirs"
         },
         {
           "id": "carte.flipper_a_plateau_annees_60",
           "rarete": "rare",
-          "sujet": "a 1960s tabletop pinball machine with colorful playfield",
+          "sujet": "a 1960s tabletop pinball machine turned monster: the two flippers are its jaws, the bumpers are bulging eyes, the plunger a tail; background: a retro diner",
           "serie": "Jeux & Loisirs"
         },
         {
-          "id": "carte.cartouche_stadium_events",
+          "id": "carte.baby_foot_de_competition_minibon_homologue",
           "rarete": "legendaire",
-          "sujet": "a golden 8-bit sports video game cartridge, gleaming",
+          "sujet": "a competition foosball table turned monster, seen from the side: on the rods stand rows of ordinary small painted wooden foosball players (red team and blue team), NO hands, NO arms, nothing else on the rods; its two eyes are drawn flat INSIDE the wooden side panel of the table, next to the ball-return slot, which is its grinning mouth with a ball as a tooth — nothing sticks out of the table, no eyes on stalks; the wooden legs end in claws; background: a crowded café bar at night",
           "serie": "Jeux & Loisirs"
         },
         {
-          "id": "carte.monte_cristo",
+          "id": "carte.encrier_porcelaine_xixe",
           "rarete": "commun",
-          "sujet": "a thick classic adventure novel with an ornate red and gold cover",
-          "serie": "Livres & Papeterie"
-        },
-        {
-          "id": "carte.les_aventures_de_titou_cap_sur_la_lune",
-          "rarete": "commun",
-          "sujet": "a vintage comic album with a red rocket flying to the moon on the cover",
-          "serie": "Livres & Papeterie"
-        },
-        {
-          "id": "carte.paris_match_70s",
-          "rarete": "commun",
-          "sujet": "a stack of 1970s news magazines",
+          "sujet": "a 19th-century porcelain inkwell turned monster: the ink hole is a single black eye, the lid an eyelid, ink dripping like drool, the quill a spine; background: a writer's desk by candlelight",
           "serie": "Livres & Papeterie"
         }
       ]
     },
     {
-      "nom": "planche3",
+      "nom": "p05",
       "cases": [
         {
-          "id": "carte.miserables_pleiade",
+          "id": "carte.lampe_huile_biblio",
           "rarete": "commun",
-          "sujet": "a prestigious leather-bound classic novel with gilded page edges",
+          "sujet": "a library oil lamp turned monster: the flame is its single eye, the glass chimney a horn, the brass base a crouching body; background: a dark library corridor of tall shelves",
           "serie": "Livres & Papeterie"
         },
         {
-          "id": "carte.conte_de_l_aviateur_et_de_l_enfant_roi_edition",
+          "id": "carte.stylo_waterman_vintage",
+          "rarete": "commun",
+          "sujet": "a vintage fountain pen turned monster: the transparent ink reservoir window shows a single eye FLOATING inside blood-red ink, the nib is a sharp fang dripping red ink, the clip a claw; background: a notary's office with stacks of paper",
+          "serie": "Livres & Papeterie"
+        },
+        {
+          "id": "carte.coffret_loupes_lecture",
+          "rarete": "commun",
+          "sujet": "a case of brass magnifying glasses turned monster: each lens is a huge staring eye, three eyes of different sizes, the case lid a mouth; background: a detective's study",
+          "serie": "Livres & Papeterie"
+        },
+        {
+          "id": "carte.stylo_plume_haut_de_gamme_a_l_etoile_blanche_d",
           "rarete": "rare",
-          "sujet": "a 1943 illustrated storybook with a starry night sky cover",
+          "sujet": "a gold-trimmed luxury fountain pen turned monster: the pale star on the cap is a single eye, the gold nib a beak, the body sleek like a serpent; background: a marble bank lobby",
           "serie": "Livres & Papeterie"
-        },
+        }
+      ]
+    },
+    {
+      "nom": "p06",
+      "cases": [
         {
-          "id": "carte.le_petit_moustachu_edition_originale_1961",
+          "id": "carte.encrier_argent_xixe",
           "rarete": "rare",
-          "sujet": "a vintage book with a bowler hat and a cane on the cover",
+          "sujet": "a solid silver inkwell turned monster: the two hinged lids are eyelids over two dark ink eyes, the base sprouting silver claws; background: a Victorian study",
           "serie": "Livres & Papeterie"
         },
         {
-          "id": "carte.gutenberg_feuillet",
+          "id": "carte.manuscrit_enlumine_xve",
           "rarete": "legendaire",
-          "sujet": "an ancient printed manuscript page in a protective gilded frame",
+          "sujet": "a 15th-century illuminated manuscript turned monster: the open pages are a wide screaming mouth, the metal clasps are teeth, the illuminated initial a single eye; background: a monastery scriptorium",
           "serie": "Livres & Papeterie"
         },
         {
-          "id": "carte.veste_jean_delavee",
+          "id": "carte.bottes_camperos_cuir",
           "rarete": "commun",
-          "sujet": "a faded denim jacket",
+          "sujet": "a pair of leather cowboy boots turned monster: each boot toe is a fanged mouth, the stitching patterns are eyes, spurs like claws; background: a dusty saloon porch",
           "serie": "Mode"
         },
         {
-          "id": "carte.blouson_cuir_vintage",
+          "id": "carte.montre_doree_vintage",
           "rarete": "commun",
-          "sujet": "a vintage brown leather jacket",
+          "sujet": "a gold vintage wristwatch turned monster: the dial is a single eye, the hands a pupil, the strap a snake-like body; background: a jeweller's velvet counter",
           "serie": "Mode"
-        },
+        }
+      ]
+    },
+    {
+      "nom": "p07",
+      "cases": [
         {
           "id": "carte.chapeau_feutre_50s",
           "rarete": "commun",
-          "sujet": "a 1950s felt fedora hat",
+          "sujet": "a 1950s felt hat turned monster: the hatband hides two slit eyes, the brim is a wide mouth, tiny feet below; background: a foggy train platform",
           "serie": "Mode"
         },
         {
           "id": "carte.robe_50s_pinup",
           "rarete": "commun",
-          "sujet": "a 1950s polka-dot pin-up dress on a hanger",
+          "sujet": "a 1950s polka-dot pin-up dress turned monster: the polka dots are dozens of small eyes, the neckline a grinning mouth, the dress stands on exactly TWO legs in heels coming out of the skirt hem — two legs only, no arms; background: a 50s dance hall",
           "serie": "Mode"
         },
         {
-          "id": "carte.broche_emaillee_artdeco",
+          "id": "carte.veste_smoking_msg",
           "rarete": "rare",
-          "sujet": "an enamelled Art Deco brooch with geometric patterns",
+          "sujet": "a black tuxedo jacket turned monster: the two buttons are eyes, the bow tie a mouth, the sleeves long arms with claws, it stands empty; background: a grand opera foyer",
+          "serie": "Mode"
+        },
+        {
+          "id": "carte.sac_a_main_talaria",
+          "rarete": "rare",
+          "sujet": "an elegant leather handbag turned monster: the clasp is a mouth, the two handles are arms ending in hands, two rivets are eyes; background: a chic boutique street",
           "serie": "Mode"
         }
       ]
     },
     {
-      "nom": "planche4",
+      "nom": "p08",
       "cases": [
-        {
-          "id": "carte.sac_a_main_talaria",
-          "rarete": "rare",
-          "sujet": "an elegant vintage designer handbag with a golden clasp",
-          "serie": "Mode"
-        },
         {
           "id": "carte.la_petite_robe_noire_chaine_1925",
           "rarete": "legendaire",
-          "sujet": "an iconic 1925 little black dress on a dress form",
+          "sujet": "a 1925 little black dress turned monster on its dress form: the pearl necklace is a row of teeth, two brooches are eyes, chains wrap around it; background: a Paris couture salon",
           "serie": "Mode"
         },
         {
-          "id": "carte.figurine_porcelaine",
+          "id": "carte.cafetiere_emaillee_50s",
           "rarete": "commun",
-          "sujet": "a small porcelain figurine of a dancer",
+          "sujet": "a 1950s enamel coffee pot turned monster: the spout is a beak, the lid a single eye, the handle a curled tail, steam like breath; background: a farmhouse kitchen",
           "serie": "Maison"
         },
         {
           "id": "carte.service_the_faience",
           "rarete": "commun",
-          "sujet": "a faience tea set with pot and cups",
+          "sujet": "a faience tea set turned haunted monsters: the teapot spout a mouth, the lid its eye, each cup a small one-eyed minion; background: a misty garden tea table",
           "serie": "Maison"
         },
         {
           "id": "carte.tabouret_bois_patine",
           "rarete": "commun",
-          "sujet": "a patinated wooden stool",
+          "sujet": "a patinated wooden stool turned monster: the seat is a face with one knot-hole eye, the legs bend like an insect's, a crack for a mouth; background: a barn interior",
           "serie": "Maison"
-        },
+        }
+      ]
+    },
+    {
+      "nom": "p09",
+      "cases": [
         {
           "id": "carte.vase_en_cristal_baraka",
           "rarete": "commun",
-          "sujet": "a sparkling cut-crystal vase",
+          "sujet": "a cut-crystal vase turned monster: the facets are many small eyes, the rim a jagged mouth, light refracting; background: a chandelier-lit dining room",
           "serie": "Maison"
         },
         {
           "id": "carte.boite_musique_ancienne",
           "rarete": "rare",
-          "sujet": "an antique music box with a tiny dancing ballerina",
+          "sujet": "an antique music box turned monster: the open lid is a jaw, the cylinder pins are teeth, the tiny ballerina its single eye on a stalk; background: a dusty nursery",
           "serie": "Maison"
         },
         {
           "id": "carte.lampe_bureau_artdeco",
           "rarete": "rare",
-          "sujet": "an Art Deco desk lamp with a green glass shade",
+          "sujet": "an Art Deco desk lamp turned monster: the green glass shade is a heavy eyelid over a glowing eye, the brass arm a neck, the base a paw; background: a banker's office at night",
           "serie": "Maison"
         },
         {
           "id": "carte.uf_joaillier_imperial_en_email_replique",
           "rarete": "legendaire",
-          "sujet": "a jewelled imperial enamel egg on a golden stand",
+          "sujet": "a jewelled enamel imperial egg turned monster: the egg is cracked open like a jaw, gems are eyes, gold claws on its stand; background: a palace treasure room",
           "serie": "Maison"
         }
       ]
     },
     {
-      "nom": "planche5",
+      "nom": "p10",
       "cases": [
         {
-          "id": "carte.aquarelle_paysage_anonyme",
+          "id": "carte.vase_art_deco_bebert_germain",
           "rarete": "commun",
-          "sujet": "a small framed watercolor landscape painting",
+          "sujet": "an Art Deco ceramic vase with geometric stripes turned monster: the stripes are rows of teeth, two handles are horns, one eye in the neck; background: a 1930s gallery",
           "serie": "Objets d'art"
         },
         {
-          "id": "carte.terre_cuite_buste",
+          "id": "carte.boite_marqueterie_florentine",
           "rarete": "commun",
-          "sujet": "a small terracotta bust on a plinth",
+          "sujet": "a Florentine marquetry box turned monster: the lid is a single half-closed eyelid over a wooden eye, the inlay patterns a grin; background: a Florentine workshop",
           "serie": "Objets d'art"
         },
         {
           "id": "carte.masque_tribal_decoratif",
           "rarete": "commun",
-          "sujet": "a decorative carved wooden tribal mask",
+          "sujet": "a carved wooden tribal mask turned monster: the mask has three eye holes, all alive, the carved mouth full of teeth, hanging by leather straps like tentacles; background: a dim ethnographic cabinet",
           "serie": "Objets d'art"
         },
         {
           "id": "carte.bronze_animalier",
           "rarete": "commun",
-          "sujet": "a bronze sculpture of a stag",
+          "sujet": "a bronze stag sculpture turned monster: the bronze is cracked open along the neck and flank to reveal a glowing red interior, the antlers twist into thorny claws, its two eyes are hollow holes glowing red, its mouth open with bronze fangs, on its marble plinth; background: a hunting lodge fireplace",
           "serie": "Objets d'art"
-        },
+        }
+      ]
+    },
+    {
+      "nom": "p11",
+      "cases": [
         {
           "id": "carte.vase_galle_signe",
           "rarete": "rare",
-          "sujet": "an Art Nouveau cameo glass vase with floral motifs",
+          "sujet": "an Art Nouveau cameo glass vase turned monster: the floral motifs sprout as eyes on stalks, the neck a mouth, mottled glass like scaly skin; background: a Nancy greenhouse",
           "serie": "Objets d'art"
         },
         {
-          "id": "carte.dessin_surrealiste_aux_montres_molles_signe",
+          "id": "carte.vase_en_verre_moule_laluck_signe",
           "rarete": "rare",
-          "sujet": "a framed surrealist drawing with drooping melting clocks",
+          "sujet": "a moulded frosted-glass vase turned monster: the relief patterns are scales, a single eye glows inside the glass, the rim a mouth; background: a museum display in dim light",
           "serie": "Objets d'art"
         },
         {
           "id": "carte.marteau_menuisier",
           "rarete": "commun",
-          "sujet": "a carpenter's hammer with a wooden handle",
+          "sujet": "a carpenter's hammer turned monster: the claw is a fanged jaw, the head has one eye, the wooden handle a body with tiny legs; background: a carpentry shop with sawdust",
           "serie": "Bricolage"
         },
         {
           "id": "carte.boite_outils_complete",
           "rarete": "commun",
-          "sujet": "an open toolbox full of tools",
-          "serie": "Bricolage"
-        },
-        {
-          "id": "carte.etabli_pliant_ancien",
-          "rarete": "commun",
-          "sujet": "an old folding wooden workbench",
+          "sujet": "an open toolbox turned monster: the open lid a jaw, the tools inside are teeth and tongues, two screw heads are eyes; background: a garage at night",
           "serie": "Bricolage"
         }
       ]
     },
     {
-      "nom": "planche6",
+      "nom": "p12",
       "cases": [
         {
-          "id": "carte.pince_etirer_cuivre",
+          "id": "carte.etabli_pliant_ancien",
           "rarete": "commun",
-          "sujet": "a copper stretching plier",
+          "sujet": "an old folding workbench turned monster: the vise jaws are its mouth, the bench dog holes are eyes, the folding legs are limbs; background: a dusty workshop",
+          "serie": "Bricolage"
+        },
+        {
+          "id": "carte.enclume_petit_modele",
+          "rarete": "commun",
+          "sujet": "a small bench anvil turned monster: the horn is a snout, the hardy hole a single eye, a crack across the base is a grin, stubby iron feet; background: a blacksmith's forge glowing red",
           "serie": "Bricolage"
         },
         {
           "id": "carte.scie_egoine_de_charpentier",
           "rarete": "commun",
-          "sujet": "a carpenter's handsaw",
+          "sujet": "a carpenter's handsaw turned monster, lying alone on a workbench with NO hand and NO person: its mouth IS the row of saw teeth along the blade (no separate drawn mouth), a single eye near the handle, the wooden handle curled like a tail; background: a lumber yard",
           "serie": "Bricolage"
         },
         {
           "id": "carte.boite_d_outils_de_manufacture_signee",
           "rarete": "rare",
-          "sujet": "a fine manufacture toolbox with brass corners, open",
+          "sujet": "a fine manufacture toolbox with brass corners turned monster: the top lid open like a jaw with brass-cornered teeth, the open drawers are stacked mouths with tongues, two brass locks are eyes; background: an old factory workshop",
           "serie": "Bricolage"
-        },
+        }
+      ]
+    },
+    {
+      "nom": "p13",
+      "cases": [
         {
           "id": "carte.rabot_d_ebeniste_a_semelle_modele_605",
           "rarete": "rare",
-          "sujet": "a cabinetmaker's metal hand plane",
+          "sujet": "a cabinetmaker's metal hand plane turned crab monster: the blade slot is a mouth with the blade as one big tooth, the front knob and rear handle are two eyes on stalks, six crab-like metal legs, wood shavings as claws; background: a cabinetmaker's bench",
           "serie": "Bricolage"
         },
         {
-          "id": "carte.coffret_ebeniste_xixe",
+          "id": "carte.machine_a_coudre_en_fonte_a_pedale_xixe",
           "rarete": "rare",
-          "sujet": "a 19th-century cabinetmaker's tool chest with fine tools inside",
+          "sujet": "a 19th-century cast-iron treadle sewing machine turned monster: the hand wheel is a single huge eye with a pupil, the needle a fang under an open mouth in the arm, the treadle its clawed feet, the golden scrollwork like tribal markings, thread like drool; background: a tailor's shop",
           "serie": "Bricolage"
         },
         {
           "id": null,
           "rarete": "commun",
-          "sujet": "a brass pocket watch"
+          "serie": "Maison",
+          "sujet": "a brass gramophone turned monster: the horn is a gaping mouth, the turntable a single eye"
         },
         {
           "id": null,
           "rarete": "commun",
-          "sujet": "a ship in a bottle"
-        },
-        {
-          "id": null,
-          "rarete": "commun",
-          "sujet": "an old camera with leather case"
-        },
-        {
-          "id": null,
-          "rarete": "commun",
-          "sujet": "a gramophone with a brass horn"
+          "serie": "Maison",
+          "sujet": "an old bellows camera turned monster: the lens is its single eye, the bellows a ribbed neck"
         }
       ]
     }
-  ]
+  ],
+  "styleV1_kawaii": "Each panel is a bold flat cartoon MASCOT: the object PERSONIFIED as an adorable tiny monster — two big friendly round eyes, a small happy smile, and when it fits, tiny stubby arms and feet — playful kawaii style, thick dark-brown outlines, cel shading, warm vintage palette, the character centered and large on a plain soft cream background.",
+  "retouches": "Retouches Guillaume 2026-09-05 : tourne-disque (un seul disque, œil au centre), baby-foot (yeux sur la face latérale seulement), stylo (œil flottant dans l'encre rouge sang), robe (2 jambes), cerf (plus monstre), planche 6 entière (scie sans main, bouche = dents). Cases retouchées seules → `--single=<id>` (carte-sheets/singles/, prioritaire à la découpe).",
+  "grille": 2,
+  "sheets_3x3_2026-09-04": "remplacées par 13 planches 2×2 le 2026-09-04 soir : en 3×3 chaque monstre tenait sur un neuvième de l'image et perdait son caractère (retour Guillaume, l'essai 2×2 était la référence)."
 }

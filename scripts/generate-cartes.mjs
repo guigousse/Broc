@@ -2,31 +2,30 @@
 /**
  * L'ART DES 50 CARTES — même principe que les timbres (2026-09-02, décision
  * Guillaume : « plusieurs sur 1 page puis redécoupage précis » pour limiter
- * les générations), puis refonte « vraie carte à jouer » le même soir :
+ * les générations), refondu le 2026-09-04 quand le cadre est devenu un FOND
+ * PEINT par rareté (`generate-fonds-cartes.mjs`) composé à l'écran par
+ * `CarteDuel` :
  *
- *   1. GABARIT PAR CARTE, dessiné ICI en SVG : carte portrait 3:4 à coins
- *      arrondis teintée aux couleurs de rareté (`getRarityColors`), fenêtre
- *      d'art centrale TRANSPARENTE, et les CARACTÉRISTIQUES RÉELLES du duel
- *      lues dans `src/data/duel/cartesDuel.ts` (toujours synchrones avec
- *      l'équilibrage) : COÛT en hexagone laiton (haut gauche), LOGO DE
- *      FAMILLE — l'icône lucide de la catégorie, celle de `CategorieIcon` —
- *      (haut droit), ATTAQUE en pastille or à l'épée (bas gauche), PV en
- *      cœur rouge (bas droit), losanges de rareté (1/2/3) + numéro x/50 au
- *      bas. Chiffres seulement : rien de localisé n'est cuit dans le webp.
- *   2. PLANCHES 3×3 générées par Gemini en 3:4, tous les objets PERSONNIFIÉS
- *      en petits monstres mignons (même mascotte que la couverture du
- *      classeur) → scripts/carte-sheets/<nom>.png.
- *   3. DÉCOUPE (marge rognée contre la gouttière), insertion sous le gabarit
- *      de chaque carte → public/cartes/<id>.webp.
+ *   1. PLANCHES 2×2 (`grille` du JSON ; 3×3 jusqu'au 2026-09-04 : trop petit,
+ *      les monstres y perdaient leur caractère) générées par Gemini en 4:3 — PAYSAGE, le ratio de la
+ *      fenêtre d'illustration des fonds —, tous les objets PERSONNIFIÉS en
+ *      petits monstres mignons → scripts/carte-sheets/<nom>.png.
+ *   2. DÉCOUPE (marge rognée contre la gouttière) → public/cartes/<id>.webp,
+ *      l'ILLUSTRATION SEULE. Plus de gabarit ici : cadre, chiffres, nom et
+ *      texte sont écrits par le composant, en 4 langues, sur les stats du
+ *      moment. Le webp ne contient rien qui puisse se périmer.
  *
  * Usage :
  *   node generate-cartes.mjs                    # tout (planches manquantes + découpe)
  *   node generate-cartes.mjs --sheet=planche1   # une planche
  *   node generate-cartes.mjs --slice-only       # re-découpe sans regénérer
- *   node generate-cartes.mjs --template-only    # 3 gabarits d'exemple (stats fictives)
  *   node generate-cartes.mjs --force            # regénère les planches existantes
+ *   node generate-cartes.mjs --single=carte.x   # UNE carte seule (retouche) → carte-sheets/singles/carte.x.png,
+ *                                               # prioritaire sur la cellule de planche à la découpe
+ *   node generate-cartes.mjs --model=flash      # (défaut : pro)
  *
- * Après coup : remplir PIECES_AVEC_IMAGE (src/lib/pieceImages.ts).
+ * Après coup : remplir PIECES_AVEC_IMAGE (src/lib/pieceImages.ts) — la
+ * découpe imprime la liste à coller.
  */
 
 import { GoogleGenAI } from "@google/genai";
@@ -38,150 +37,18 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const SHEETS_DIR = path.join(__dirname, "carte-sheets");
+/** Les retouches à l'unité : une planche entière regénérée pour une case
+ *  refusée perdrait les huit voisines validées (timbres 2026-09-02, même
+ *  leçon). Un single ici REMPLACE la cellule de planche à la découpe. */
+const SINGLES_DIR = path.join(SHEETS_DIR, "singles");
 const CONFIG_PATH = path.join(__dirname, "carte-prompts.json");
-const DUEL_PATH = path.join(PROJECT_ROOT, "src", "data", "duel", "cartesDuel.ts");
 const OUTPUT_DIR = path.join(PROJECT_ROOT, "public", "cartes");
 const ENV_PATH = path.join(PROJECT_ROOT, ".env");
 
-/* ── Icônes lucide, extraites des SOURCES du paquet ───────────────────────
-   `lucide-react` n'exporte pas ses fichiers d'icônes dans son champ
-   `exports` : on lit le .mjs et on évalue le littéral `__iconNode` (tableau
-   [tag, attrs] sans clés quotées — pas du JSON). */
-async function chargerIcone(nom) {
-  const src = await fs.readFile(
-    path.join(PROJECT_ROOT, "node_modules/lucide-react/dist/esm/icons", `${nom}.mjs`),
-    "utf8",
-  );
-  const m = src.match(/const __iconNode = (\[[\s\S]*?\n\]);/);
-  if (!m) throw new Error(`icône lucide illisible : ${nom}`);
-  return new Function(`return ${m[1]}`)();
-}
-
-function iconeSvg(node, cx, cy, taille, couleur, epaisseur = 2) {
-  const s = taille / 24;
-  const inner = node
-    .map(([tag, attrs]) => {
-      const a = Object.entries(attrs)
-        .filter(([k]) => k !== "key")
-        .map(([k, v]) => `${k}="${v}"`)
-        .join(" ");
-      return `<${tag} ${a}/>`;
-    })
-    .join("");
-  return `<g transform="translate(${cx - 12 * s} ${cy - 12 * s}) scale(${s})" fill="none" stroke="${couleur}" stroke-width="${epaisseur}" stroke-linecap="round" stroke-linejoin="round">${inner}</g>`;
-}
-
-/** Les logos de famille = les MÊMES icônes que `CategorieIcon` dans l'app. */
-const ICONE_SERIE = {
-  Musique: "disc-3",
-  "Jeux & Loisirs": "dice-5",
-  "Livres & Papeterie": "book-open",
-  Mode: "shirt",
-  Maison: "lamp",
-  "Objets d'art": "palette",
-  Bricolage: "wrench",
-};
-
-/* ── Gabarit d'une carte ─────────────────────────────────────────────────
-   480×640 (3:4), viewBox 75×100. Fenêtre d'art 5.5..69.5 × 14..72. Le bas
-   porte les stats ; le haut, le coût et le logo de famille. */
-const LARGEUR = 480;
-const HAUTEUR = 640;
-const FEN = { x: 5.5, y: 14, w: 64, h: 58 };
-const FEN_PX = {
-  x: Math.round((FEN.x / 75) * LARGEUR),
-  y: Math.round((FEN.y / 100) * HAUTEUR),
-  w: Math.round((FEN.w / 75) * LARGEUR),
-  h: Math.round((FEN.h / 100) * HAUTEUR),
-};
-
-/** Couleurs de `src/lib/rarityColors.ts` — recopiées, le script ne peut pas
- *  importer du TS. Toute divergence là-bas est à reporter ici. */
-const RARETES = {
-  commun: { outer: "#C9B98C", inner: "#D9C9A0", accent: "#F4ECD6", losanges: 1 },
-  rare: { outer: "#8FB2D0", inner: "#A8C2D9", accent: "#DCEAF3", losanges: 2 },
-  legendaire: { outer: "#D9A0A0", inner: "#E0B0B0", accent: "#F4D9D9", losanges: 3 },
-};
-const OR = "#b08d3c";
-const ENCRE = "#3a2a14";
-
-/** Un chiffre de stat : blanc, gras, cerné d'encre (paint-order). */
-function chiffre(x, y, taille, valeur) {
-  return `<text x="${x}" y="${y}" font-family="Helvetica, Arial, sans-serif" font-weight="800" font-size="${taille}" text-anchor="middle" fill="#fff" stroke="${ENCRE}" stroke-width="${taille * 0.14}" style="paint-order: stroke" >${valeur}</text>`;
-}
-
-function hexagone(cx, cy, r) {
-  const pts = Array.from({ length: 6 }, (_, i) => {
-    const a = (Math.PI / 3) * i - Math.PI / 2;
-    return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
-  });
-  return pts.join(" ");
-}
-
-function coeur(cx, cy, r) {
-  return `M ${cx} ${cy + r * 0.9}
-    C ${cx - r * 1.4} ${cy - r * 0.1} ${cx - r * 0.9} ${cy - r} ${cx} ${cy - r * 0.35}
-    C ${cx + r * 0.9} ${cy - r} ${cx + r * 1.4} ${cy - r * 0.1} ${cx} ${cy + r * 0.9} Z`;
-}
-
-/**
- * Le SVG complet d'une carte (cadre + stats), la fenêtre d'art en trou
- * alpha. `carte` : { rarete, cout, attaque, pv, serie, numero }.
- */
-function svgCarte(carte, icones) {
-  const c = RARETES[carte.rarete];
-  // Losanges de rareté, au centre bas entre les deux médaillons.
-  const losanges = [];
-  for (let i = 0; i < c.losanges; i++) {
-    const x = 37.5 + (i - (c.losanges - 1) / 2) * 5.4;
-    losanges.push(
-      `<path d="M ${x} 84.5 l 1.7 2 l -1.7 2 l -1.7 -2 Z" fill="${c.outer}" stroke="${OR}" stroke-width="0.3"/>`,
-    );
-  }
-  const filetOr =
-    carte.rarete === "legendaire"
-      ? `<rect x="2.6" y="2.6" width="69.8" height="94.8" rx="4.4" fill="none" stroke="${OR}" stroke-width="0.5"/>
-         <rect x="3.6" y="3.6" width="67.8" height="92.8" rx="3.9" fill="none" stroke="${OR}" stroke-width="0.3"/>`
-      : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${LARGEUR}" height="${HAUTEUR}" viewBox="0 0 75 100">
-  <defs>
-    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="${c.accent}"/>
-      <stop offset="1" stop-color="${c.inner}"/>
-    </linearGradient>
-    <mask id="m">
-      <rect width="75" height="100" rx="5" fill="white"/>
-      <rect x="${FEN.x}" y="${FEN.y}" width="${FEN.w}" height="${FEN.h}" rx="1.6" fill="black"/>
-    </mask>
-  </defs>
-  <g mask="url(#m)">
-    <rect width="75" height="100" rx="5" fill="url(#face)"/>
-    <rect x="0.6" y="0.6" width="73.8" height="98.8" rx="4.7" fill="none" stroke="${c.outer}" stroke-width="1.4"/>
-    ${filetOr}
-    <rect x="${FEN.x - 0.6} " y="${FEN.y - 0.6}" width="${FEN.w + 1.2}" height="${FEN.h + 1.2}" rx="2" fill="none" stroke="${c.outer}" stroke-width="1"/>
-  </g>
-
-  <!-- COÛT (énergie du duel) : hexagone laiton, haut gauche. -->
-  <polygon points="${hexagone(9.5, 8, 6.2)}" fill="${OR}" stroke="${ENCRE}" stroke-width="0.7"/>
-  ${chiffre(9.5, 10.6, 7.5, carte.cout)}
-
-  <!-- LOGO DE FAMILLE : l'icône de la catégorie, haut droit. -->
-  <circle cx="65.5" cy="8" r="5.8" fill="${c.accent}" stroke="${c.outer}" stroke-width="0.9"/>
-  ${iconeSvg(icones[ICONE_SERIE[carte.serie]], 65.5, 8, 7.2, ENCRE, 2.2)}
-
-  <!-- ATTAQUE : pastille or à l'épée, bas gauche. -->
-  <circle cx="10" cy="89" r="7.2" fill="#a65b2a" stroke="${ENCRE}" stroke-width="0.7"/>
-  ${iconeSvg(icones.sword, 5.9, 84.6, 4.6, "#f4ecd6", 2.6)}
-  ${chiffre(10.6, 92, 8.5, carte.attaque)}
-
-  <!-- PV : cœur rouge, bas droit. -->
-  <path d="${coeur(65, 89, 7.6)}" fill="#b23a3a" stroke="${ENCRE}" stroke-width="0.7"/>
-  ${chiffre(65, 92, 8.5, carte.pv)}
-
-  ${losanges.join("\n  ")}
-  <text x="37.5" y="94.5" font-family="Menlo, monospace" font-weight="700" font-size="3" text-anchor="middle" fill="${ENCRE}" opacity="0.75">${carte.numero} / 50</text>
-</svg>`;
-}
+/** Une illustration livrée : 4:3, de quoi remplir la fenêtre d'une fiche
+ *  à 2× sans peser (la fenêtre fait ~70 % de la carte, ~300 px en fiche). */
+const ILLU_W = 640;
+const ILLU_H = 480;
 
 /* ── Environnement ── */
 async function loadDotEnv() {
@@ -207,21 +74,6 @@ async function loadDotEnv() {
   }
 }
 
-/* ── Stats de duel, lues à la SOURCE ─────────────────────────────────────
-   `cartesDuel.ts` est du TS : on n'importe pas, on lit — une regex par
-   entrée `"carte.x": { cout: N, attaque: N, pv: N`. L'équilibrage du duel
-   reste la seule source de vérité, les webp se refont en --slice-only. */
-async function chargerStatsDuel() {
-  const src = await fs.readFile(DUEL_PATH, "utf8");
-  const stats = {};
-  const re = /"(carte\.[a-z0-9_]+)":\s*\{\s*cout:\s*(\d+),\s*attaque:\s*(\d+),\s*pv:\s*(\d+)/g;
-  let m;
-  while ((m = re.exec(src))) {
-    stats[m[1]] = { cout: +m[2], attaque: +m[3], pv: +m[4] };
-  }
-  return stats;
-}
-
 const MODEL_IDS = {
   pro: "gemini-3-pro-image-preview",
   flash: "gemini-2.5-flash-image",
@@ -230,7 +82,6 @@ const MODEL_IDS = {
 const args = process.argv.slice(2);
 const force = args.includes("--force");
 const sliceOnly = args.includes("--slice-only");
-const templateOnly = args.includes("--template-only");
 function flagValue(name, fallback) {
   const prefix = `--${name}=`;
   const hit = args.find((a) => a.startsWith(prefix));
@@ -238,88 +89,118 @@ function flagValue(name, fallback) {
 }
 const modelKey = flagValue("model", "pro");
 const seuleSheet = flagValue("sheet", null);
+const single = flagValue("single", null);
 
 /* ── Prompt d'une planche ── */
-function promptPlanche(sheet, style) {
+const EN_LETTRES = { 2: "TWO", 3: "THREE" };
+function promptPlanche(sheet, style, grille) {
   const sujets = sheet.cases.map((c, i) => `${i + 1}. ${c.sujet}`).join("\n");
+  const n = EN_LETTRES[grille];
   return [
-    "One single portrait image (3:4) containing a 3x3 grid of nine equal portrait panels separated by clean, thin, pure-white gutters (about 2% of the image width) and a pure-white outer margin of the same width.",
+    `One single landscape image (4:3) containing a grid of EXACTLY ${n} COLUMNS and EXACTLY ${n} ROWS — ${grille * grille} equal landscape panels, no more, no fewer — separated by clean, thin, pure-white gutters (about 2% of the image width) and a pure-white outer margin of the same width.`,
     style,
-    "Each illustration completely fills its own panel edge to edge (full bleed), subject centered and large.",
+    "Each illustration completely fills its own panel edge to edge (full bleed), the character centered, large, and entirely visible inside its panel — nothing cut by the panel edge.",
     "No text, no letters, no numbers, no logos, no frames inside the panels — the card frame is added separately later.",
-    "Row by row, left to right, the nine panels depict:",
+    `Row by row, left to right, the ${grille * grille} panels depict:`,
     sujets,
   ].join("\n");
 }
 
-/* ── Découpe + composition ── */
-async function composerCarte(cellBuf, carte, icones) {
-  const gabarit = await sharp(Buffer.from(svgCarte(carte, icones)))
-    .png()
-    .toBuffer();
-  const cell = await sharp(cellBuf)
-    .resize(FEN_PX.w + 6, FEN_PX.h + 6, { fit: "cover" })
-    .toBuffer();
-  const rendu = await sharp({
-    create: {
-      width: LARGEUR,
-      height: HAUTEUR,
-      channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    },
-  })
-    .composite([
-      { input: cell, left: FEN_PX.x - 3, top: FEN_PX.y - 3 },
-      { input: gabarit, left: 0, top: 0 },
-    ])
-    .webp({ quality: 90 })
-    .toBuffer();
-  await fs.writeFile(path.join(OUTPUT_DIR, `${carte.id}.webp`), rendu);
-  console.log(`  ✂️  ${carte.id}.webp (${Math.round(rendu.length / 1024)} kB)`);
+/* ── Prompt d'une carte seule (retouche) ── */
+function promptSingle(sujet, style) {
+  return [
+    "One single landscape illustration (4:3), full bleed, no border, no frame.",
+    style,
+    "The character centered, large, and entirely visible — nothing cut by the edge.",
+    "No text, no letters, no numbers, no logos.",
+    `It depicts: ${sujet}`,
+  ].join("\n");
 }
 
-async function decouperPlanche(sheet, statsDuel, icones, numeroDepart) {
+/* ── Garde de grille ── */
+/** Compte les colonnes et lignes de cases en repérant les gouttières :
+ *  une colonne (ligne) de pixels quasi tous blancs, hors marge extérieure. */
+async function compterGrille(src, W, H) {
+  const { data } = await sharp(src).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const blanc = (i) => data[i] > 235 && data[i + 1] > 235 && data[i + 2] > 235;
+  const colBlanche = new Array(W).fill(0);
+  const ligBlanche = new Array(H).fill(0);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (blanc((y * W + x) * 3)) { colBlanche[x]++; ligBlanche[y]++; }
+    }
+  }
+  const runs = (tab, total) => {
+    // Une gouttière = série contiguë de colonnes blanches à ≥ 92 %, qui ne
+    // touche pas le bord (la marge). Les cases = les intervalles entre.
+    const estG = tab.map((n) => n / total >= 0.92);
+    let n = 0, dedans = false, debut = 0;
+    for (let i = 0; i < estG.length; i++) {
+      if (estG[i] && !dedans) { dedans = true; debut = i; }
+      if (!estG[i] && dedans) { dedans = false; if (debut > 0) n++; }
+    }
+    return n + 1;
+  };
+  return { colonnes: runs(colBlanche, H), lignes: runs(ligBlanche, W) };
+}
+
+/* ── Découpe ── */
+async function decouperPlanche(sheet, G) {
   const sheetPath = path.join(SHEETS_DIR, `${sheet.nom}.png`);
   let src;
   try {
     src = await fs.readFile(sheetPath);
   } catch {
     console.error(`❌  planche absente : ${sheetPath}`);
-    return 0;
+    return [];
   }
   const { width: W, height: H } = await sharp(src).metadata();
-  const cellW = Math.floor(W / 3);
-  const cellH = Math.floor(H / 3);
+  // Garde : Gemini a déjà rendu une planche en 4×3 malgré la consigne
+  // (2026-09-04, planches 5 et 6). Une découpe en tiers y serait fausse
+  // partout : on compte les gouttières blanches avant de couper.
+  const grille = await compterGrille(src, W, H);
+  if (grille.colonnes !== G || grille.lignes !== G) {
+    console.error(`❌  ${sheet.nom} : grille ${grille.colonnes}×${grille.lignes} au lieu de ${G}×${G} — à regénérer (--force --sheet=${sheet.nom})`);
+    process.exitCode = 1;
+    return [];
+  }
+  const cellW = Math.floor(W / G);
+  const cellH = Math.floor(H / G);
+  // Rognage : la gouttière blanche n'est jamais exactement à 2 %, et Gemini
+  // dessine parfois un liseré au bord de la case malgré la consigne.
   const inset = Math.round(cellW * 0.05);
 
-  let n = 0;
+  const ids = [];
   for (let i = 0; i < sheet.cases.length; i++) {
-    const { id, rarete, serie } = sheet.cases[i];
+    const { id } = sheet.cases[i];
     if (!id) continue;
-    const stats = statsDuel[id];
-    if (!stats) {
-      console.error(`❌  ${id} absent de cartesDuel.ts`);
-      process.exitCode = 1;
-      continue;
+    const col = i % G;
+    const row = Math.floor(i / G);
+    let source = sharp(src).extract({
+      left: col * cellW + inset,
+      top: row * cellH + inset,
+      width: cellW - 2 * inset,
+      height: cellH - 2 * inset,
+    });
+    try {
+      const singleBuf = await fs.readFile(path.join(SINGLES_DIR, `${id}.png`));
+      // Même rognage que la cellule : Gemini borde parfois d'un liseré.
+      const m = await sharp(singleBuf).metadata();
+      const ins = Math.round(m.width * 0.03);
+      source = sharp(singleBuf).extract({ left: ins, top: ins, width: m.width - 2 * ins, height: m.height - 2 * ins });
+      console.log(`  🔁 ${id} : single (retouche) à la place de la cellule`);
+    } catch {
+      // pas de single : la cellule de planche
     }
-    const col = i % 3;
-    const row = Math.floor(i / 3);
-    const cell = await sharp(src)
-      .extract({
-        left: col * cellW + inset,
-        top: row * cellH + inset,
-        width: cellW - 2 * inset,
-        height: cellH - 2 * inset,
-      })
+    const rendu = await source
+      .resize(ILLU_W, ILLU_H, { fit: "cover" })
+      .webp({ quality: 88 })
       .toBuffer();
-    await composerCarte(
-      cell,
-      { id, rarete, serie, numero: numeroDepart + n, ...stats },
-      icones,
-    );
-    n++;
+    await fs.writeFile(path.join(OUTPUT_DIR, `${id}.webp`), rendu);
+    console.log(`  ✂️  ${id}.webp (${Math.round(rendu.length / 1024)} kB)`);
+    ids.push(id);
   }
-  return n;
+  return ids;
 }
 
 /* ── Main ── */
@@ -328,31 +209,10 @@ async function main() {
   await fs.mkdir(SHEETS_DIR, { recursive: true });
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
 
-  const icones = {};
-  for (const nom of [...new Set(Object.values(ICONE_SERIE))]) {
-    icones[nom] = await chargerIcone(nom);
-  }
-  icones.sword = await chargerIcone("sword");
-
-  if (templateOnly) {
-    const exemples = [
-      { rarete: "commun", cout: 2, attaque: 2, pv: 3, serie: "Bricolage", numero: 43 },
-      { rarete: "rare", cout: 3, attaque: 2, pv: 4, serie: "Musique", numero: 6 },
-      { rarete: "legendaire", cout: 5, attaque: 4, pv: 5, serie: "Maison", numero: 36 },
-    ];
-    for (const ex of exemples) {
-      const p = path.join(__dirname, `carte-template-${ex.rarete}.png`);
-      await fs.writeFile(
-        p,
-        await sharp(Buffer.from(svgCarte(ex, icones))).png().toBuffer(),
-      );
-      console.log(`🖼  gabarit ${ex.rarete} → ${path.relative(PROJECT_ROOT, p)}`);
-    }
-    return;
-  }
-
   const config = JSON.parse(await fs.readFile(CONFIG_PATH, "utf8"));
-  const statsDuel = await chargerStatsDuel();
+  // 2×2 depuis le 2026-09-04 soir : en 3×3 chaque monstre tenait sur un
+  // neuvième de l'image et perdait son caractère (13 planches au lieu de 6).
+  const grille = config.grille ?? 3;
   let sheets = config.sheets;
   if (seuleSheet) {
     sheets = sheets.filter((s) => s.nom === seuleSheet);
@@ -362,7 +222,29 @@ async function main() {
     }
   }
 
-  if (!sliceOnly) {
+  if (single) {
+    const cas = config.sheets.flatMap((sh) => sh.cases).find((c) => c.id === single);
+    if (!cas) { console.error(`❌  --single="${single}" inconnue.`); process.exit(1); }
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const model = MODEL_IDS[modelKey];
+    if (!apiKey || !model) { console.error("❌  GEMINI_API_KEY ou modèle manquant."); process.exit(1); }
+    const ai = new GoogleGenAI({ apiKey });
+    console.log(`🎨  single ${single} — génération (${model})…`);
+    const response = await ai.models.generateContent({
+      model,
+      contents: promptSingle(cas.sujet, config.style),
+      ...(modelKey === "pro" ? { config: { imageConfig: { aspectRatio: "4:3", imageSize: "1K" } } } : {}),
+    });
+    const part = (response.candidates?.[0]?.content?.parts ?? []).find((p) => p.inlineData?.data);
+    if (!part) { console.error("❌  pas d'image dans la réponse"); process.exit(1); }
+    await fs.mkdir(SINGLES_DIR, { recursive: true });
+    await fs.writeFile(path.join(SINGLES_DIR, `${single}.png`), Buffer.from(part.inlineData.data, "base64"));
+    console.log(`✅  singles/${single}.png`);
+    // Puis la découpe de SA planche seulement, qui prendra le single.
+    sheets = config.sheets.filter((sh) => sh.cases.some((c) => c.id === single));
+  }
+
+  if (!sliceOnly && !single) {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       console.error("❌  GEMINI_API_KEY absente (cf. .env).");
@@ -389,9 +271,9 @@ async function main() {
       console.log(`🎨  planche ${sheet.nom} — génération (${model})…`);
       const requestConfig = {
         model,
-        contents: promptPlanche(sheet, config.style),
+        contents: promptPlanche(sheet, config.style, grille),
         ...(modelKey === "pro"
-          ? { config: { imageConfig: { aspectRatio: "3:4", imageSize: "2K" } } }
+          ? { config: { imageConfig: { aspectRatio: "4:3", imageSize: "2K" } } }
           : {}),
       };
       const response = await ai.models.generateContent(requestConfig);
@@ -409,26 +291,16 @@ async function main() {
     }
   }
 
-  // Le numéro imprimé = l'ordre GLOBAL des pochettes (1..50) : on le fait
-  // courir à travers les planches, cases vides exclues.
-  const numeroDepartPar = new Map();
-  let compteur = 1;
-  for (const sheet of config.sheets) {
-    numeroDepartPar.set(sheet.nom, compteur);
-    compteur += sheet.cases.filter((c) => c.id).length;
-  }
-
-  let total = 0;
+  const ids = [];
   for (const sheet of sheets) {
     console.log(`— découpe ${sheet.nom} —`);
-    total += await decouperPlanche(
-      sheet,
-      statsDuel,
-      icones,
-      numeroDepartPar.get(sheet.nom),
-    );
+    ids.push(...(await decouperPlanche(sheet, grille)));
   }
-  console.log(`\n${total} carte(s) écrites dans public/cartes/`);
+  console.log(`\n${ids.length} illustration(s) écrites dans public/cartes/`);
+  if (!seuleSheet) {
+    console.log("\nÀ coller dans PIECES_AVEC_IMAGE (src/lib/pieceImages.ts) :");
+    console.log(ids.sort().map((id) => `  "${id}",`).join("\n"));
+  }
 }
 
 main().catch((err) => {

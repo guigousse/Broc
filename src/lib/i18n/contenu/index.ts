@@ -15,6 +15,9 @@ import { OBJETS_EL } from "./el/objets";
 import { TIMBRES_EN } from "./en/timbres";
 import { TIMBRES_ES } from "./es/timbres";
 import { TIMBRES_EL } from "./el/timbres";
+import { CARTES_EN } from "./en/cartes";
+import { CARTES_ES } from "./es/cartes";
+import { CARTES_EL } from "./el/cartes";
 import { BROCANTES_EN } from "./en/brocantes";
 import { BROCANTES_ES } from "./es/brocantes";
 import { BROCANTES_EL } from "./el/brocantes";
@@ -62,12 +65,19 @@ const OBJETS: Record<LocaleTraduite, Record<string, string>> = {
   el: OBJETS_EL,
 };
 
-/** Classeur de cartes & album de timbres (2026-08-30) : table dédiée aux timbres
- * (les cartes empruntent le nom de leur objet source dans `OBJETS`). */
+/** Classeur de cartes & album de timbres (2026-08-30) : tables dédiées. Les
+ * cartes ont d'abord emprunté le nom de leur objet source dans `OBJETS` ;
+ * depuis le 2026-09-04 chacune porte le nom de son petit monstre, un jeu de
+ * mots PAR LANGUE (`cartes.ts`), avec l'objet source en repli. */
 const TIMBRES_TRAD: Record<LocaleTraduite, Record<string, string>> = {
   en: TIMBRES_EN,
   es: TIMBRES_ES,
   el: TIMBRES_EL,
+};
+const CARTES_TRAD: Record<LocaleTraduite, Record<string, string>> = {
+  en: CARTES_EN,
+  es: CARTES_ES,
+  el: CARTES_EL,
 };
 
 /** Nom localisé d'un template d'objet. Id inconnu → id brut (marqueur repérable). */
@@ -93,8 +103,8 @@ export function nomObjet(
     if (estPiece(o.templateId)) {
       const piece = getPiece(o.templateId);
       const trad =
-        piece?.album === "classeur" && piece.source
-          ? OBJETS[locale][piece.source]
+        piece?.album === "classeur"
+          ? (CARTES_TRAD[locale][o.templateId] ?? (piece.source ? OBJETS[locale][piece.source] : undefined))
           : TIMBRES_TRAD[locale][o.templateId];
       if (trad) return trad;
     } else {
@@ -102,6 +112,8 @@ export function nomObjet(
       if (trad) return trad;
     }
   }
+  // Une pièce a son propre nom FR (celui de la carte, pas de l'objet source).
+  if (estPiece(o.templateId)) return getPiece(o.templateId)?.nom ?? o.nom;
   return getTemplate(o.templateId)?.nom ?? o.nom;
 }
 

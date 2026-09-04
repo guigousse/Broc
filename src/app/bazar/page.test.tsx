@@ -433,7 +433,7 @@ describe("BazarPage — la cérémonie d'ouverture d'un paquet", () => {
   it("un achat de paquet réussi affiche la cérémonie", () => {
     acheterAuBazar.mockReturnValue({
       ok: true,
-      pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"],
+      pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.boite_de_construction_metallique_no_3"],
     });
     render(<BazarPage />);
     acheterLaPochetteDeCartes();
@@ -459,7 +459,7 @@ describe("BazarPage — la cérémonie d'ouverture d'un paquet", () => {
   it("« Ranger » referme la cérémonie", () => {
     acheterAuBazar.mockReturnValue({
       ok: true,
-      pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"],
+      pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.boite_de_construction_metallique_no_3"],
     });
     render(<BazarPage />);
     acheterLaPochetteDeCartes();
@@ -474,7 +474,7 @@ describe("BazarPage — la cérémonie d'ouverture d'un paquet", () => {
   it("« Voir » referme la cérémonie et ouvre le classeur de cartes", () => {
     acheterAuBazar.mockReturnValue({
       ok: true,
-      pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"],
+      pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.boite_de_construction_metallique_no_3"],
     });
     render(<BazarPage />);
     acheterLaPochetteDeCartes();

@@ -28,9 +28,9 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
         pieces={[
           "carte.marteau_menuisier",
           "carte.marteau_menuisier",
-          "carte.risk_1992",
+          "carte.boite_de_construction_metallique_no_3",
         ]}
-        quantitesAvant={{ "carte.risk_1992": 1 }}
+        quantitesAvant={{ "carte.boite_de_construction_metallique_no_3": 1 }}
         onVoirAlbum={onVoir}
         onClose={onClose}
       />,
@@ -135,7 +135,7 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
         pieces={[
           "carte.marteau_menuisier",
           "carte.marteau_menuisier",
-          "carte.risk_1992",
+          "carte.boite_de_construction_metallique_no_3",
         ]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
@@ -163,7 +163,7 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
         pieces={[
           "carte.marteau_menuisier",
           "carte.marteau_menuisier",
-          "carte.risk_1992",
+          "carte.boite_de_construction_metallique_no_3",
         ]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
@@ -184,7 +184,7 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
         pieces={[
           "carte.marteau_menuisier",
           "carte.marteau_menuisier",
-          "carte.risk_1992",
+          "carte.boite_de_construction_metallique_no_3",
         ]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
