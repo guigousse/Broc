@@ -3,8 +3,9 @@
 import type { CSSProperties } from "react";
 import { Gamepad2, Landmark, PawPrint, Plane, Star, type LucideIcon } from "lucide-react";
 import { getPiece, type PieceCollection, type ThemeTimbre } from "@/data/pieces";
-import { getItemImageUrl, getItemThumbUrl } from "@/lib/itemImages";
 import { pieceImageSrc } from "@/lib/pieceImages";
+import { CarteDuel } from "@/components/pieces/CarteDuel";
+import { RATIO_CARTE } from "@/data/duel/gabaritCarte";
 import { getRarityColors } from "@/lib/rarityColors";
 
 export const ICONE_THEME_TIMBRE: Record<ThemeTimbre, LucideIcon> = {
@@ -24,6 +25,20 @@ export function PieceVisuel({ id, size, grise = false, thumb = false }: Props) {
     filter: grise ? "grayscale(1) opacity(0.55)" : undefined,
   };
   if (!piece) return <div data-testid="piece-visuel" data-piece-source="placeholder" style={box} />;
+  // Une carte est TOUJOURS composée par `CarteDuel` (fond peint par rareté +
+  // textes vivants), qu'elle ait son art ou l'objet source en attendant :
+  // la source dit seulement d'où vient l'illustration (2026-09-04).
+  if (piece.album === "classeur") {
+    return (
+      <div data-testid="piece-visuel" data-piece-source={src ? "image" : "placeholder"} style={{ ...box, display: "grid", placeItems: "center" }}>
+        {/* La carte tient dans la boîte EN HAUTEUR (la fiche offre un carré,
+            la pochette un 5/7) : hauteur pleine, largeur déduite du ratio. */}
+        <div style={{ height: "100%", maxWidth: "100%", aspectRatio: RATIO_CARTE }}>
+          <CarteDuel id={id} thumb={thumb} />
+        </div>
+      </div>
+    );
+  }
   if (src) {
     return (
       <div data-testid="piece-visuel" data-piece-source="image" style={box}>
@@ -34,21 +49,7 @@ export function PieceVisuel({ id, size, grise = false, thumb = false }: Props) {
   }
   return (
     <div data-testid="piece-visuel" data-piece-source="placeholder" style={box}>
-      {piece.album === "classeur" ? <CartePlaceholder piece={piece} thumb={thumb} /> : <TimbrePlaceholder piece={piece} />}
-    </div>
-  );
-}
-
-/** Carte à jouer : l'objet source « toonifié » par un filtre, dans un cadre teinté par la rareté. */
-function CartePlaceholder({ piece, thumb }: { piece: PieceCollection; thumb: boolean }) {
-  const couleurs = getRarityColors(piece.rarete);
-  const src = piece.source ? (thumb ? (getItemThumbUrl(piece.source) ?? getItemImageUrl(piece.source)) : getItemImageUrl(piece.source)) : null;
-  return (
-    <div style={{ width: "100%", height: "100%", borderRadius: "6%", border: `3px solid ${couleurs.outer}`, background: "var(--paper-100)", boxSizing: "border-box", padding: "8%", display: "grid", placeItems: "center", overflow: "hidden" }}>
-      {src && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt="" draggable={false} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", filter: "saturate(1.4) contrast(1.1)" }} />
-      )}
+      <TimbrePlaceholder piece={piece} />
     </div>
   );
 }

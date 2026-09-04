@@ -20,6 +20,7 @@ import {
 import { FichePiece } from "@/components/albums/FichePiece";
 import { LivretReglesSheet } from "@/components/albums/LivretReglesSheet";
 import { PieceVisuel } from "@/components/pieces/PieceVisuel";
+import { RATIO_CARTE } from "@/data/duel/gabaritCarte";
 import { CATEGORIE_ALBUM, getPiece, piecesDe } from "@/data/pieces";
 import {
   albumsDe,
@@ -81,8 +82,9 @@ const HORS_GRILLE_PX = 204;
 const CHROME_APP = `(${PANNEAU_TOP}) - (${PANNEAU_BOTTOM})`;
 
 /* Pleine largeur, mais plafonnée par la hauteur disponible : une grille de
-   largeur W fait (W − 2·padding − 2·gap)·4/3 + 2·gap + 2·padding de haut
-   (3 lignes de cases 3/4), d'où W = (H − 44)·3/4 + 44 pour H donnée.
+   largeur W fait (W − 2·padding − 2·gap)·7/5 + 2·gap + 2·padding de haut
+   (3 lignes de cases 5/7, le format des fonds de carte depuis le
+   2026-09-04), d'où W = (H − 44)·5/7 + 44 pour H donnée.
    `minmax(0, 1fr)` : sans le `0`, la taille naturelle des images élargit les
    colonnes au-delà du conteneur (3ᵉ colonne coupée, vu le 2026-08-31). */
 const grille3x3: CSSProperties = {
@@ -91,7 +93,7 @@ const grille3x3: CSSProperties = {
   gap: GAP_PX,
   padding: PADDING_PX,
   width: "100%",
-  maxWidth: `calc((100dvh - ${CHROME_APP} - ${HORS_GRILLE_PX + 2 * GAP_PX + 2 * PADDING_PX}px) * 0.75 + ${2 * GAP_PX + 2 * PADDING_PX}px)`,
+  maxWidth: `calc((100dvh - ${CHROME_APP} - ${HORS_GRILLE_PX + 2 * GAP_PX + 2 * PADDING_PX}px) * ${5 / 7} + ${2 * GAP_PX + 2 * PADDING_PX}px)`,
   margin: "0 auto",
   boxSizing: "border-box",
   // La même feuille anthracite grenée que l'album de timbres (2026-09-03).
@@ -102,11 +104,11 @@ const grille3x3: CSSProperties = {
 
 /* La POCHETTE : une case bien délimitée sur la feuille anthracite — liseré
    translucide, fond à peine plus clair, creux d'ombre interne. `minWidth/
-   minHeight: 0` + `overflow: hidden` : la case garde sa boîte 3/4 quel que
+   minHeight: 0` + `overflow: hidden` : la case garde sa boîte 5/7 quel que
    soit le contenu. */
 const pochette: CSSProperties = {
   position: "relative",
-  aspectRatio: "3 / 4",
+  aspectRatio: RATIO_CARTE,
   minWidth: 0,
   minHeight: 0,
   overflow: "hidden",

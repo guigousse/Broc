@@ -70,7 +70,12 @@ describe("ClasseurOverlay", () => {
   // page sont des pochettes VIDES délimitées.
   it("affiche 2 cartes + 7 pochettes vides, le compteur et le badge ×N", () => {
     render(<ClasseurOverlay open onClose={() => {}} />);
-    expect(screen.getByText("2 / 50")).toBeTruthy();
+    // Le compteur du bas, pas le numéro « n / 50 » que chaque carte composée
+    // (`CarteDuel`) porte dans son cartouche depuis le 2026-09-04.
+    const compteurs = screen
+      .getAllByText("2 / 50")
+      .filter((el) => !el.closest('[data-testid="carte-duel"]'));
+    expect(compteurs).toHaveLength(1);
     expect(document.querySelectorAll('[data-testid="pochette"]')).toHaveLength(
       2,
     );
@@ -294,18 +299,24 @@ describe("ClasseurOverlay — plein écran", () => {
    *  travers les pages — cases « à venir » comprises. */
   it("les emplacements sont numérotés, en continu d'une page à l'autre", () => {
     render(<ClasseurOverlay open onClose={() => {}} />);
-    const grille = () => within(screen.getByTestId("page-classeur"));
+    // Les numéros de CASE seulement : une carte composée (`CarteDuel`) écrit
+    // aussi ses chiffres (coût, attaque, PV) dans la grille.
+    const numeros = () =>
+      within(screen.getByTestId("page-classeur"))
+        .queryAllByText(/^\d+$/)
+        .filter((el) => !el.closest('[data-testid="carte-duel"]'))
+        .map((el) => el.textContent);
     // Page 1 : numéros 1 à 9.
     for (const n of [1, 5, 9]) {
-      expect(grille().getByText(String(n))).toBeTruthy();
+      expect(numeros()).toContain(String(n));
     }
-    expect(grille().queryByText("10")).toBeNull();
+    expect(numeros()).not.toContain("10");
     // Dernière page (6) : numéros 46 à 54, cases « à venir » comprises.
     for (let i = 0; i < 5; i++) {
       fireEvent.click(screen.getByRole("button", { name: "Page suivante" }));
     }
-    expect(grille().getByText("46")).toBeTruthy();
-    expect(grille().getByText("54")).toBeTruthy();
+    expect(numeros()).toContain("46");
+    expect(numeros()).toContain("54");
   });
 
   it("les flèches de pagination n'ont ni cadre ni fond", () => {
@@ -319,14 +330,14 @@ describe("ClasseurOverlay — plein écran", () => {
     }
   });
 
-  it("les 9 cases partagent une boîte 3/4 que leur contenu ne peut pas agrandir", () => {
+  it("les 9 cases partagent une boîte 5/7 que leur contenu ne peut pas agrandir", () => {
     render(<ClasseurOverlay open onClose={() => {}} />);
     const grille = screen.getByTestId("page-classeur") as HTMLElement;
     expect(grille.style.gridTemplateColumns).toBe("repeat(3, minmax(0, 1fr))");
     const cases = Array.from(grille.children) as HTMLElement[];
     expect(cases).toHaveLength(9);
     for (const c of cases) {
-      expect(c.style.aspectRatio).toBe("3 / 4");
+      expect(c.style.aspectRatio).toBe("5 / 7");
       expect(c.style.minWidth).toBe("0px");
       expect(c.style.minHeight).toBe("0px");
       expect(c.style.overflow).toBe("hidden");

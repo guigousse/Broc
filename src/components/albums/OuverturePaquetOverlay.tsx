@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { PieceVisuel } from "@/components/pieces/PieceVisuel";
+import { RATIO_CARTE } from "@/data/duel/gabaritCarte";
 import { getPiece } from "@/data/pieces";
 import { nomObjet } from "@/lib/i18n/contenu";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -56,7 +57,7 @@ const rangee: CSSProperties = {
 
 const carteBox: CSSProperties = {
   width: "min(30vw, 108px)",
-  aspectRatio: "3 / 4",
+  aspectRatio: RATIO_CARTE,
   cursor: "pointer",
   transformStyle: "preserve-3d",
   transition: `transform ${ROTATION_MS}ms ease`,

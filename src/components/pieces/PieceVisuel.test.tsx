@@ -1,7 +1,16 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { PieceVisuel } from "./PieceVisuel";
+
+// Depuis le 2026-09-04 les 50 cartes ont leur art : pour tester le repli
+// « objet source toonifié », on retire le marteau de la liste déclarée.
+vi.mock("@/lib/pieceImages", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/lib/pieceImages")>();
+  const sans = new Set([...mod.PIECES_AVEC_IMAGE].filter((id) => id !== "carte.marteau_menuisier"));
+  return { ...mod, pieceImageSrc: (id: string, declarees: ReadonlySet<string> = sans) => mod.pieceImageSrc(id, declarees) };
+});
+
 
 afterEach(cleanup);
 
