@@ -56,6 +56,8 @@ export const el: DictionnaireUI = {
     permissionRequise: "Απαιτείται άδεια συστήματος",
     autoriser: "Αποδοχή",
     permissionAccordee: "Άδεια χορηγήθηκε ✓",
+    confidentialite: "Απόρρητο",
+    optionsConfidentialite: "Επιλογές απορρήτου (διαφημίσεις)",
     achats: "Αγορές",
     restaurerAchats: "Επαναφορά αγορών",
     restaurationEnCours: "Επαναφορά…",

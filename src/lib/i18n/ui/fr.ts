@@ -59,6 +59,8 @@ export const fr = {
     permissionRequise: "Permission système requise",
     autoriser: "Autoriser",
     permissionAccordee: "Permission accordée ✓",
+    confidentialite: "Confidentialité",
+    optionsConfidentialite: "Options de confidentialité (publicités)",
     achats: "Achats",
     restaurerAchats: "Restaurer les achats",
     restaurationEnCours: "Restauration…",
