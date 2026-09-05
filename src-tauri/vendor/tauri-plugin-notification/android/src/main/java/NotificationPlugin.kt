@@ -267,6 +267,19 @@ class NotificationPlugin(private val activity: Activity): Plugin(activity) {
     } else {
       if (getPermissionState(LOCAL_NOTIFICATIONS) !== PermissionState.GRANTED) {
         requestPermissionForAlias(LOCAL_NOTIFICATIONS, invoke, "permissionsCallback")
+      } else {
+        // PATCH BROC — la permission est DÉJÀ accordée : il n'y a pas de
+        // dialogue à ouvrir, mais il faut répondre quand même. L'amont
+        // (tauri-apps/plugins-workspace, branche v2 au 2026-09-06) sort ici
+        // sans résoudre ni rejeter, et la commande reste en suspens pour
+        // toujours. Or `run_mobile_plugin` côté Rust attend la réponse par un
+        // `recv()` BLOQUANT : chaque appel immobilise donc un worker tokio
+        // définitivement, et au bout de N appels — N = nombre de cœurs — plus
+        // aucune commande asynchrone du jeu ne répond (pubs, sauvegarde
+        // durable, chargement figé sur « Ouverture du local… »).
+        // Mesuré sur émulateur le 2026-09-06 ; garde de non-régression dans
+        // src/lib/notifications/permissionAndroid.test.ts.
+        permissionState(invoke)
       }
     }
   }
