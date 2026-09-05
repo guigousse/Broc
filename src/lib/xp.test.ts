@@ -10,7 +10,9 @@ import {
   auPlafondNiveau,
   crediterXPBrocanteur,
   JETONS_NIVEAU_MAX,
+  jetonsPrestigeDus,
   NIVEAU_BROCANTEUR_MAX,
+  XP_PAR_JETON_PRESTIGE,
   xpRequisPourNiveauBrocanteur,
   xpDuNiveauBrocanteur,
   XP_COUDE_NIVEAU,
@@ -189,7 +191,7 @@ describe("plafond de points à vie (COUT_TOTAL_COMPETENCES)", () => {
   });
 });
 
-describe("auPlafondNiveau — au niveau 100, l'XP n'a plus d'effet", () => {
+describe("auPlafondNiveau — au niveau 100, le niveau et les points ne bougent plus", () => {
   it("vrai au plafond seulement", () => {
     expect(auPlafondNiveau({ niveau: NIVEAU_BROCANTEUR_MAX - 1 })).toBe(false);
     expect(auPlafondNiveau({ niveau: NIVEAU_BROCANTEUR_MAX })).toBe(true);
@@ -225,14 +227,14 @@ describe("crediterXPBrocanteur — le niveau 100 verse ses Bazarcoins (2026-08-2
     expect(next.jetons).toBe(7 + JETONS_NIVEAU_MAX);
   });
 
-  it("un saut de plusieurs niveaux qui passe par le 100 ne verse qu'une fois", () => {
+  it("un saut qui passe par le 100 verse la prime une fois, puis 1 Ƶ par 500 XP d'excédent", () => {
     const s = createMockGameState({
       jetons: 0,
       brocanteur: { xp: xpDe(97), niveau: 97, pointsDisponibles: 0 },
     });
     const next = crediterXPBrocanteur(s, xpDe(100) - xpDe(97) + 5000);
     expect(next.brocanteur.niveau).toBe(100);
-    expect(next.jetons).toBe(JETONS_NIVEAU_MAX);
+    expect(next.jetons).toBe(JETONS_NIVEAU_MAX + 10);
   });
 
   it("un niveau ordinaire ne touche pas aux jetons", () => {
@@ -245,14 +247,14 @@ describe("crediterXPBrocanteur — le niveau 100 verse ses Bazarcoins (2026-08-2
     expect(next.jetons).toBe(3);
   });
 
-  it("déjà au plafond : l'XP s'accumule, aucun jeton de plus", () => {
+  it("déjà au plafond : l'XP s'accumule et 999 XP valent 1 Ƶ (le reste attend)", () => {
     const s = createMockGameState({
       jetons: 50,
       brocanteur: { xp: xpDe(100), niveau: 100, pointsDisponibles: 0 },
     });
     const next = crediterXPBrocanteur(s, 999);
     expect(next.brocanteur.xp).toBe(xpDe(100) + 999);
-    expect(next.jetons).toBe(50);
+    expect(next.jetons).toBe(51);
   });
 
   it("le point de compétence du niveau est versé comme avant", () => {
@@ -262,5 +264,67 @@ describe("crediterXPBrocanteur — le niveau 100 verse ses Bazarcoins (2026-08-2
     });
     const next = crediterXPBrocanteur(s, xpDe(5) - xpDe(4));
     expect(next.brocanteur.pointsDisponibles).toBe(2);
+  });
+});
+
+describe("prestige au-delà du niveau 100 — 1 Ƶ tous les 500 XP, à l'infini (2026-09-05)", () => {
+  const xpDe = (niveau: number) => xpRequisPourNiveauBrocanteur(niveau);
+  const auPlafond = (excedent: number) => ({
+    xp: xpDe(NIVEAU_BROCANTEUR_MAX) + excedent,
+    niveau: NIVEAU_BROCANTEUR_MAX,
+    pointsDisponibles: 0,
+  });
+
+  it("XP_PAR_JETON_PRESTIGE vaut 500", () => {
+    expect(XP_PAR_JETON_PRESTIGE).toBe(500);
+  });
+
+  it("jetonsPrestigeDus : 0 avant le plafond, ⌊excédent / 500⌋ au plafond", () => {
+    expect(jetonsPrestigeDus({ xp: xpDe(99) + 4000, niveau: 99, pointsDisponibles: 0 })).toBe(0);
+    expect(jetonsPrestigeDus(auPlafond(0))).toBe(0);
+    expect(jetonsPrestigeDus(auPlafond(499))).toBe(0);
+    expect(jetonsPrestigeDus(auPlafond(500))).toBe(1);
+    expect(jetonsPrestigeDus(auPlafond(1250))).toBe(2);
+  });
+
+  it("499 XP ne versent rien, le 500ᵉ point verse le jeton", () => {
+    const s = createMockGameState({ jetons: 0, brocanteur: auPlafond(0) });
+    const presque = crediterXPBrocanteur(s, 499);
+    expect(presque.jetons).toBe(0);
+    const pile = crediterXPBrocanteur(presque, 1);
+    expect(pile.jetons).toBe(1);
+  });
+
+  it("deux gains de 300 : rien au premier, 1 Ƶ au second (cumul 600)", () => {
+    const s = createMockGameState({ jetons: 0, brocanteur: auPlafond(0) });
+    const un = crediterXPBrocanteur(s, 300);
+    expect(un.jetons).toBe(0);
+    const deux = crediterXPBrocanteur(un, 300);
+    expect(deux.jetons).toBe(1);
+  });
+
+  it("un gros gain saute plusieurs paliers d'un coup : 1200 XP = 2 Ƶ", () => {
+    const s = createMockGameState({ jetons: 5, brocanteur: auPlafond(0) });
+    expect(crediterXPBrocanteur(s, 1200).jetons).toBe(7);
+  });
+
+  it("la boucle est infinie : le 40ᵉ palier paie comme le premier", () => {
+    const s = createMockGameState({ jetons: 0, brocanteur: auPlafond(500 * 39 + 250) });
+    expect(crediterXPBrocanteur(s, 250).jetons).toBe(1);
+  });
+
+  it("la barre au plafond repart à 0 tous les 500 XP", () => {
+    expect(progressionNiveauBrocanteur(auPlafond(0))).toBe(0);
+    expect(progressionNiveauBrocanteur(auPlafond(250))).toBe(0.5);
+    expect(progressionNiveauBrocanteur(auPlafond(500))).toBe(0);
+    expect(progressionNiveauBrocanteur(auPlafond(1375))).toBe(0.75);
+  });
+
+  it("detailProgressionBrocanteur au plafond : x / 500 dans le palier courant", () => {
+    expect(detailProgressionBrocanteur(auPlafond(1250))).toEqual({
+      dansNiveau: 250,
+      requisNiveau: 500,
+      manquant: 250,
+    });
   });
 });

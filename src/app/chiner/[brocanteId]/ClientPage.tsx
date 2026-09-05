@@ -56,7 +56,6 @@ import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import { indexObjetScenario, scenarioDeLEtape, tutorielActif } from "@/lib/tutoriel";
 import { SESSION_TUTORIEL } from "@/data/tutorielScenario";
-import { lignesXpDuBilan } from "@/lib/bilan/ceremonie";
 import { BilanSession, type LigneXp } from "@/components/mobile/bilan/BilanSession";
 import { degelerXpAffichage, gelerXpAffichage } from "@/lib/affichageGele";
 import {
@@ -536,17 +535,14 @@ export default function SessionChinePage() {
     router.push("/bureau");
   };
 
-  /** Décompte d'XP du bilan — muet si la session s'est ouverte au niveau
-   *  maximum : l'XP y est toujours créditée mais ne produit plus rien, et une
-   *  pastille qui s'envole vers une barre déjà pleine ne promet que du vide. */
-  const lignesXpBilan: readonly LigneXp[] = lignesXpDuBilan(
-    [
-      { cle: "achats", montant: xpSession.achats },
-      { cle: "decouvertes", montant: xpSession.decouvertes },
-      { cle: "negociations", montant: xpSession.negociations },
-    ],
-    instantaneXpRef.current,
-  );
+  /** Décompte d'XP du bilan. Au niveau maximum aussi : l'XP y remplit la
+   *  barre bleue de prestige (1 Ƶ tous les 500 XP), la pastille a donc
+   *  toujours une cible. */
+  const lignesXpBilan: readonly LigneXp[] = [
+    { cle: "achats", montant: xpSession.achats },
+    { cle: "decouvertes", montant: xpSession.decouvertes },
+    { cle: "negociations", montant: xpSession.negociations },
+  ];
 
   /** Occupation du stockage AVANT les achats de la session : on retranche les
    *  achats du total courant, ce qui laisse en place l'objet éventuellement

@@ -57,6 +57,7 @@ import { accepterChapitre } from "@/lib/quetes/principales";
 import { prochainLundi } from "@/lib/calendrier";
 import {
   crediterXPBrocanteur,
+  jetonsPrestigeDus,
   emptyBrocanteur,
   XP_DECOUVERTE_COLLECTION,
   XP_RESTAURATION_ETAPE,
@@ -402,6 +403,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // sauvegarder écraserait la partie du slot fraîchement activé avec
   // l'ancienne. Toute écriture est donc gardée sur cette appartenance.
   const slotEtatRef = useRef<NumeroSlot | null>(null);
+
+  // Prestige : au niveau 100, chaque tranche de 500 XP verse un Bazarcoin
+  // (`crediterXPBrocanteur`) et le joueur en est prévenu par un toast. Le
+  // verdict est pris ICI, sur l'état commité, plutôt qu'aux quatre robinets
+  // d'XP : un seul endroit, aucun oublié. Le compteur est dérivé de l'XP
+  // (`jetonsPrestigeDus`) et comparé à sa valeur précédente POUR LE MÊME
+  // slot — charger une autre save, ou la même, ne gagne rien et ne dit rien.
+  const prestigeVuRef = useRef<{ slot: NumeroSlot; dus: number } | null>(null);
+  useEffect(() => {
+    const slot = slotEtatRef.current;
+    if (!state || slot === null) {
+      prestigeVuRef.current = null;
+      return;
+    }
+    const dus = jetonsPrestigeDus(state.brocanteur);
+    const vu = prestigeVuRef.current;
+    prestigeVuRef.current = { slot, dus };
+    if (!vu || vu.slot !== slot || dus <= vu.dus) return;
+    const n = dus - vu.dus;
+    toast(
+      n === 1
+        ? raisonLocalisee("prestigeJeton")
+        : raisonLocalisee("prestigeJetons", { n }),
+      { type: "succes" },
+    );
+  }, [state, toast]);
 
   useEffect(() => {
     let cancelled = false;

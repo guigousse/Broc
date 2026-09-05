@@ -14,7 +14,6 @@ import { DoorOpen } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { ItemCard } from "@/components/ui/ItemCard";
-import { lignesXpDuBilan } from "@/lib/bilan/ceremonie";
 import { BilanSession, type LigneXp } from "@/components/mobile/bilan/BilanSession";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -1058,17 +1057,14 @@ export default function VitrineJourneePage() {
 
   const brocanteBg = brocante ? getBrocanteImageUrl(brocante.id) : null;
 
-  /** Décompte d'XP du bilan — muet si la journée s'est ouverte au niveau
-   *  maximum : l'XP y est toujours créditée mais ne produit plus rien, et une
-   *  pastille qui s'envole vers une barre déjà pleine ne promet que du vide. */
-  const lignesXpBilan: readonly LigneXp[] = lignesXpDuBilan(
-    [
-      { cle: "ventes", montant: xpSession.ventes },
-      { cle: "justePrix", montant: xpSession.justePrix },
-      { cle: "negociations", montant: xpSession.negociations },
-    ],
-    instantaneXpRef.current,
-  );
+  /** Décompte d'XP du bilan. Au niveau maximum aussi : l'XP y remplit la
+   *  barre bleue de prestige (1 Ƶ tous les 500 XP), la pastille a donc
+   *  toujours une cible. */
+  const lignesXpBilan: readonly LigneXp[] = [
+    { cle: "ventes", montant: xpSession.ventes },
+    { cle: "justePrix", montant: xpSession.justePrix },
+    { cle: "negociations", montant: xpSession.negociations },
+  ];
 
   /* Persona révélé : compétence Lecteur d'âmes, célébrité (toujours à visage
      découvert), ou journée de vente scriptée du tutoriel (les trois visages

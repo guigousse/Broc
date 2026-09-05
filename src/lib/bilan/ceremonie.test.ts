@@ -4,11 +4,9 @@ import {
   DECALAGE_ITEM_MS,
   PAUSE_FINALE_MS,
   VOL_MS,
-  lignesXpDuBilan,
   phasesEnvoiItems,
   phasesEnvoiXp,
 } from "./ceremonie";
-import { NIVEAU_BROCANTEUR_MAX } from "@/lib/xp";
 
 describe("phasesEnvoiItems — acte 1", () => {
   it("2 items et 2 lignes XP : envols décalés, atterrissages 620 ms plus tard", () => {
@@ -88,26 +86,5 @@ describe("phasesEnvoiXp — acte 2", () => {
       { at: 0, etape: { type: "degel" } },
       { at: PAUSE_FINALE_MS, etape: { type: "sortie" } },
     ]);
-  });
-});
-
-describe("lignesXpDuBilan — l'XP se tait au niveau maximum", () => {
-  const lignes = [
-    { cle: "ventes", montant: 40 },
-    { cle: "negociations", montant: 5 },
-  ];
-
-  it("en deçà du plafond : le décompte est rendu tel quel (même référence)", () => {
-    expect(lignesXpDuBilan(lignes, { niveau: NIVEAU_BROCANTEUR_MAX - 1 })).toBe(
-      lignes,
-    );
-  });
-
-  it("au plafond : plus aucune ligne, donc plus de pastille ni de vol", () => {
-    expect(lignesXpDuBilan(lignes, { niveau: NIVEAU_BROCANTEUR_MAX })).toEqual([]);
-  });
-
-  it("sans instantané d'entrée (session reprise à froid) : décompte conservé", () => {
-    expect(lignesXpDuBilan(lignes, null)).toBe(lignes);
   });
 });

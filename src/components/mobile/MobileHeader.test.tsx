@@ -14,6 +14,7 @@ import {
   gelerJetonsAffichage,
   gelerXpAffichage,
 } from "@/lib/affichageGele";
+import { NIVEAU_BROCANTEUR_MAX, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
 
 afterEach(() => {
   degelerXpAffichage();
@@ -83,6 +84,45 @@ describe("MobileHeader — bloc niveau", () => {
     expect(bloc.textContent).toBe("Niveau4");
     // Plus de préfixe « N » : le libellé au-dessus dit déjà de quoi il s'agit.
     expect(bloc.textContent).not.toContain("N4");
+  });
+});
+
+describe("MobileHeader — barre de prestige au niveau 100", () => {
+  const seuil100 = xpRequisPourNiveauBrocanteur(NIVEAU_BROCANTEUR_MAX);
+  const etatPlafond = (excedent: number) => ({
+    ...etat(NIVEAU_BROCANTEUR_MAX),
+    brocanteur: { niveau: NIVEAU_BROCANTEUR_MAX, xp: seuil100 + excedent, pointsDisponibles: 0 },
+  });
+
+  it("sous le plafond : pas de remplissage bleu, le laiton progresse seul", () => {
+    mockState = {
+      ...etat(4),
+      brocanteur: { niveau: 4, xp: xpRequisPourNiveauBrocanteur(4), pointsDisponibles: 0 },
+    };
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} />);
+    expect(document.querySelector("[data-testid='xp-prestige']")).toBeNull();
+    const laiton = document.querySelector("[data-testid='xp-laiton']") as HTMLElement;
+    expect(laiton.style.width).toBe("0%");
+  });
+
+  it("au plafond : laiton plein dessous, bleu superposé à la progression du palier", () => {
+    mockState = etatPlafond(250);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} />);
+    const laiton = document.querySelector("[data-testid='xp-laiton']") as HTMLElement;
+    expect(laiton.style.width).toBe("100%");
+    const bleu = document.querySelector("[data-testid='xp-prestige']") as HTMLElement;
+    expect(bleu.style.width).toBe("50%");
+    expect(bleu.style.background).toContain("--azur-400");
+  });
+
+  it("au plafond, palier tout juste bouclé : le bleu repart à 0", () => {
+    mockState = etatPlafond(1000);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} />);
+    const bleu = document.querySelector("[data-testid='xp-prestige']") as HTMLElement;
+    expect(bleu.style.width).toBe("0%");
   });
 });
 

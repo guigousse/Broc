@@ -8,7 +8,7 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { ENERGIE_MAX, energieCourante } from "@/lib/energie";
-import { emptyBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
+import { auPlafondNiveau, emptyBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
 import {
   useBudgetAffiche,
   useEnergieAffiche,
@@ -169,6 +169,7 @@ const xpNiveauStyle: CSSProperties = {
 };
 
 const xpTrackStyle: CSSProperties = {
+  position: "relative",
   width: 56,
   height: 5,
   background: "rgba(247,244,238,0.18)",
@@ -180,6 +181,19 @@ const xpFillStyle: CSSProperties = {
   display: "block",
   height: "100%",
   background: "var(--brass-500)",
+  transition: "width 300ms ease",
+};
+
+/**
+ * Au niveau 100 : le laiton reste plein (le niveau est bouclé) et la
+ * progression vers le prochain Bazarcoin de prestige se superpose en bleu —
+ * la couleur de la monnaie du Bazar, qu'elle annonce.
+ */
+const xpPrestigeStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  right: "auto",
+  background: "var(--azur-400)",
   transition: "width 300ms ease",
 };
 
@@ -244,11 +258,23 @@ export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
         <span style={xpNiveauStyle}>{brocanteurAffiche.niveau}</span>
         <span style={xpTrackStyle}>
           <span
+            data-testid="xp-laiton"
             style={{
               ...xpFillStyle,
-              width: `${Math.round(progressionNiveauBrocanteur(brocanteurAffiche) * 100)}%`,
+              width: auPlafondNiveau(brocanteurAffiche)
+                ? "100%"
+                : `${Math.round(progressionNiveauBrocanteur(brocanteurAffiche) * 100)}%`,
             }}
           />
+          {auPlafondNiveau(brocanteurAffiche) ? (
+            <span
+              data-testid="xp-prestige"
+              style={{
+                ...xpPrestigeStyle,
+                width: `${Math.round(progressionNiveauBrocanteur(brocanteurAffiche) * 100)}%`,
+              }}
+            />
+          ) : null}
         </span>
       </span>
     </>

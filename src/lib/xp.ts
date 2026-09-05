@@ -40,7 +40,10 @@ export const XP_PENTE_LOG =
   (XP_CIBLE_AU_COUDE - XP_BROCANTEUR_PALIER_1) / Math.log(XP_COUDE_NIVEAU);
 /** Intensité de la queue : ΔXP gagne C·(N−30)² par niveau au-delà du coude. */
 export const XP_QUEUE_C = 0.1;
-/** Niveau plafond : la progression s'arrête à 100 (l'XP au-delà est ignorée). */
+/**
+ * Niveau plafond : le niveau et les points s'arrêtent à 100. L'XP au-delà
+ * n'est PAS perdue : elle nourrit la boucle de prestige (`jetonsPrestigeDus`).
+ */
 export const NIVEAU_BROCANTEUR_MAX = 100;
 
 /** Coût du seul niveau `n` (n ≥ 1), arrondi à l'entier. */
@@ -93,14 +96,40 @@ export const POINTS_PAR_NIVEAU = 1;
 export const POINTS_BONUS_CHAPITRE = 2;
 
 /**
- * Le brocanteur est-il au plafond de niveau ? Au-delà, l'XP gagnée continue
- * de s'accumuler dans la save mais ne produit plus rien : ni niveau, ni point.
- * Les cérémonies qui la mettent en scène (décompte du bilan de session) s'en
- * servent pour se taire — une animation qui n'a aucun effet ne fait
- * qu'égarer le joueur.
+ * Le brocanteur est-il au plafond de niveau ? Au-delà, l'XP gagnée ne produit
+ * plus ni niveau ni point : elle remplit la barre de prestige, qui verse un
+ * Bazarcoin tous les `XP_PAR_JETON_PRESTIGE` et repart à zéro, sans fin.
  */
 export function auPlafondNiveau(b: Pick<BrocanteurState, "niveau">): boolean {
   return b.niveau >= NIVEAU_BROCANTEUR_MAX;
+}
+
+/* === Prestige : au-delà du niveau 100 ================================== */
+
+/**
+ * Coût d'un Bazarcoin de prestige. Décidé le 2026-09-05 : jusque-là l'XP au
+ * plafond s'accumulait « en silence », et une progression qui ne produit
+ * rien finit par décourager de jouer. 500 XP ≈ 5 à 10 journées de jeu au
+ * revenu mesuré par le simulateur (48 à 94 XP/jour) — une pièce, pas une
+ * pluie.
+ */
+export const XP_PAR_JETON_PRESTIGE = 500;
+
+/** XP accumulée au-delà du seuil du niveau 100 (0 sous le plafond). */
+function excedentPrestige(b: Pick<BrocanteurState, "xp" | "niveau">): number {
+  if (!auPlafondNiveau(b)) return 0;
+  return Math.max(0, b.xp - xpRequisPourNiveauBrocanteur(NIVEAU_BROCANTEUR_MAX));
+}
+
+/**
+ * Nombre TOTAL de Bazarcoins de prestige que cet état a rapportés depuis le
+ * passage au niveau 100. Dérivé de la seule XP, jamais stocké : la save n'a
+ * pas de compteur à migrer ni à désynchroniser, et `crediterXPBrocanteur`
+ * verse simplement la différence avant/après. Le header s'en sert aussi pour
+ * afficher son toast « +1 Ƶ » quand la valeur monte.
+ */
+export function jetonsPrestigeDus(b: BrocanteurState): number {
+  return Math.floor(excedentPrestige(b) / XP_PAR_JETON_PRESTIGE);
 }
 
 /**
@@ -150,7 +179,8 @@ export const JETONS_NIVEAU_MAX = 50;
 
 /**
  * Le SEUL robinet d'XP de la partie : verse l'XP au brocanteur (niveaux et
- * points) et, si le niveau 100 vient d'être franchi, ses Bazarcoins. Les
+ * points), la prime du niveau 100 quand il vient d'être franchi, puis les
+ * Bazarcoins de prestige (1 par tranche de 500 XP au-delà, sans fin). Les
  * appelants (vente, restauration, découverte, mission) ne touchent plus à
  * `brocanteur` directement — sinon le franchissement du plafond se jouerait
  * à quatre endroits et l'un d'eux finirait par l'oublier.
@@ -167,16 +197,27 @@ export function crediterXPBrocanteur<
   const franchitPlafond =
     state.brocanteur.niveau < NIVEAU_BROCANTEUR_MAX &&
     brocanteur.niveau >= NIVEAU_BROCANTEUR_MAX;
+  // Un gros gain peut sauter plusieurs paliers de 500 d'un coup : on verse la
+  // différence de paliers, pas « un jeton si franchi ».
+  const prestige =
+    jetonsPrestigeDus(brocanteur) - jetonsPrestigeDus(state.brocanteur);
   return {
     ...state,
     brocanteur,
-    jetons: franchitPlafond ? state.jetons + JETONS_NIVEAU_MAX : state.jetons,
+    jetons:
+      state.jetons + (franchitPlafond ? JETONS_NIVEAU_MAX : 0) + prestige,
   };
 }
 
-/** Progression vers le prochain niveau de Brocanteur (0..1). */
+/**
+ * Progression vers le prochain niveau de Brocanteur (0..1). Au plafond :
+ * progression vers le prochain Bazarcoin de prestige, qui repart à 0 à
+ * chaque palier de 500.
+ */
 export function progressionNiveauBrocanteur(b: BrocanteurState): number {
-  if (b.niveau >= NIVEAU_BROCANTEUR_MAX) return 1;
+  if (auPlafondNiveau(b)) {
+    return (excedentPrestige(b) % XP_PAR_JETON_PRESTIGE) / XP_PAR_JETON_PRESTIGE;
+  }
   const seuilCourant = xpRequisPourNiveauBrocanteur(b.niveau);
   const seuilProchain = xpRequisPourNiveauBrocanteur(b.niveau + 1);
   const span = seuilProchain - seuilCourant;
@@ -190,9 +231,14 @@ export function detailProgressionBrocanteur(b: BrocanteurState): {
   requisNiveau: number;
   manquant: number;
 } {
-  if (b.niveau >= NIVEAU_BROCANTEUR_MAX) {
-    // Au plafond : barre pleine, plus rien à grimper.
-    return { dansNiveau: 0, requisNiveau: 0, manquant: 0 };
+  if (auPlafondNiveau(b)) {
+    // Au plafond : le « niveau » courant est le palier de prestige en cours.
+    const dansNiveau = excedentPrestige(b) % XP_PAR_JETON_PRESTIGE;
+    return {
+      dansNiveau,
+      requisNiveau: XP_PAR_JETON_PRESTIGE,
+      manquant: XP_PAR_JETON_PRESTIGE - dansNiveau,
+    };
   }
   const seuilCourant = xpRequisPourNiveauBrocanteur(b.niveau);
   const seuilProchain = xpRequisPourNiveauBrocanteur(b.niveau + 1);

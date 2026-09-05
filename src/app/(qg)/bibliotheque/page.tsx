@@ -8,6 +8,7 @@ import { TreePicker } from "@/components/mobile/TreePicker";
 import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { useToast } from "@/components/ui/Toast";
+import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import {
@@ -92,6 +93,7 @@ export default function CompetencesPage() {
   const meta = getTreeMeta(tree);
   const treeDef = getTreeDef(tree);
   const xpProgress = progressionNiveauBrocanteur(state.brocanteur);
+  const auPlafond = auPlafondNiveau(state.brocanteur);
   const prochain = prochainDeblocage(state.brocanteur.niveau);
   const { dansNiveau, requisNiveau } = detailProgressionBrocanteur(
     state.brocanteur,
@@ -171,9 +173,24 @@ export default function CompetencesPage() {
                   style={{
                     height: "100%",
                     background: "var(--brass-700)",
-                    width: `${Math.round(xpProgress * 100)}%`,
+                    width: auPlafond ? "100%" : `${Math.round(xpProgress * 100)}%`,
                   }}
                 />
+                {/* Niveau 100 : le laiton reste plein et la progression vers
+                    le prochain Bazarcoin de prestige (1 Ƶ / 500 XP) se
+                    superpose en bleu, la couleur de la monnaie du Bazar. */}
+                {auPlafond ? (
+                  <div
+                    data-testid="xp-prestige"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      right: "auto",
+                      background: "var(--azur-600)",
+                      width: `${Math.round(xpProgress * 100)}%`,
+                    }}
+                  />
+                ) : null}
                 <span
                   style={{
                     position: "absolute",
@@ -190,15 +207,19 @@ export default function CompetencesPage() {
                     pointerEvents: "none",
                   }}
                 >
-                  {/* Au plafond, `detailProgressionBrocanteur` rend 0 / 0 :
-                      afficher « 0 / 0 XP » ferait lire une progression
-                      remise à zéro. La barre est pleine, on le dit. */}
-                  {auPlafondNiveau(state.brocanteur)
-                    ? d.bibliotheque.xpMaximum
-                    : tr(d.bibliotheque.xpProgression, {
-                        dansNiveau: dansNiveau.toLocaleString(locale),
-                        requisNiveau: requisNiveau.toLocaleString(locale),
-                      })}
+                  {/* Au plafond, le détail compte vers le prochain Bazarcoin
+                      (x / 500 XP) : le signe Ƶ dit ce que la barre bleue
+                      prépare. */}
+                  {tr(d.bibliotheque.xpProgression, {
+                    dansNiveau: dansNiveau.toLocaleString(locale),
+                    requisNiveau: requisNiveau.toLocaleString(locale),
+                  })}
+                  {auPlafond ? (
+                    <>
+                      {"\u00a0→\u00a0"}
+                      <BazarcoinIcon size={10} surClair />
+                    </>
+                  ) : null}
                 </span>
               </div>
               <div
