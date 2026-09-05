@@ -18,9 +18,12 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.app"
         android:usesCleartextTraffic="${usesCleartextTraffic}">
-        <!-- App ID AdMob Android. Valeur de TEST Google tant que l'app Android
-             n'existe pas dans la console AdMob ; le vrai vaut
-             ca-app-pub-6928338731034491~… (Task 8 du plan B). -->
+        <!-- ⚠ INCOHÉRENT AU 2026-09-05 : les trois blocs d'AdmobPlugin.kt sont
+             ceux de PRODUCTION, cet App ID est encore celui de TEST Google.
+             Le vrai, de la forme ca-app-pub-6928338731034491~…, est à relever
+             dans la console AdMob sur la fiche de l'app Broc Android.
+             Tant qu'il n'est pas posé ici, aucune impression réelle ne sera
+             comptée : ne pas envoyer cette build en production. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />

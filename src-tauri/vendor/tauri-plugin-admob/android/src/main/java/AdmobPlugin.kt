@@ -26,17 +26,19 @@ import com.google.android.ump.UserMessagingPlatform
 // Un emplacement inconnu ou vide retombe sur AD_UNIT_DEFAUT — le joueur garde
 // sa récompense, seule la ventilation est perdue.
 //
-// Bloc rewarded de TEST Google tant que les 3 blocs Android n'existent pas dans
-// la console AdMob (spec §10, étape 2). À remplacer par les vrais blocs
-// ca-app-pub-6928338731034491/… dès qu'ils sont créés (Task 8 du plan B).
-// L'émulateur est automatiquement un appareil de test GMA : les vrais blocs
-// pourront y être recettés sans générer de trafic invalide.
-private const val AD_UNIT_TEST = "ca-app-pub-3940256099942544/5224354917"
-private const val AD_UNIT_ENERGIE = AD_UNIT_TEST
+// Blocs de PRODUCTION de l'app AdMob Android, créés par Guillaume le 2026-09-05
+// au format « Avec récompense » (⚠ jamais « Interstitiel avec récompense » :
+// RewardedAd.load refuse un bloc d'un autre format, et le format n'est pas
+// modifiable après création — panne de la boîte mystère iOS du 2026-08-18).
+// Pour tout débogage, remettre le bloc rewarded de TEST Google
+// "ca-app-pub-3940256099942544/5224354917" : l'émulateur est automatiquement
+// appareil de test GMA, mais un VRAI téléphone qui clique ses propres pubs
+// vaut un bannissement du compte.
+private const val AD_UNIT_ENERGIE = "ca-app-pub-6928338731034491/5859045886"
 private val AD_UNITS: Map<String, String> = mapOf(
   "energie" to AD_UNIT_ENERGIE,
-  "boite-mystere" to AD_UNIT_TEST,
-  "restauration" to AD_UNIT_TEST,
+  "boite-mystere" to "ca-app-pub-6928338731034491/5167217647",
+  "restauration" to "ca-app-pub-6928338731034491/2265722130",
 )
 
 // Bloc servi quand l'emplacement est inconnu ou pas encore créé côté AdMob.
