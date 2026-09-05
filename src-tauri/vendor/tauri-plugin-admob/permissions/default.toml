@@ -1,3 +1,8 @@
 [default]
-description = "Permissions par défaut du plugin AdMob : init du SDK et affichage de rewarded ads."
-permissions = ["allow-initialize", "allow-show-rewarded-ad"]
+description = "Permissions par défaut du plugin AdMob : init du SDK, affichage de rewarded ads, options de confidentialité UMP."
+permissions = [
+  "allow-initialize",
+  "allow-show-rewarded-ad",
+  "allow-privacy-options-required",
+  "allow-show-privacy-options",
+]

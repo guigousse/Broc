@@ -113,6 +113,18 @@ et minSdk ≥ 23 (le nôtre est 24). Si le `build.gradle.kts` racine généré p
 Tauri porte un plugin Kotlin plus ancien, la version se surcharge dans le module du
 plugin ; c'est le risque CI de ce sous-projet, il est traité en premier.
 
+**Constaté en Task 1 (2026-09-05)** : le projet généré portait Kotlin 1.9.25 ; relevé à
+2.1.21. Mais `play-services-ads:25.4.0` est compilé avec des **métadonnées Kotlin
+2.3.0**, que le compilateur 2.1 refuse (« Module was compiled with an incompatible
+version of Kotlin »). Monter à 2.2+ est impossible : depuis Kotlin 2.2, `kotlinOptions {}`
+est une **erreur de compilation de script**, et quatre modules Gradle du registre Cargo
+l'utilisent encore (`tauri-api` de Tauri 2.11.2, `tauri-plugin-haptics`,
+`tauri-plugin-in-app-review`, `tauri-plugin-opener`), non éditables de façon
+reproductible en CI. Décision : **Kotlin 2.1.21 + `-Xskip-metadata-version-check`**
+dans le seul module admob. Les API du SDK appelées sont des classes Java ; la version
+des métadonnées Kotlin n'a aucun effet à l'exécution. À retirer quand Tauri passera à
+`compilerOptions {}`.
+
 ## 4. Comportement du plugin Kotlin
 
 Copie du pont Swift `AdmobBridge.swift`, invariants compris. Le texte ci-dessous est

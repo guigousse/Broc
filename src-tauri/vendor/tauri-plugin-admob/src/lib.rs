@@ -7,18 +7,18 @@ mod commands;
 mod error;
 mod models;
 
-#[cfg(target_os = "ios")]
+#[cfg(mobile)]
 mod mobile;
-#[cfg(not(target_os = "ios"))]
+#[cfg(desktop)]
 mod desktop;
 
-#[cfg(target_os = "ios")]
+#[cfg(mobile)]
 use mobile::Admob;
-#[cfg(not(target_os = "ios"))]
+#[cfg(desktop)]
 use desktop::Admob;
 
 pub use error::{Error, Result};
-pub use models::AdResult;
+pub use models::{AdResult, OptionsConfidentialite};
 
 /// Accès à l'état du plugin depuis les commandes.
 pub trait AdmobExt<R: Runtime> {
@@ -35,12 +35,14 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("admob")
         .invoke_handler(tauri::generate_handler![
             commands::initialize,
-            commands::show_rewarded_ad
+            commands::show_rewarded_ad,
+            commands::privacy_options_required,
+            commands::show_privacy_options
         ])
         .setup(|app, api| {
-            #[cfg(target_os = "ios")]
+            #[cfg(mobile)]
             let admob = mobile::init(app, api)?;
-            #[cfg(not(target_os = "ios"))]
+            #[cfg(desktop)]
             let admob = desktop::init(app, api)?;
             app.manage(admob);
             Ok(())

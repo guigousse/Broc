@@ -17,7 +17,7 @@
 - Lint : `npx eslint src` (pas `npm run lint`, cassé sous Next 16). Types : `npx tsc --noEmit`.
 - Rust cible Android : `scripts/android-cargo-check.sh -p tauri-plugin-admob` (créé en Task 1, il pose l'environnement NDK).
 - Build Android locale : `CARGO_PROFILE_DEV_DEBUG=0 npx tauri android build --debug --target x86_64` après `npm run build`. Prévoir ≥ 10 Gi libres (`df -h /`) ; 13 Gi au 2026-09-05.
-- Versions exactes : `com.google.android.gms:play-services-ads:25.4.0`, `com.google.android.ump:user-messaging-platform:4.0.0`, `org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.21` (le SDK exige Kotlin ≥ 2.1.0 ; le projet généré porte 1.9.25).
+- Versions exactes : `com.google.android.gms:play-services-ads:25.4.0`, `com.google.android.ump:user-messaging-platform:4.0.0`, `org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.21` (le SDK exige Kotlin ≥ 2.1.0 ; le projet généré porte 1.9.25). **Pas Kotlin 2.2+** : `kotlinOptions {}` y devient une erreur de script et quatre modules du registre Cargo (tauri-api 2.11.2, haptics, in-app-review, opener) l'utilisent. Le SDK portant des métadonnées Kotlin 2.3.0, le module admob compile avec `freeCompilerArgs += listOf("-Xskip-metadata-version-check")` (constaté en Task 1 le 2026-09-05).
 - Identifiants de TEST Google tant que Guillaume n'a pas fourni les vrais : App ID `ca-app-pub-3940256099942544~3347511713`, bloc rewarded `ca-app-pub-3940256099942544/5224354917`.
 - Noms des commandes : Rust/TS `initialize`, `show_rewarded_ad`, `privacy_options_required`, `show_privacy_options` ; Kotlin `initialize`, `showRewardedAd`, `privacyOptionsRequired`, `showPrivacyOptions` (c'est le nom Kotlin qui est passé à `run_mobile_plugin`).
 - `PLUGIN_IDENTIFIER = "com.guigousse.broc.admob"`, classe `AdmobPlugin`.

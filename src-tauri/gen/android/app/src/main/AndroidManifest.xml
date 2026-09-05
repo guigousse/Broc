@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- ⚠ Fichier généré par `tauri android init` mais ÉDITÉ À LA MAIN :
      `android:screenOrientation="portrait"` (le jeu est conçu en portrait, la
-     rotation casse la mise en page). Ne pas régénérer sans reporter ce
-     réglage. -->
+     rotation casse la mise en page) ; permission AD_ID et meta-data
+     APPLICATION_ID AdMob (sous-projet B — sans ce meta-data, le SDK plante
+     l'app au lancement). Ne pas régénérer sans reporter ces réglages. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Ajoutée de toute façon par le manifeste du SDK Google Mobile Ads ;
+         déclarée ici pour que la Data safety se lise depuis le dépôt. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <!-- AndroidTV support -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
@@ -14,6 +18,12 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.app"
         android:usesCleartextTraffic="${usesCleartextTraffic}">
+        <!-- App ID AdMob Android. Valeur de TEST Google tant que l'app Android
+             n'existe pas dans la console AdMob ; le vrai vaut
+             ca-app-pub-6928338731034491~… (Task 8 du plan B). -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
             android:screenOrientation="portrait"
