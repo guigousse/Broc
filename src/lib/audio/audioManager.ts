@@ -3,6 +3,7 @@ import {
   safeLocalStorageSet,
 } from "@/lib/storage/safeLocalStorage";
 import { inverserEtRogner } from "@/lib/audio/inverserSon";
+import type { Rarete } from "@/types/game";
 
 export interface AudioPrefs {
   volume: number;
@@ -65,6 +66,7 @@ export const VOLUME_BORNE_ARCADE = 0.55;
 
 /** Détonation d'un bouquet de feu d'artifice (écran de level-up). */
 export const SON_EXPLOSION = "/sounds/explosion.mp3";
+export const SON_DECHIRURE_PAQUET = "/sounds/dechirure-paquet.mp3";
 
 /**
  * Position de la détonation DANS le fichier, mesurée sur l'échantillon
@@ -804,6 +806,81 @@ class AudioManager {
       osc.start(t0);
       osc.stop(t0 + dur + 0.03);
     });
+  }
+
+  /**
+   * Le sceau du paquet Brocomon qu'on arrache : le premier froissement de
+   * /sounds/dechirure-paquet.mp3 (≈ 1 s, découpé d'un enregistrement de sac
+   * plastique). Précharger à l'ouverture de la cérémonie : le `await` sur
+   * le tampon décalerait le bruit par rapport à la bande qui s'envole.
+   */
+  async playDechirurePaquet(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer(SON_DECHIRURE_PAQUET);
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
+  /**
+   * La révélation d'une carte Brocomon, de plus en plus épique avec la
+   * rareté — même vocabulaire que les sons de chinage, superposable à la
+   * cloche de découverte (`playDecouverte`) d'une carte inédite :
+   *   - commun : le souffle du retournement (glissando grave) + une note ;
+   *   - rare : + l'arpège cristallin C6 E6 G6 ;
+   *   - légendaire : + une cloche grave C4/G4, un arpège plus long jusqu'au
+   *     C7 et trois éclats qui montent ensuite (~2 s).
+   */
+  playRevelationCarte(rarete: Rarete): void {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const ctx = this.ctx;
+    const master = this.master;
+    const now = ctx.currentTime;
+    const voix = (
+      type: OscillatorType,
+      freq: number,
+      t0: number,
+      dur: number,
+      g: number,
+      attaque = 0.012,
+      glissVers?: number,
+    ) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      if (glissVers) osc.frequency.exponentialRampToValueAtTime(glissVers, t0 + dur * 0.8);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(g, t0 + attaque);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.03);
+    };
+
+    // Le souffle du retournement : un glissando grave qui tombe, et la note
+    // qui « pose » la carte.
+    voix("sine", 220, now, 0.22, 0.22, 0.01, 90);
+    voix("triangle", 659.26, now + 0.08, 0.16, 0.12);
+    if (rarete === "commun") return;
+
+    if (rarete === "rare") {
+      [1046.5, 1318.5, 1568.0].forEach((f, i) => voix("triangle", f, now + 0.1 + i * 0.07, 0.3, 0.14));
+      return;
+    }
+
+    // Légendaire : cloche grave qui s'ouvre, arpège plus long, éclats.
+    voix("sine", 261.63, now + 0.05, 1.6, 0.2, 0.06);
+    voix("sine", 392.0, now + 0.17, 1.5, 0.16, 0.06);
+    [1046.5, 1318.5, 1568.0, 2093.0].forEach((f, i) => voix("triangle", f, now + 0.12 + i * 0.09, 0.42, 0.14));
+    [1174.66, 1479.98, 1760.0].forEach((f, i) => voix("triangle", f, now + 0.7 + i * 0.19, 0.55, 0.11));
   }
 
   /** Rareté (rare/lég./unique) : petit arpège cristallin ascendant, superposable. */

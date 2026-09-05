@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface ConfirmModalProps {
@@ -87,6 +88,14 @@ const btn = (variant: "ghost" | "primary" | "danger"): CSSProperties => ({
 /**
  * Modale de confirmation générique au style du jeu — remplace les
  * `window.confirm()` natifs (incohérents avec le thème, non stylables).
+ *
+ * Rendue en PORTAIL sur `document.body` (bug 2026-09-05) : un `position:
+ * fixed` se cale sur le premier ancêtre porteur d'un `transform`, d'un
+ * `filter` ou d'un `backdrop-filter` — ouverte depuis le bouton Recycler de
+ * la ligne du bas d'un album (absolue + translateY), la modale tenait dans
+ * le rectangle du bouton, 45 × 45 px, et le panneau en `overflow: hidden`
+ * rognait le reste. Hors de l'arbre, elle couvre l'écran quoi qu'il y ait
+ * au-dessus d'elle.
  */
 export function ConfirmModal({
   open,
@@ -99,8 +108,8 @@ export function ConfirmModal({
   danger = false,
 }: ConfirmModalProps) {
   const { d } = useLangue();
-  if (!open) return null;
-  return (
+  if (!open || typeof document === "undefined") return null;
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -129,6 +138,7 @@ export function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

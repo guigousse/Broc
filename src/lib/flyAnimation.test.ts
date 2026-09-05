@@ -38,6 +38,21 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
+describe("flyToTab — cloneDe", () => {
+  it("emporte une copie fidèle du nœud donné, à la place d'une image", () => {
+    mockMatchMedia(false);
+    const carte = document.createElement("div");
+    carte.innerHTML = '<span data-testid="temoin">Brocomon</span>';
+    flyToTab({ ...opts(), cloneDe: carte, sansCadre: true });
+    const clone = document.body.children[1] as HTMLElement;
+    expect(clone.querySelector('[data-testid="temoin"]')?.textContent).toBe("Brocomon");
+    // L'original n'a pas bougé : c'est une copie qui vole.
+    expect(carte.parentElement).toBeNull();
+    vi.advanceTimersByTime(620);
+    expect(document.body.children.length).toBe(1);
+  });
+});
+
 describe("flyToTab — prefers-reduced-motion", () => {
   it("sans reduced-motion : un clone est ajouté puis retiré, pulsation + son à la fin", () => {
     mockMatchMedia(false);

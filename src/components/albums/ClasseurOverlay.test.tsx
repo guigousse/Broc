@@ -152,6 +152,19 @@ describe("ClasseurOverlay", () => {
     expect(screen.getByTestId("fiche-visuel")).toBeTruthy();
   });
 
+  // Retour 2026-09-05 : la fiche d'une carte POSÉE n'a plus de bouton
+  // « Rendre au bac » (le lâcher hors classeur reste le chemin) ; une carte
+  // en vrac garde « Poser sur la page ».
+  it("la fiche d'une carte posée n'a plus de bouton Rendre au bac", () => {
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    const carte = screen.getAllByTestId("pochette")[0];
+    fireEvent.pointerDown(carte, { clientX: 50, clientY: 50, pointerId: 1 });
+    fireEvent.pointerUp(carte, { clientX: 52, clientY: 51, pointerId: 1 });
+    expect(screen.getByTestId("fiche-visuel")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Rendre au bac" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Poser sur la page" })).toBeNull();
+  });
+
   it("le bouton Règles ouvre le livret", () => {
     render(<ClasseurOverlay open onClose={() => {}} />);
     fireEvent.click(screen.getByRole("button", { name: "Règles" }));

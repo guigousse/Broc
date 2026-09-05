@@ -18,7 +18,8 @@ import { volumeAmbianceBazarForPos } from "@/components/bazar/bazarAudioCurves";
 import { destinationChiner, destinationEtaler } from "@/lib/porte";
 import { stockageEstPlein } from "@/lib/stockage";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { OuverturePaquetOverlay } from "@/components/albums/OuverturePaquetOverlay";
+import { OuverturePaquetCartesOverlay } from "@/components/albums/OuverturePaquetCartesOverlay";
+import { OuverturePochetteTimbresOverlay } from "@/components/albums/OuverturePochetteTimbresOverlay";
 import { ClasseurOverlay } from "@/components/albums/ClasseurOverlay";
 import { AlbumTimbresOverlay } from "@/components/albums/AlbumTimbresOverlay";
 import type { AlbumId } from "@/data/pieces";
@@ -234,16 +235,21 @@ export default function BazarPage() {
       {irisSortie}
 
       {/* La cérémonie d'ouverture, au-dessus de la fiche (zIndex 107 contre
-          105) : « Voir » la referme et ouvre directement l'album concerné,
-          « Ranger » la referme sans rien ouvrir de plus. */}
-      {paquetOuvert && (
-        <OuverturePaquetOverlay
+          105), une par album : le booster Brocomon à déchirer (2026-09-04),
+          l'enveloppe de timbres à ouvrir vers le haut (2026-09-05). Chacune
+          se referme d'elle-même après le « Ranger » et l'envol vers la
+          Collection. */}
+      {paquetOuvert && paquetOuvert.albumId === "classeur" && (
+        <OuverturePaquetCartesOverlay
           pieces={paquetOuvert.pieces}
           quantitesAvant={paquetOuvert.quantitesAvant}
-          onVoirAlbum={() => {
-            setAlbumOuvert(paquetOuvert.albumId);
-            setPaquetOuvert(null);
-          }}
+          onClose={() => setPaquetOuvert(null)}
+        />
+      )}
+      {paquetOuvert && paquetOuvert.albumId === "timbres" && (
+        <OuverturePochetteTimbresOverlay
+          pieces={paquetOuvert.pieces}
+          quantitesAvant={paquetOuvert.quantitesAvant}
           onClose={() => setPaquetOuvert(null)}
         />
       )}

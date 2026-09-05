@@ -105,9 +105,29 @@ describe("ArticleDetailBazar", () => {
       ),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Acheter pour 5 Bazarcoins" })).toBeTruthy();
-    // Aucun visuel d'objet ni d'engrenage : l'icône placeholder de l'album.
-    expect(screen.getByRole("dialog").querySelector("img")).toBeNull();
+    // Le paquet de cartes a son visuel Brocomon (2026-09-04), pas d'étoiles.
+    expect(screen.getByRole("dialog").querySelector("img")?.getAttribute("src")).toBe("/cartes/paquet.webp");
     expect(screen.queryByTestId("etoiles-fiche")).toBeNull();
+  });
+
+  // « Lorsque l'on clique sur le paquet, il doit s'afficher plus gros »
+  // (2026-09-05) : le booster prend une boîte plus haute que celle des
+  // objets, et la remplit.
+  it("le paquet de cartes s'affiche en grand dans la fiche", () => {
+    monter(PAQUET);
+    const img = screen.getByRole("dialog").querySelector("img") as HTMLImageElement;
+    expect(img.style.height).toBe("100%");
+    const boite = img.parentElement as HTMLElement;
+    expect(boite.style.height).toBe("42vh");
+    expect(boite.style.maxHeight).toBe("330px");
+  });
+
+  it("une fiche de pochette de timbres montre l'enveloppe, en grand aussi", () => {
+    monter({ genre: "paquet", album: "timbres", libelle: "Pochette de 3 timbres", prix: 5 });
+    const img = screen.getByRole("dialog").querySelector("img") as HTMLImageElement;
+    expect(img.getAttribute("src")).toBe("/timbres/pochette.webp");
+    expect(img.style.height).toBe("100%");
+    expect((img.parentElement as HTMLElement).style.maxHeight).toBe("330px");
   });
 
   // ── LA FICHE FLOTTE (refonte du 2026-08-26) ─────────────────────────────
@@ -221,6 +241,17 @@ describe("ArticleDetailBazar", () => {
       expect(objetEnVol()).toHaveLength(0);
       vi.advanceTimersByTime(DELAI_OBJET_MS + 10);
       expect(objetEnVol()).toHaveLength(1);
+    });
+
+    // Un paquet de cartes n'a pas de livraison (2026-09-05) : ses cartes se
+    // révèlent dans la cérémonie qui suit et s'envolent au « Ranger ».
+    it("un paquet paie, mais rien ne vole vers la Réserve et rien ne sonne l'arrivée", () => {
+      monter(PAQUET);
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
+      expect(audioManager.playCash).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(DELAI_OBJET_MS + 2000);
+      expect(objetEnVol()).toHaveLength(0);
+      expect(audioManager.playPickup).not.toHaveBeenCalled();
     });
 
     /**

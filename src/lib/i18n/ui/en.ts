@@ -928,6 +928,8 @@ export const en: DictionnaireUI = {
     nouveau: "New!",
     doublon: "×{n}",
     ranger: "Put away",
+    dechirer: "Swipe to tear open",
+    ouvrirPochette: "Swipe up to open",
     ouverture: "Opening",
     serie: "Series: {serie}",
     theme_voyage: "Travel",

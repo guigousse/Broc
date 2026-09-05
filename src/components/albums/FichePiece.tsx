@@ -2,22 +2,26 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { FicheObjet, ficheBackdrop } from "@/components/ui/FicheObjet";
-import { LigneDuel } from "@/components/albums/LigneDuel";
 import { PieceVisuel } from "@/components/pieces/PieceVisuel";
+import { RATIO_CARTE } from "@/data/duel/gabaritCarte";
 import { CATEGORIE_ALBUM, getPiece, type ThemeTimbre } from "@/data/pieces";
 import { nomObjet } from "@/lib/i18n/contenu";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleCategorie } from "@/lib/i18n/libelles";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
-import type { CategorieObjet } from "@/types/game";
 
 /* ── LA FICHE D'UNE PIÈCE (carte/timbre) ─────────────────────────────────
    Réutilise `FicheObjet` (né au Bazar, repris par le stockage puis la
    collection) : une pièce n'a ni prix de marché ni prix d'achat (elle ne se
-   vend/s'achète pas comme un objet), et son visuel n'est pas un `ItemSticker`
-   — c'est un `PieceVisuel` (carte à jouer toonifiée ou timbre dentelé), d'où
-   la prop `visuel` de `FicheObjet`. Se pose PAR-DESSUS un `AlbumShell`
-   (zIndex 106 > 105). */
+   vend/s'achète pas comme un objet), ni ÉTAT (pas d'étoiles), et son visuel
+   n'est pas un `ItemSticker` — c'est un `PieceVisuel` (carte composée ou
+   timbre dentelé), d'où la prop `visuel` de `FicheObjet`. Se pose PAR-DESSUS
+   un `AlbumShell` (zIndex 106 > 105).
+
+   Une CARTE porte déjà tout sur son propre fond — nom, catégorie, coût,
+   attaque, PV, texte d'effet : la fiche ne répète rien (ni thème, ni série,
+   ni ligne de duel) et lui laisse la place, en grand (retour Guillaume
+   2026-09-05). Un timbre garde sa ligne « Série » : le thème ne se lit pas
+   sur le timbre. */
 
 interface FichePieceProps {
   id: string;
@@ -36,6 +40,13 @@ const ligneSerie: CSSProperties = {
   textAlign: "center",
   color: "var(--brass-300)",
   textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+};
+
+/** La carte en grand : la hauteur de l'écran, au format 5:7, plafonnée. */
+const boiteCarte: CSSProperties = {
+  height: "52vh",
+  maxHeight: 420,
+  aspectRatio: RATIO_CARTE,
 };
 
 function libelleTheme(theme: ThemeTimbre, d: DictionnaireUI): string {
@@ -62,11 +73,7 @@ export function FichePiece({
   const { d, tr, locale } = useLangue();
   const piece = getPiece(id);
   if (!piece) return null;
-
-  const serie =
-    piece.album === "classeur"
-      ? libelleCategorie(piece.serie as CategorieObjet, d)
-      : libelleTheme(piece.serie as ThemeTimbre, d);
+  const carte = piece.album === "classeur";
 
   return (
     <div
@@ -80,17 +87,21 @@ export function FichePiece({
         categorie={CATEGORIE_ALBUM[piece.album]}
         nom={nomObjet({ templateId: id, nom: piece.nom }, locale)}
         rarete={piece.rarete}
-        etat="Très bon"
         prixMarche={null}
         prixAchat={null}
         visuel={<PieceVisuel id={id} />}
+        boiteVisuel={carte ? boiteCarte : undefined}
+        sansTheme={carte}
         onClose={onClose}
       >
-        <div style={ligneSerie}>
-          {tr(d.albums.serie, { serie })}
-          {quantite > 1 && <> · {tr(d.albums.doublon, { n: quantite })}</>}
-        </div>
-        {piece.album === "classeur" && <LigneDuel id={id} />}
+        {carte ? (
+          quantite > 1 && <div style={ligneSerie}>{tr(d.albums.doublon, { n: quantite })}</div>
+        ) : (
+          <div style={ligneSerie}>
+            {tr(d.albums.serie, { serie: libelleTheme(piece.serie as ThemeTimbre, d) })}
+            {quantite > 1 && <> · {tr(d.albums.doublon, { n: quantite })}</>}
+          </div>
+        )}
         {children}
       </FicheObjet>
     </div>

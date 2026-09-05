@@ -954,6 +954,8 @@ export const el: DictionnaireUI = {
     nouveau: "Νέο!",
     doublon: "×{n}",
     ranger: "Τακτοποίηση",
+    dechirer: "Σύρε για να σκίσεις",
+    ouvrirPochette: "Σύρε προς τα πάνω για να ανοίξεις",
     ouverture: "Άνοιγμα",
     serie: "Σειρά: {serie}",
     theme_voyage: "Ταξίδια",

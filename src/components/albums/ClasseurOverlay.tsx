@@ -836,20 +836,10 @@ export function ClasseurOverlay({
           quantite={album.pieces[fiche] ?? 0}
           onClose={() => setFiche(null)}
         >
-          {fiche in slots ? (
-            // Symétrie avec « Poser sur la page » : accessible au clavier,
-            // même chemin que le lâcher hors classeur.
-            <button
-              type="button"
-              style={poserBtn}
-              onClick={() => {
-                rendreCarteAuBac(fiche);
-                setFiche(null);
-              }}
-            >
-              {d.albums.rendreAuBac}
-            </button>
-          ) : (
+          {/* Une carte POSÉE n'a plus de bouton « Rendre au bac » (retour
+              2026-09-05) : le lâcher hors classeur reste le chemin. Une carte
+              en vrac garde « Poser sur la page ». */}
+          {!(fiche in slots) && (
             <button
               type="button"
               style={poserBtn}

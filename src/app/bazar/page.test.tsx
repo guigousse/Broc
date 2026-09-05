@@ -21,6 +21,7 @@ import { audioManager } from "@/lib/audio/audioManager";
 import { dureesIris, lireFlagIris } from "@/lib/transitionIris";
 import { initCollection } from "@/lib/collection";
 import { volumeAmbianceBazarForPos } from "@/components/bazar/bazarAudioCurves";
+import { DUREE_ENVOL_MS, ECART_ENVOL_MS } from "@/components/albums/OuverturePaquetCartesOverlay";
 
 const push = vi.fn();
 const replace = vi.fn();
@@ -430,7 +431,28 @@ describe("BazarPage — la cérémonie d'ouverture d'un paquet", () => {
     });
   }
 
-  it("un achat de paquet réussi affiche la cérémonie", () => {
+  /** Réduction de mouvement : le paquet Brocomon arrive déjà ouvert, ses
+   *  3 cartes retournées et les boutons Voir/Ranger présents d'emblée. */
+  function avecMouvementReduit(fn: () => void) {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query === "(prefers-reduced-motion: reduce)",
+      media: query,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+      onchange: null,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      fn();
+    } finally {
+      window.matchMedia = original;
+    }
+  }
+
+  it("un achat de paquet de CARTES affiche le paquet Brocomon scellé, à déchirer", () => {
     acheterAuBazar.mockReturnValue({
       ok: true,
       pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.boite_de_construction_metallique_no_3"],
@@ -439,7 +461,26 @@ describe("BazarPage — la cérémonie d'ouverture d'un paquet", () => {
     acheterLaPochetteDeCartes();
     const dialogs = screen.getAllByRole("dialog");
     expect(dialogs.some((el) => el.getAttribute("aria-label") === "Ouverture")).toBe(true);
-    expect(screen.getAllByTestId("carte-paquet")).toHaveLength(3);
+    expect(screen.getByTestId("paquet-scelle")).toBeTruthy();
+    expect(screen.queryAllByTestId("carte-paquet")).toHaveLength(0);
+  });
+
+  it("un achat de pochette de TIMBRES affiche l'enveloppe fermée, à ouvrir", () => {
+    (mockState as { albums: { timbres: { achete: boolean } } }).albums.timbres.achete = true;
+    acheterAuBazar.mockReturnValue({
+      ok: true,
+      pieces: ["timbre.renard_roux", "timbre.renard_roux", "timbre.renard_roux"],
+    });
+    render(<BazarPage />);
+    act(() => {
+      screen.getByRole("button", { name: "Pochette de 3 timbres" }).click();
+    });
+    act(() => {
+      screen.getByRole("button", { name: /^Acheter pour/ }).click();
+    });
+    expect(screen.queryByTestId("paquet-scelle")).toBeNull();
+    expect(screen.getByTestId("pochette").dataset.phase).toBe("fermee");
+    expect(screen.queryAllByTestId("timbre-paquet")).toHaveLength(0);
   });
 
   it("un achat de lot de pièces (pas un paquet) n'ouvre PAS la cérémonie", async () => {
@@ -456,34 +497,57 @@ describe("BazarPage — la cérémonie d'ouverture d'un paquet", () => {
     ).toBe(false);
   });
 
-  it("« Ranger » referme la cérémonie", () => {
+  it("« Ranger » fait s'envoler les cartes puis referme la cérémonie", () => {
+    vi.useFakeTimers();
     acheterAuBazar.mockReturnValue({
       ok: true,
       pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.boite_de_construction_metallique_no_3"],
     });
-    render(<BazarPage />);
-    acheterLaPochetteDeCartes();
+    avecMouvementReduit(() => {
+      render(<BazarPage />);
+      acheterLaPochetteDeCartes();
+    });
     act(() => {
       screen.getByRole("button", { name: "Ranger" }).click();
     });
-    expect(
-      screen.queryAllByRole("dialog").some((el) => el.getAttribute("aria-label") === "Ouverture"),
-    ).toBe(false);
+    // Les 3 vols vers la Collection s'enchaînent avant que le voile tombe.
+    const ouverte = () =>
+      screen.queryAllByRole("dialog").some((el) => el.getAttribute("aria-label") === "Ouverture");
+    expect(ouverte()).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(2 * ECART_ENVOL_MS + DUREE_ENVOL_MS + 50);
+    });
+    expect(ouverte()).toBe(false);
+    vi.useRealTimers();
   });
 
-  it("« Voir » referme la cérémonie et ouvre le classeur de cartes", () => {
+  it("ni le paquet de cartes ni la pochette de timbres n'ont de bouton Voir", () => {
     acheterAuBazar.mockReturnValue({
       ok: true,
       pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.boite_de_construction_metallique_no_3"],
     });
-    render(<BazarPage />);
-    acheterLaPochetteDeCartes();
-    act(() => {
-      screen.getByRole("button", { name: "Voir" }).click();
+    avecMouvementReduit(() => {
+      render(<BazarPage />);
+      acheterLaPochetteDeCartes();
     });
-    expect(
-      screen.queryAllByRole("dialog").some((el) => el.getAttribute("aria-label") === "Ouverture"),
-    ).toBe(false);
-    expect(screen.getByRole("dialog", { name: "Classeur de cartes" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Voir" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Ranger" })).toBeTruthy();
+    cleanup();
+    (mockState as { albums: { timbres: { achete: boolean } } }).albums.timbres.achete = true;
+    acheterAuBazar.mockReturnValue({
+      ok: true,
+      pieces: ["timbre.renard_roux", "timbre.renard_roux", "timbre.renard_roux"],
+    });
+    avecMouvementReduit(() => {
+      render(<BazarPage />);
+      act(() => {
+        screen.getByRole("button", { name: "Pochette de 3 timbres" }).click();
+      });
+      act(() => {
+        screen.getByRole("button", { name: /^Acheter pour/ }).click();
+      });
+    });
+    expect(screen.queryByRole("button", { name: "Voir" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Ranger" })).toBeTruthy();
   });
 });

@@ -177,6 +177,20 @@ describe("celebrerAchat", () => {
     expect(clone.style.backgroundSize).toBe("contain");
   });
 
+  /**
+   * Un PAQUET de cartes n'a pas de livraison : ses cartes se révèlent dans
+   * la cérémonie qui suit et s'envolent d'elles-mêmes au « Ranger » — le
+   * carré qui volait vers la Réserve dès l'achat racontait une arrivée qui
+   * n'avait pas encore eu lieu (retour 2026-09-05).
+   */
+  it("sans livraison : la monnaie sort, mais rien ne vole et rien ne sonne l'arrivée", () => {
+    celebrerAchat({ prix: 5, rectObjet: rect, imageUrl: null, livraison: false });
+    expect(audioManager.playCash).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(DELAI_OBJET_MS + DUREE_JAILLISSEMENT_MS + 500);
+    expect(objetEnVol()).toHaveLength(0);
+    expect(audioManager.playPickup).not.toHaveBeenCalled();
+  });
+
   it("sans objet à faire voler, le paiement se joue quand même", () => {
     celebrerAchat({ prix: 3, rectObjet: null, imageUrl: null });
     vi.advanceTimersByTime(2000);

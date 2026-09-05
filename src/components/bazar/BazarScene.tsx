@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Package } from "lucide-react";
 import { UnifiedPanorama, type PanoramaZone } from "@/components/mobile/panorama/UnifiedPanorama";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
 import { ItemSticker } from "@/components/ui/ItemSticker";
@@ -16,7 +15,6 @@ import { PRIX_ALBUM, PRIX_PAQUET } from "@/lib/bazar/albums";
 import type { JeuArcade } from "@/lib/bazar/arcade";
 import type { AlbumsState, EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
-import { RondArticle } from "./RondArticle";
 import { TenancierBazar } from "./TenancierBazar";
 import { BorneArcade } from "./BorneArcade";
 import { BorneArcadeEcran } from "./BorneArcadeEcran";
@@ -196,11 +194,11 @@ export function BazarScene({
                 ? d.bazar.pochetteTimbres
                 : d.bazar.albumTimbres;
           const prix = achete ? PRIX_PAQUET : PRIX_ALBUM;
-          // Seul le paquet/la pochette (après achat) garde une icône.
-          const Icone = album === "classeur" ? Package : Mail;
           // Les deux albums ont leur art (2026-09-02) : posés sur l'étagère
           // comme les objets du haut, le bas du livre sur l'arête de la case.
-          // Les paquets/pochettes (après achat) restent en placeholder.
+          // Après achat, le paquet de cartes (Brocomon, 2026-09-04) et la
+          // pochette de timbres (enveloppe bleue, 2026-09-05) ont leur
+          // visuel, posés dans la même boîte.
           //
           // La boîte du visuel n'est PAS le carré de la case (retour device
           // 2026-09-04) : large comme la case, un carré fait ~13 % de la
@@ -214,7 +212,12 @@ export function BazarScene({
           // livre debout y garde ses proportions, plus étroit qu'avant.
           const cle = i === 0 ? "case5" : "case6";
           const boite = boiteSousPlanche(cle);
-          const visuel = !achete ? (
+          const srcVisuel = !achete
+            ? `/bazar/albums/${album === "classeur" ? "classeur-cartes" : "album-timbres"}.webp`
+            : album === "classeur"
+              ? "/cartes/paquet.webp"
+              : "/timbres/pochette.webp";
+          const visuel = (
             <span
               style={{
                 display: "block",
@@ -224,7 +227,7 @@ export function BazarScene({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`/bazar/albums/${album === "classeur" ? "classeur-cartes" : "album-timbres"}.webp`}
+                src={srcVisuel}
                 alt=""
                 draggable={false}
                 style={{
@@ -235,10 +238,6 @@ export function BazarScene({
                 }}
               />
             </span>
-          ) : (
-            <RondArticle>
-              <Icone size={28} />
-            </RondArticle>
           );
           return (
             <ArticleBazar

@@ -125,6 +125,12 @@ interface CelebrationAchat {
   rectObjet: DOMRect | null;
   /** Image de l'objet acheté, ou `null` pour un lot de pièces. */
   imageUrl: string | null;
+  /**
+   * Second temps ou pas. Un paquet de cartes se paie mais ne se LIVRE pas
+   * ici : ses cartes se révèlent dans la cérémonie qui suit et s'envolent
+   * d'elles-mêmes au « Ranger » (2026-09-05). Défaut : `true`.
+   */
+  livraison?: boolean;
 }
 
 /**
@@ -144,12 +150,13 @@ interface CelebrationAchat {
  * célébration se referme dans la foulée, et un composant démonté emporterait
  * ses minuteries avec lui.
  */
-export function celebrerAchat({ prix, rectObjet, imageUrl }: CelebrationAchat): void {
+export function celebrerAchat({ prix, rectObjet, imageUrl, livraison = true }: CelebrationAchat): void {
   if (typeof window === "undefined") return;
 
   // ① Le paiement.
   void audioManager.playCash();
   jaillirJetons(prix);
+  if (!livraison) return;
 
   // ② La livraison. En mouvement réduit, elle n'a rien à faire voler — mais
   // elle garde sa voix et sa place dans le temps : le joueur a demandé moins

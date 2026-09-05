@@ -145,6 +145,19 @@ describe("BazarScene", () => {
     expect(screen.getByRole("button", { name: /pochette de 3 timbres/i })).toBeTruthy();
   });
 
+  // Le paquet de cartes a son visuel « Brocomon » (2026-09-04) et la pochette
+  // de timbres son enveloppe bleue (2026-09-05).
+  it("après achat, la case 5 montre le paquet Brocomon, la case 6 la pochette", () => {
+    const a = initAlbums();
+    a.classeur.achete = true;
+    a.timbres.achete = true;
+    monter(ETAL, 25, { ok: true }, undefined, a);
+    const paquet = screen.getByRole("button", { name: /paquet de 3 cartes/i }).querySelector("img");
+    expect(paquet?.getAttribute("src")).toBe("/cartes/paquet.webp");
+    const pochette = screen.getByRole("button", { name: /pochette de 3 timbres/i }).querySelector("img");
+    expect(pochette?.getAttribute("src")).toBe("/timbres/pochette.webp");
+  });
+
   // Le visuel de l'album ne doit pas monter derrière la planche du haut
   // (retour device 2026-09-04) : sa boîte prend l'`aspect-ratio` dérivé du
   // décor, pas le carré de la case, et l'image y est ancrée en bas.

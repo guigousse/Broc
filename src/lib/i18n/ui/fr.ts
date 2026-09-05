@@ -984,6 +984,8 @@ export const fr = {
     nouveau: "Nouveau !",
     doublon: "×{n}",
     ranger: "Ranger",
+    dechirer: "Glisse pour déchirer",
+    ouvrirPochette: "Glisse vers le haut pour ouvrir",
     ouverture: "Ouverture",
     serie: "Série : {serie}",
     theme_voyage: "Voyage",

@@ -31,6 +31,25 @@ describe("ConfirmModal", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  // Bug 2026-09-05 : ouverte depuis le bouton Recycler du classeur, la
+  // modale (position: fixed, inset: 0) se calait sur le RECTANGLE DU BOUTON
+  // — un ancêtre en `transform` (la ligne du bas de l'album) capture le
+  // fixed, et le panneau en `overflow: hidden` rognait le reste : mesurée
+  // 45 × 45 px au banc. Un portail sur `document.body` la sort de tout
+  // ancêtre transformé/filtré.
+  it("se rend sur document.body, hors de l'arbre de son déclencheur", () => {
+    const { container } = render(
+      <div data-testid="declencheur" style={{ transform: "translateY(-20px)" }}>
+        <ConfirmModal open onClose={() => {}} onConfirm={() => {}} titre="Test">
+          corps
+        </ConfirmModal>
+      </div>,
+    );
+    const dialog = screen.getByRole("dialog", { name: "Test" });
+    expect(container.contains(dialog)).toBe(false);
+    expect(dialog.parentElement).toBe(document.body);
+  });
+
   it("affiche titre, corps et boutons quand open est true", () => {
     renderModal();
     const dialog = screen.getByRole("dialog");

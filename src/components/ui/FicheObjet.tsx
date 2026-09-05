@@ -145,6 +145,16 @@ interface FicheObjetProps {
    * ne saurait pas la dessiner). Absent = `ItemSticker` habituel.
    */
   visuel?: ReactNode;
+  /**
+   * La boîte du visuel, à la place du carré de 263 px : une carte Brocomon
+   * s'affiche en grand, au format 5:7, sur la hauteur de l'écran (2026-09-05).
+   */
+  boiteVisuel?: CSSProperties;
+  /**
+   * Pas de ligne « Thème » : une carte porte déjà sa catégorie sur son propre
+   * fond, la fiche ne la répète pas (2026-09-05).
+   */
+  sansTheme?: boolean;
   /** Ce que la fiche ajoute sous la ligne valeur/thème. */
   children?: ReactNode;
 }
@@ -161,6 +171,8 @@ export function FicheObjet({
   prixAchat,
   onClose,
   visuel,
+  boiteVisuel,
+  sansTheme = false,
   children,
 }: FicheObjetProps) {
   const { d } = useLangue();
@@ -178,7 +190,7 @@ export function FicheObjet({
       </button>
       <div style={ficheCard}>
         <div style={previewWrap}>
-          <div style={stickerBox} data-testid="fiche-visuel">
+          <div style={boiteVisuel ?? stickerBox} data-testid="fiche-visuel">
             {visuel ?? (
               <ItemSticker
                 templateId={templateId}
@@ -247,6 +259,7 @@ export function FicheObjet({
               </span>
             </li>
           )}
+          {!sansTheme && (
           <li style={puce}>
             <span style={ligne}>
               <span style={libelle}>{d.inventaire.themeMot} :</span>
@@ -261,6 +274,7 @@ export function FicheObjet({
               </span>
             </span>
           </li>
+          )}
         </ul>
 
         {children}

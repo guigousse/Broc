@@ -32,6 +32,12 @@ interface FlyOpts {
    * `contain` : sans cadre à remplir, `cover` rognerait les bords de l'objet.
    */
   sansCadre?: boolean;
+  /**
+   * Fait voler une COPIE de ce nœud (cloneNode profond) au lieu d'une image :
+   * une carte Brocomon est composée (fond peint + textes), elle n'a pas
+   * d'URL à elle. Le clone remplit la boîte du vol ; `imageUrl` est ignoré.
+   */
+  cloneDe?: HTMLElement;
 }
 
 const PULSE_CLASS = "broc-pulse-once";
@@ -87,7 +93,11 @@ export function flyToTab(opts: FlyOpts): void {
     transition: `left ${duration}ms cubic-bezier(0.55, 0, 0.45, 1), top ${duration}ms cubic-bezier(0.45, 0, 0.55, 1), width ${duration}ms ease-in, height ${duration}ms ease-in, opacity ${duration}ms ease-in, transform ${duration}ms ease-in-out`,
   });
 
-  if (opts.imageUrl) {
+  if (opts.cloneDe) {
+    const copie = opts.cloneDe.cloneNode(true) as HTMLElement;
+    Object.assign(copie.style, { width: "100%", height: "100%", margin: "0" });
+    clone.appendChild(copie);
+  } else if (opts.imageUrl) {
     clone.style.backgroundImage = `url(${opts.imageUrl})`;
     clone.style.backgroundSize = nu ? "contain" : "cover";
     clone.style.backgroundPosition = "center";

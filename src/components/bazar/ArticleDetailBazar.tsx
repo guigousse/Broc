@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { Mail, Package } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
 import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
@@ -17,7 +16,6 @@ import { celebrerAchat } from "@/lib/celebrationAchat";
 import { getItemImageUrl } from "@/lib/itemImages";
 import type { AlbumId } from "@/data/pieces";
 import type { CategorieObjet, Rarete } from "@/types/game";
-import { RondArticle } from "./RondArticle";
 
 /**
  * L'article présenté en grand. Deux genres, parce que l'étal en vend deux :
@@ -197,12 +195,38 @@ const descriptionAlbum: CSSProperties = {
   textShadow: "0 1px 2px rgba(0,0,0,.6)",
 };
 
-/** L'icône PLACEHOLDER d'un paquet/d'une pochette — les albums, eux, ont
- *  leur art (`VisuelAlbum`). */
-function IconeAlbum({ album }: { album: AlbumId }) {
-  const Icone = album === "classeur" ? Package : Mail;
-  return <Icone size={72} />;
+/** Le booster Brocomon (2026-09-04) ou l'enveloppe de timbres (2026-09-05) :
+ *  il remplit sa boîte en hauteur. */
+function VisuelPaquet({ album }: { album: AlbumId }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={album === "classeur" ? "/cartes/paquet.webp" : "/timbres/pochette.webp"}
+      alt=""
+      draggable={false}
+      style={{
+        height: "100%",
+        width: "auto",
+        filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.45))",
+      }}
+    />
+  );
 }
+
+/** La boîte du paquet : plus haute que celle des objets — « il doit
+ *  s'afficher plus gros » (retour 2026-09-05), plafonnée pour les petits
+ *  écrans. */
+const paquetBox: CSSProperties = {
+  ...pieceBox,
+  height: "42vh",
+  maxHeight: 330,
+  // Flex, pas grid : dans une grille à ligne implicite (`auto`), la hauteur
+  // en % de l'image ne se résout pas et elle reprend sa largeur naturelle
+  // (mesuré 263 × 425 au banc au lieu de 204 × 330).
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+};
 
 /** Les deux albums ont leur art (2026-09-02) : le visuel de la fiche est
  *  l'image détourée, sans le rond placeholder. */
@@ -309,6 +333,8 @@ export function ArticleDetailBazar({
         article.genre === "objet" && article.categorie
           ? getItemImageUrl(article.templateId)
           : null,
+      // Le paquet de cartes se paie ici mais se livre dans sa cérémonie.
+      livraison: article.genre !== "paquet",
     });
   };
 
@@ -363,13 +389,11 @@ export function ArticleDetailBazar({
               />
             </div>
           ) : (
-            <div style={pieceBox}>
+            <div style={article.genre === "paquet" ? paquetBox : pieceBox}>
               {article.genre === "album" ? (
                 <VisuelAlbum album={article.album} taille={150} />
               ) : (
-                <RondArticle size={120}>
-                  <IconeAlbum album={article.album} />
-                </RondArticle>
+                <VisuelPaquet album={article.album} />
               )}
             </div>
           )}

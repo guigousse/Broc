@@ -508,6 +508,40 @@ describe("audioManager — effets et préférences", () => {
     expect(FakeAudioContext.instances).toHaveLength(0);
   });
 
+  // ── L'ouverture d'un paquet Brocomon (2026-09-05) ────────────────────────
+  it("playDechirurePaquet charge /sounds/dechirure-paquet.mp3 et lance la source", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playDechirurePaquet();
+    expect(fetchMock).toHaveBeenCalledWith("/sounds/dechirure-paquet.mp3");
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(1);
+    expect(ctx.bufferSources[0].start).toHaveBeenCalled();
+  });
+
+  it("playRevelationCarte : plus la rareté monte, plus le son s'étoffe (2, 5, 11 voix)", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playRevelationCarte("commun");
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.oscillators).toHaveLength(2);
+    audioManager.playRevelationCarte("rare");
+    expect(ctx.oscillators).toHaveLength(2 + 5);
+    audioManager.playRevelationCarte("legendaire");
+    expect(ctx.oscillators).toHaveLength(2 + 5 + 11);
+    for (const osc of ctx.oscillators) {
+      expect(osc.start).toHaveBeenCalled();
+      expect(osc.stop).toHaveBeenCalled();
+    }
+  });
+
+  it("les sons du paquet sont muets quand la préférence effets est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    await audioManager.playDechirurePaquet();
+    audioManager.playRevelationCarte("legendaire");
+    expect(FakeAudioContext.instances).toHaveLength(0);
+    expect(fetchMock).not.toHaveBeenCalledWith("/sounds/dechirure-paquet.mp3");
+  });
+
   it("playLevelUp charge /sounds/level-up.mp3 et lance la source", async () => {
     const { audioManager } = await freshManager();
     await audioManager.playLevelUp();
