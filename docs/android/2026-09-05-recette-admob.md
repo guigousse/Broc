@@ -128,13 +128,12 @@ manifeste, trois blocs dans `AdmobPlugin.kt`. Rebuild, réinstallation, `pm clea
 | Acceptation | `IABTCF_gdprApplies=1`, `IABTCF_PurposeConsents=11111111111` | ✅ |
 | Bloc **énergie** de production | une **vraie campagne** est servie, en mode Test Ad puisque l'émulateur est appareil de test. Le bloc est donc bien au format « Avec récompense », sinon `RewardedAd.load` l'aurait refusé | ✅ |
 | **Fermeture avant la récompense** | enfin testable : les vraies créations durent plus longtemps que celles de test et exposent la croix avant la fin. Google demande confirmation, puis la fermeture donne **pas de gain**, jauge et sauvegarde inchangées à 1, **aucun toast d'erreur**, bouton réarmé sur « +1 » | ✅ |
-| Blocs **boîte mystère** et **restauration** | **non prouvés**. Trois tentatives, trois échecs de nature réseau sur un émulateur dégradé par mes coupures répétées : `Ad failed to load : 2` réseau, puis `unexpected end of stream`, puis `Missing required "js" parameter`. Aucun de ces messages n'est un refus de format, qui serait explicite | ⏳ |
+| Blocs **boîte mystère** et **restauration** | pas chargés sur l'appareil : trois tentatives, trois échecs de nature réseau sur un émulateur dégradé par mes coupures répétées, `Ad failed to load : 2`, puis `unexpected end of stream`, puis `Missing required "js" parameter`. Aucun n'est un refus de format. **Format confirmé par Guillaume dans la console** le 2026-09-06 : les trois lignes affichent « Avec récompense » | ✅ par la console |
 
-**Ce qu'il reste à confirmer, et le moyen le plus court** : ouvrir la console AdMob, page
-des blocs de Broc Android, et lire la colonne Format. Les trois lignes doivent afficher
-**Avec récompense**. Cinq secondes suffisent, là où l'émulateur a résisté une heure.
-C'est exactement le contrôle qui manquait le 2026-08-18, quand un bloc iOS créé en
-« Interstitiel avec récompense » a produit un toast rouge en production.
+Le contrôle qui manquait le 2026-08-18, quand un bloc iOS créé en « Interstitiel avec
+récompense » a produit un toast rouge en production, est donc fait. La colonne Format de
+la console répond en cinq secondes là où l'émulateur a résisté une heure : c'est le
+premier réflexe à avoir, avant de chercher un défaut dans le code.
 
 **Défaut d'environnement à retenir** : couper et rétablir le réseau plusieurs fois par
 `svc wifi disable` finit par casser durablement la pile réseau de l'AVD, jusqu'à survivre
