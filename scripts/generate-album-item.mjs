@@ -61,21 +61,46 @@ const STYLE = [
   "Strict square 1:1 aspect ratio composition.",
 ];
 
+/** Deux timbres livrés, en référence de style pour la couverture de l'album. */
+const TIMBRE_REF_A = "timbre.arenes_de_nimes.webp";
+const TIMBRE_REF_B = "timbre.ballon_monte_1870.webp";
+
 const ITEMS = [
   {
     id: "album-timbres",
+    // Refonte 2026-09-05 : le MÊME classeur à anneaux que celui des cartes
+    // (référence = son dessin brut), en BLEU, « TIMBRES » à la place du
+    // mot-image, et un bouquet de timbres au centre de la couverture.
+    refs: [
+      ["album-item-classeur-cartes-brut.png", "REF 1 — the card binder: copy its exact shape, angle, spine with rivets, sleeve pages peeking out, gold Art Deco frame and the bevelled gold lettering treatment; only the colour, the word and the centre change."],
+      ["../public/timbres/" + TIMBRE_REF_A, "REF 2 — one of the game's stamps, for the style of the stamps drawn on the cover."],
+      ["../public/timbres/" + TIMBRE_REF_B, "REF 3 — another of the game's stamps."],
+    ],
     sujet: [
-      "Single object: a classic stamp collector's stockbook album, standing upright, seen at a slight three-quarter angle.",
-      "Deep navy blue textured leatherette cover. Two thin horizontal gold fillet lines near the top of the cover and two more near the bottom, continuing onto the spine. One thin vertical gold line running down the center of the front cover. A small gold diamond-shaped emblem stamped near the bottom center of the cover. Cream-white page edges visible on the open side.",
+      "Single object: a stamp collector's RING BINDER identical in shape to REF 1 (same three-quarter angle, same thick square spine with three round metal rivets and a small gold label holder, same sleeve pages peeking out).",
+      "Textured DEEP BLUE cover (navy to royal blue) instead of red, with the same polished gold Art Deco frame: stepped geometric border, fan motifs in the corners, fine parallel gold fillets.",
+      'Printed on the front cover, upper part: the word "TIMBRES" — seven ornate serif capital letters T, I, M, B, R, E, S on one line, spanning about 75% of the cover width, in the same bevelled gold lettering with a dark keyline as REF 1.',
+      "Below the word, centred: a small fanned cluster of three or four postage stamps, drawn in the style of REF 2 and REF 3 (perforated edges, engraved look, muted vintage inks), slightly overlapping and tilted, as if pinned on the cover.",
+      "This is the only text in the image.",
     ],
   },
   {
     id: "classeur-cartes",
+    // Refonte 2026-09-05 (retour Guillaume) : un CLASSEUR À ANNEAUX Brocomon
+    // dans le MÊME FORMAT que l'album de timbres (référence = son dessin
+    // brut : angle, taille, dos à rivets, pochettes), en vermillon, avec le
+    // VINYLE À ŒIL du dos de carte au centre et le mot-image du paquet.
+    refs: [
+      ["album-item-album-timbres-brut.png", "REF 1 — the stamp binder: copy its EXACT shape, size, three-quarter angle, thick square spine with rivets and label holder, sleeve pages peeking out, gold Art Deco frame and bevelled gold lettering treatment; only the colour, the word and the centre change."],
+      ["paquet-cartes/dos-brut.png", "REF 2 — the card back: copy its centre — the black vinyl record whose label is a single golden eye — as the emblem on the cover."],
+      ["paquet-cartes/paquet-brut.png", "REF 3 — the booster pack: the BROCOMON wordmark to copy (same eight letters, same bevelled gold treatment) and the vermilion-and-gold palette."],
+    ],
     sujet: [
-      "Single object: a trading-card collector's ring binder, standing upright, seen at a slight three-quarter angle.",
-      // La chaise PERSONNIFIÉE en petit monstre mignon (recette 2026-09-02) :
-      // la mascotte du jeu de cartes, façon créature kawaii.
-      "Textured vermilion red cover with a thin cream border line around its edge. Printed large in the center of the front cover: a bold, SIMPLIFIED cartoon mascot — a cute little wooden chair PERSONIFIED as an adorable tiny monster: two big friendly round eyes and a small happy smile on the backrest, tiny stubby arms, its four legs like little feet, playful kawaii creature style with thick outlines, cream and warm brown tones. Nothing else on the cover. Rounded spine, cream-white page edges visible on the open side.",
+      "Single object: a trading-card collector's RING BINDER identical in shape, size and angle to REF 1 (same three-quarter view, same thick square spine with three round metal rivets and a small gold label holder, same sleeve pages peeking out at the top).",
+      "Textured VERMILION RED cover instead of blue, with the same polished gold Art Deco frame: stepped geometric border, fan motifs in the corners, fine parallel gold fillets.",
+      'Printed on the front cover, upper part: the BROCOMON wordmark copied from REF 3 — eight ornate serif capital letters B, R, O, C, O, M, O, N on one line, spanning about 75% of the cover width, in the same bevelled gold lettering with a dark keyline as REF 1\'s word.',
+      "Below the wordmark, centred: the emblem from REF 2 — a black vinyl record seen from above, fine concentric grooves, whose round gold label is a single wide-open golden EYE with a black vertical pupil, ringed by a thin gold rim — about 45% of the cover width.",
+      "This is the only text in the image.",
     ],
   },
 ];
@@ -142,11 +167,18 @@ async function main() {
   const force = args.includes("--force");
   const detourOnly = args.includes("--detour-only");
   const seulItem = (args.find((a) => a.startsWith("--item=")) ?? "").slice(7);
+  // `--candidat=<n>` : un essai de plus, rangé dans scripts/album-candidats/
+  // sans toucher au webp livré (on compare, puis on copie celui qu'on garde).
+  const candidat = (args.find((a) => a.startsWith("--candidat=")) ?? "").slice(11);
 
   for (const item of ITEMS) {
     if (seulItem && item.id !== seulItem) continue;
-    const brut = path.join(__dirname, `album-item-${item.id}-brut.png`);
-    const sortie = path.join(SORTIE_DIR, `${item.id}.webp`);
+    const suffixe = candidat ? `-c${candidat}` : "";
+    const brut = path.join(__dirname, candidat ? "album-candidats" : "", `album-item-${item.id}${suffixe}-brut.png`);
+    const sortie = candidat
+      ? path.join(__dirname, "album-candidats", `${item.id}${suffixe}.webp`)
+      : path.join(SORTIE_DIR, `${item.id}.webp`);
+    if (candidat) await fs.mkdir(path.join(__dirname, "album-candidats"), { recursive: true });
 
     let existe = true;
     try {
@@ -162,9 +194,15 @@ async function main() {
       }
       const ai = new GoogleGenAI({ apiKey });
       console.log(`🎨 ${item.id} — génération (gemini-3-pro-image-preview)…`);
+      const parts = [{ text: [STYLE[0], ...item.sujet, ...STYLE.slice(1)].join(" ") }];
+      for (const [ref, legende] of item.refs ?? []) {
+        const file = path.join(__dirname, ref);
+        parts.push({ text: legende });
+        parts.push({ inlineData: { mimeType: file.endsWith(".png") ? "image/png" : "image/webp", data: (await fs.readFile(file)).toString("base64") } });
+      }
       const response = await ai.models.generateContent({
         model: "gemini-3-pro-image-preview",
-        contents: [STYLE[0], ...item.sujet, ...STYLE.slice(1)].join(" "),
+        contents: [{ role: "user", parts }],
         config: { imageConfig: { aspectRatio: "1:1", imageSize: "1K" } },
       });
       const part = (response.candidates?.[0]?.content?.parts ?? []).find(
