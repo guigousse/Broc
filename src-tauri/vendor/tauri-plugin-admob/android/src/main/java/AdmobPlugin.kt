@@ -170,14 +170,37 @@ class AdmobPlugin(private val activity: Activity) : Plugin(activity) {
 
   /** Rouvre le formulaire de consentement. Le SDK GMA relit lui-même la chaîne
    *  TCF pour les requêtes suivantes ; les pubs déjà préchargées sont servies
-   *  telles quelles (comportement Google standard). */
+   *  telles quelles (comportement Google standard).
+   *
+   *  RECETTE 2026-09-05 : si la requête d'infos de consentement du boot a
+   *  échoué (réseau instable), le SDK n'a « No valid response received yet »
+   *  et le formulaire ne s'affiche pas au premier appui — il ne marchait qu'au
+   *  second, après une relance interne. On rafraîchit donc les infos AVANT
+   *  d'afficher : quasi instantané quand elles sont déjà en cache, et le
+   *  message d'erreur remonte au joueur (toast) si le réseau manque vraiment. */
   @Command
   fun showPrivacyOptions(invoke: Invoke) {
     activity.runOnUiThread {
-      UserMessagingPlatform.showPrivacyOptionsForm(activity) { erreur ->
-        if (erreur != null) invoke.reject(erreur.message ?: "Formulaire indisponible")
-        else invoke.resolve()
+      val params = ConsentRequestParameters.Builder()
+        .setTagForUnderAgeOfConsent(false)
+      if (estDebogable()) {
+        params.setConsentDebugSettings(
+          ConsentDebugSettings.Builder(activity)
+            .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
+            .build()
+        )
       }
+      consentInformation.requestConsentInfoUpdate(
+        activity,
+        params.build(),
+        {
+          UserMessagingPlatform.showPrivacyOptionsForm(activity) { erreur ->
+            if (erreur != null) invoke.reject(erreur.message ?: "Formulaire indisponible")
+            else invoke.resolve()
+          }
+        },
+        { erreur -> invoke.reject(erreur.message ?: "Formulaire indisponible") }
+      )
     }
   }
 
