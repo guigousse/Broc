@@ -19,7 +19,10 @@ const UA_IOS = "Mozilla/5.0 (iPhone; CPU iPhone OS 26_2 like Mac OS X)";
 
 async function chargerFrais() {
   vi.resetModules();
-  return await import("./adProvider");
+  return {
+    provider: await import("./adProvider"),
+    adMob: await import("./adMobProvider"),
+  };
 }
 
 afterEach(() => {
@@ -30,42 +33,50 @@ afterEach(() => {
   });
 });
 
+/**
+ * Depuis le sous-projet B, Android a sa régie (plugin Kotlin) : les gardes qui
+ * privaient l'UI de pub sur Android disparaissent. `pubDisponible()` reste la
+ * garde que l'UI consulte — elle vaut vrai partout aujourd'hui.
+ */
 describe("pubDisponible", () => {
-  it("faux sous Tauri Android — aucune régie n'y est branchée", async () => {
+  it("vrai sous Tauri Android — le plugin Kotlin est branché", async () => {
     simulerTauri(UA_ANDROID);
-    const { pubDisponible } = await chargerFrais();
-    expect(pubDisponible()).toBe(false);
+    const { provider } = await chargerFrais();
+    expect(provider.pubDisponible()).toBe(true);
   });
 
   it("vrai sous Tauri iOS", async () => {
     simulerTauri(UA_IOS);
-    const { pubDisponible } = await chargerFrais();
-    expect(pubDisponible()).toBe(true);
+    const { provider } = await chargerFrais();
+    expect(provider.pubDisponible()).toBe(true);
   });
 
   it("vrai hors Tauri (le stub de dev reste disponible)", async () => {
-    const { pubDisponible } = await chargerFrais();
-    expect(pubDisponible()).toBe(true);
+    const { provider } = await chargerFrais();
+    expect(provider.pubDisponible()).toBe(true);
   });
 });
 
 describe("getAdProvider selon la plateforme", () => {
-  it("sur Android, renvoie le provider indisponible", async () => {
+  it("sur Android, renvoie le provider AdMob natif", async () => {
     simulerTauri(UA_ANDROID);
-    const { getAdProvider, IndisponibleAdProvider } = await chargerFrais();
-    expect(getAdProvider()).toBeInstanceOf(IndisponibleAdProvider);
+    const { provider, adMob } = await chargerFrais();
+    expect(provider.getAdProvider()).toBeInstanceOf(adMob.AdMobAdProvider);
+  });
+
+  it("sur iOS, renvoie le provider AdMob natif", async () => {
+    simulerTauri(UA_IOS);
+    const { provider, adMob } = await chargerFrais();
+    expect(provider.getAdProvider()).toBeInstanceOf(adMob.AdMobAdProvider);
   });
 
   it("hors Tauri, renvoie le stub", async () => {
-    const { getAdProvider, StubAdProvider } = await chargerFrais();
-    expect(getAdProvider()).toBeInstanceOf(StubAdProvider);
+    const { provider } = await chargerFrais();
+    expect(provider.getAdProvider()).toBeInstanceOf(provider.StubAdProvider);
   });
 
-  it("GARDE : sur Android, aucune récompense n'est jamais accordée", async () => {
-    simulerTauri(UA_ANDROID);
-    const { getAdProvider, EMPLACEMENTS_PUB } = await chargerFrais();
-    await expect(
-      getAdProvider().showRewardedAd(EMPLACEMENTS_PUB.energie),
-    ).rejects.toThrow();
+  it("GARDE : le provider « indisponible » n'existe plus", async () => {
+    const { provider } = await chargerFrais();
+    expect("IndisponibleAdProvider" in provider).toBe(false);
   });
 });

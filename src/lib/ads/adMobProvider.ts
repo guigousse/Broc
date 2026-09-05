@@ -8,9 +8,10 @@ import { plateformeNative } from "@/lib/plateforme";
 import { logEvenement } from "@/lib/analytics/contexte";
 import { EVENEMENTS } from "@/lib/analytics/analytics";
 
-/** Vrai uniquement sous runtime Tauri sur iOS (le plugin n'existe que là). */
+/** Vrai sous runtime Tauri sur iOS ET Android : le plugin existe sur les deux
+ *  (Swift d'un côté, Kotlin de l'autre, même contrat). */
 export function adMobDisponible(): boolean {
-  return plateformeNative() === "ios";
+  return plateformeNative() !== null;
 }
 
 export class AdMobAdProvider implements AdProvider {
@@ -56,4 +57,26 @@ export class AdMobAdProvider implements AdProvider {
       throw e;
     }
   }
+}
+
+/**
+ * Vrai quand UMP exige un point d'entrée « options de confidentialité »
+ * (joueur en UE). Faux sur toute erreur : mieux vaut pas de bouton qu'un
+ * bouton qui échoue. Implémenté côté natif sur Android seulement (sous-projet
+ * B) ; l'appelant gate sur la plateforme.
+ */
+export async function optionsConfidentialiteRequises(): Promise<boolean> {
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const res = await invoke<{ requis: boolean }>("plugin:admob|privacy_options_required");
+    return res.requis === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Rouvre le formulaire de consentement UMP. L'erreur remonte à l'UI (toast). */
+export async function montrerOptionsConfidentialite(): Promise<void> {
+  const { invoke } = await import("@tauri-apps/api/core");
+  await invoke("plugin:admob|show_privacy_options");
 }

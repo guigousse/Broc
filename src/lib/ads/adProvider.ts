@@ -1,5 +1,4 @@
 import { AdMobAdProvider, adMobDisponible } from "./adMobProvider";
-import { plateformeNative } from "@/lib/plateforme";
 import { logEvenement } from "@/lib/analytics/contexte";
 import { EVENEMENTS } from "@/lib/analytics/analytics";
 
@@ -41,33 +40,20 @@ export class StubAdProvider implements AdProvider {
   }
 }
 
-/**
- * Provider des plateformes où aucune régie n'est encore branchée — Android,
- * tant que le plugin Kotlin du sous-projet B n'existe pas. Il ne récompense
- * jamais : c'est le filet, pas le mécanisme. Le mécanisme est `pubDisponible()`,
- * que l'UI consulte pour ne proposer aucune pub du tout.
- */
-export class IndisponibleAdProvider implements AdProvider {
-  async showRewardedAd(_emplacement: EmplacementPub): Promise<AdResult> {
-    throw new Error("Publicités indisponibles sur cette plateforme");
-  }
-}
-
-/** Faux là où aucune régie n'est branchée : l'UI ne doit alors ni proposer de
- *  pub, ni en offrir la récompense gratuitement. */
+/** Garde consultée par l'UI avant de proposer une pub. Vraie partout depuis
+ *  que le plugin Android existe (sous-projet B) ; conservée parce que c'est
+ *  ELLE que les écrans interrogent — une plateforme sans régie la remettra à
+ *  faux sans toucher aux appelants. */
 export function pubDisponible(): boolean {
-  return plateformeNative() !== "android";
+  return true;
 }
 
-// Singleton injectable — AdMob natif sous Tauri iOS, stub partout ailleurs
-// (web Safari, simulateur, dev desktop), provider indisponible sous Tauri
-// Android (aucune régie n'y est encore branchée).
+// Singleton injectable — AdMob natif sous Tauri (iOS et Android), stub partout
+// ailleurs (web Safari, simulateur, dev desktop).
 let instance: AdProvider | null = null;
 export function getAdProvider(): AdProvider {
   if (!instance) {
-    if (adMobDisponible()) instance = new AdMobAdProvider();
-    else if (plateformeNative() === "android") instance = new IndisponibleAdProvider();
-    else instance = new StubAdProvider();
+    instance = adMobDisponible() ? new AdMobAdProvider() : new StubAdProvider();
   }
   return instance;
 }

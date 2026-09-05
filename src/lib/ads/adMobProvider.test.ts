@@ -59,6 +59,16 @@ describe("adMobDisponible", () => {
     expect(adMob.adMobDisponible()).toBe(true);
   });
 
+  it("vrai sous Tauri Android (plugin Kotlin du sous-projet B)", async () => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    Object.defineProperty(window.navigator, "userAgent", {
+      value: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Mobile Safari/537.36",
+      configurable: true,
+    });
+    const { adMob } = await chargerFrais();
+    expect(adMob.adMobDisponible()).toBe(true);
+  });
+
   it("vrai sous Tauri avec UA desktop « Macintosh » + tactile (iPadOS 13+ WKWebView)", async () => {
     (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
     Object.defineProperty(window.navigator, "userAgent", {
@@ -172,5 +182,39 @@ describe("AdMobAdProvider", () => {
     const p = new adMob.AdMobAdProvider();
     await expect(p.showRewardedAd("energie")).rejects.toThrow();
     await expect(p.showRewardedAd("energie")).resolves.toEqual({ rewarded: true });
+  });
+});
+
+describe("options de confidentialité (UMP)", () => {
+  it("optionsConfidentialiteRequises interroge le natif et lit `requis`", async () => {
+    simulerTauriIos();
+    invokeMock.mockResolvedValue({ requis: true });
+    const { adMob } = await chargerFrais();
+    await expect(adMob.optionsConfidentialiteRequises()).resolves.toBe(true);
+    expect(invokeMock).toHaveBeenCalledWith("plugin:admob|privacy_options_required");
+  });
+
+  it("optionsConfidentialiteRequises vaut faux quand le natif répond faux", async () => {
+    simulerTauriIos();
+    invokeMock.mockResolvedValue({ requis: false });
+    const { adMob } = await chargerFrais();
+    await expect(adMob.optionsConfidentialiteRequises()).resolves.toBe(false);
+  });
+
+  it("optionsConfidentialiteRequises vaut faux sur erreur (pas de bouton plutôt qu'un bouton mort)", async () => {
+    simulerTauriIos();
+    invokeMock.mockRejectedValue(new Error("commande inconnue"));
+    const { adMob } = await chargerFrais();
+    await expect(adMob.optionsConfidentialiteRequises()).resolves.toBe(false);
+  });
+
+  it("montrerOptionsConfidentialite appelle le natif et propage l'erreur", async () => {
+    simulerTauriIos();
+    invokeMock.mockResolvedValue(undefined);
+    const { adMob } = await chargerFrais();
+    await expect(adMob.montrerOptionsConfidentialite()).resolves.toBeUndefined();
+    expect(invokeMock).toHaveBeenCalledWith("plugin:admob|show_privacy_options");
+    invokeMock.mockRejectedValue(new Error("formulaire indisponible"));
+    await expect(adMob.montrerOptionsConfidentialite()).rejects.toThrow("formulaire indisponible");
   });
 });
