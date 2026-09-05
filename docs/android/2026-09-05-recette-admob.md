@@ -116,7 +116,32 @@ Plus aucun « No valid response received yet ». Le défaut 2.2 est fermé.
 avant ~25 s, et confirmer par capture plutôt que par `dumpsys window` — le formulaire UMP
 est un **dialogue dans l'activité du jeu**, `mCurrentFocus` reste `MainActivity`.
 
-## 5. Ce que l'émulateur ne prouve pas
+## 5. Deuxième passe avec les identifiants de PRODUCTION — 2026-09-06
+
+Guillaume a créé l'app AdMob « Broc Android » et ses trois blocs le 2026-09-05 au soir,
+puis publié son message de consentement européen. App ID `…~4045707660` dans le
+manifeste, trois blocs dans `AdmobPlugin.kt`. Rebuild, réinstallation, `pm clear`.
+
+| Point | Mesuré | Verdict |
+|---|---|---|
+| App ID de production reconnu | **le message de consentement de Guillaume s'affiche**, avec son logo, son texte « Broc asks for your consent », ses 210 partenaires et le bouton Refuser qu'il venait d'activer. C'est la preuve que l'App ID correspond à son compte et à son app, et que le message est publié et ciblé sur Broc Android | ✅ |
+| Acceptation | `IABTCF_gdprApplies=1`, `IABTCF_PurposeConsents=11111111111` | ✅ |
+| Bloc **énergie** de production | une **vraie campagne** est servie, en mode Test Ad puisque l'émulateur est appareil de test. Le bloc est donc bien au format « Avec récompense », sinon `RewardedAd.load` l'aurait refusé | ✅ |
+| **Fermeture avant la récompense** | enfin testable : les vraies créations durent plus longtemps que celles de test et exposent la croix avant la fin. Google demande confirmation, puis la fermeture donne **pas de gain**, jauge et sauvegarde inchangées à 1, **aucun toast d'erreur**, bouton réarmé sur « +1 » | ✅ |
+| Blocs **boîte mystère** et **restauration** | **non prouvés**. Trois tentatives, trois échecs de nature réseau sur un émulateur dégradé par mes coupures répétées : `Ad failed to load : 2` réseau, puis `unexpected end of stream`, puis `Missing required "js" parameter`. Aucun de ces messages n'est un refus de format, qui serait explicite | ⏳ |
+
+**Ce qu'il reste à confirmer, et le moyen le plus court** : ouvrir la console AdMob, page
+des blocs de Broc Android, et lire la colonne Format. Les trois lignes doivent afficher
+**Avec récompense**. Cinq secondes suffisent, là où l'émulateur a résisté une heure.
+C'est exactement le contrôle qui manquait le 2026-08-18, quand un bloc iOS créé en
+« Interstitiel avec récompense » a produit un toast rouge en production.
+
+**Défaut d'environnement à retenir** : couper et rétablir le réseau plusieurs fois par
+`svc wifi disable` finit par casser durablement la pile réseau de l'AVD, jusqu'à survivre
+à un redémarrage. Le System UI part alors en boucle d'ANR. Pour recetter un mode
+hors-ligne, préférer une seule coupure en fin de session.
+
+## 6. Ce que l'émulateur ne prouve pas
 
 - Les revenus réels et le taux de remplissage des vrais blocs (Task 8, IDs à créer par
   Guillaume) ; le trafic de test ne remonte pas dans AdMob.
