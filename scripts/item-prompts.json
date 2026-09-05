@@ -468,6 +468,26 @@
 "description": "a vintage 64-bit era video game cardboard box, slight three-quarter view, cover artwork showing a grown wandering minstrel with shoulder-length brown hair, a wide-brimmed brown hat and a burgundy travelling cape over a brown tunic, playing a transverse flute on green rolling hills with a distant castle behind him, fictional stylized title 'SOLDA' across the cover, a plain geometric '64' emblem in the corner, worn cardboard edges"
 },
 {
+"templateId": "jx.puzzle_en_bois_1000_pieces_paysage_alpin",
+"rarete": "commun",
+"description": "a vintage wooden jigsaw puzzle of an alpine landscape (snow-capped peaks, a pine forest and a small chalet by a lake), almost fully assembled on a flat surface with a few loose pieces scattered at one edge, its open cardboard box lid propped beside it showing the same painted scene, top-down slight three-quarter view, no readable text"
+},
+{
+"templateId": "jx.jeu_de_l_oie_lithographie_1900",
+"rarete": "commun",
+"description": "an antique circa-1900 lithographed Game of the Goose board, unfolded flat, with the classic spiral track of small numbered squares illustrated with geese, a bridge, an inn, a well and a labyrinth, faded chromolithograph colours on yellowed paper, visible fold creases and worn corners, two tiny turned wooden pawns and two bone dice resting on the board, top-down slight three-quarter view, no readable text other than the tiny square numbers"
+},
+{
+"templateId": "jx.boite_de_construction_metallique_no_3",
+"rarete": "commun",
+"description": "a vintage 1950s metal construction set in its open cardboard box: perforated red and green enamelled metal strips, small brass nuts and bolts, tiny wheels and a little screwdriver neatly arranged in the box compartments, with a small half-built crane model standing beside the box, three-quarter view, a plain 'N° 3' printed on the lid and nothing else, invented branding, no real brand logos"
+},
+{
+"templateId": "jx.locomotive_a_vapeur_electrique_1950",
+"rarete": "rare",
+"description": "a vintage 1950s electric model-train steam locomotive with its coal tender, O gauge, black painted tinplate body with red wheels and gold lining, brass boiler details and a small headlamp, standing on a short straight piece of three-rail track, side three-quarter view, no brand logos, no text"
+},
+{
 "templateId": "jx.jeu_magnatimmo_annees_80",
 "rarete": "commun",
 "description": "a vintage 1980s real-estate trading board game box, three-quarter top view, the title \"MAGNATIMMO\" printed boldly on the worn cardboard lid, a cheerful plump property-developer character in a pinstripe suit and a fedora (no top hat, no monocle, no cane, no moustache) holding a small house and a fan of banknotes, a few small buildings, no real brand logos, invented game"

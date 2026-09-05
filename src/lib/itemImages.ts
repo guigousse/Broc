@@ -101,6 +101,9 @@ export const ITEMS_WITH_IMAGE: ReadonlySet<string> = new Set<string>([
   "jx.jeu_engrenage_de_metal_infiltration_32_bit",
   "jx.jeu_d_aventure_japonais_128_bit",
   "jx.jeu_solda_flute_temporelle_aventure_3d_64_bit",
+  "jx.puzzle_en_bois_1000_pieces_paysage_alpin",
+  "jx.jeu_de_l_oie_lithographie_1900",
+  "jx.boite_de_construction_metallique_no_3",
   "jx.jeu_question_pour_un_fromage_culture_generale",
   "jx.jeu_kicekatue_mr_mayonnaise_vintage",
   "jx.jeu_de_cartes_long_trajet_annees_60",
@@ -118,6 +121,7 @@ export const ITEMS_WITH_IMAGE: ReadonlySet<string> = new Set<string>([
   "jx.lot_de_figurines_de_spountch",
   "jx.lot_de_figurines_d_ufs_surprises",
   // Jeux & Loisirs — rares
+  "jx.locomotive_a_vapeur_electrique_1950",
   "jx.figurine_de_guerre_galactique_1978",
   "jx.figurine_de_dark_father_1977",
   "jx.flipper_a_plateau_annees_60",
