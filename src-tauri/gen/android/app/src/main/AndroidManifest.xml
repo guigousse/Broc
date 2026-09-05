@@ -18,15 +18,16 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.app"
         android:usesCleartextTraffic="${usesCleartextTraffic}">
-        <!-- ⚠ INCOHÉRENT AU 2026-09-05 : les trois blocs d'AdmobPlugin.kt sont
-             ceux de PRODUCTION, cet App ID est encore celui de TEST Google.
-             Le vrai, de la forme ca-app-pub-6928338731034491~…, est à relever
-             dans la console AdMob sur la fiche de l'app Broc Android.
-             Tant qu'il n'est pas posé ici, aucune impression réelle ne sera
-             comptée : ne pas envoyer cette build en production. -->
+        <!-- App ID de l'app AdMob « Broc Android », créée le 2026-09-05. Sans ce
+             meta-data, le SDK Google Mobile Ads plante l'app au lancement ; avec
+             celui d'un autre compte, les impressions ne sont comptées nulle part.
+             Une garde le vérifie contre les blocs du plugin
+             (src/lib/ads/emplacementsAppeles.test.ts).
+             Pour déboguer, remettre l'App ID de test Google
+             "ca-app-pub-3940256099942544~3347511713" ET les blocs de test. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-6928338731034491~4045707660" />
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
             android:screenOrientation="portrait"

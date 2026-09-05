@@ -111,4 +111,30 @@ describe("AD_UNITS (plugin Kotlin Android) — un bloc distinct par emplacement"
   it.skipIf(enTest)("aucun bloc n'est partagé entre deux emplacements", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  /**
+   * L'App ID vit dans le manifeste de l'app, les blocs dans le plugin : deux
+   * fichiers, donc un oubli possible. Mélanger un App ID de test avec des blocs
+   * de production ne casse RIEN de visible — les pubs s'affichent sur un
+   * appareil de test — mais aucune impression réelle n'est comptée en
+   * production. C'est le mode de panne le plus cher et le plus silencieux.
+   */
+  it("l'App ID du manifeste appartient au même compte AdMob que les blocs", () => {
+    const manifeste = readFileSync(
+      "src-tauri/gen/android/app/src/main/AndroidManifest.xml",
+      "utf8",
+    );
+    const appId = manifeste.match(
+      /APPLICATION_ID"\s*\n?\s*android:value="([^"]+)"/,
+    )?.[1];
+    expect(appId, "meta-data APPLICATION_ID absent du manifeste").toBeDefined();
+    const editeur = (v: string) => v.match(/^ca-app-pub-(\d+)/)?.[1];
+    const editeurBlocs = editeur(ids[0] ?? "");
+    expect(
+      editeur(appId ?? ""),
+      enTest
+        ? "blocs de test : l'App ID doit être celui de test Google"
+        : "blocs de PRODUCTION avec un App ID d'un autre compte — aucune impression ne serait comptée",
+    ).toBe(editeurBlocs);
+  });
 });
