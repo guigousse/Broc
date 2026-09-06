@@ -307,6 +307,30 @@
           "markdownDescription": "Denies the initialize command without any pre-configured scope."
         },
         {
+          "description": "Enables the privacy_options_required command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-privacy-options-required",
+          "markdownDescription": "Enables the privacy_options_required command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the privacy_options_required command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-privacy-options-required",
+          "markdownDescription": "Denies the privacy_options_required command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the show_privacy_options command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-show-privacy-options",
+          "markdownDescription": "Enables the show_privacy_options command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the show_privacy_options command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-show-privacy-options",
+          "markdownDescription": "Denies the show_privacy_options command without any pre-configured scope."
+        },
+        {
           "description": "Enables the show_rewarded_ad command without any pre-configured scope.",
           "type": "string",
           "const": "allow-show-rewarded-ad",
@@ -319,10 +343,10 @@
           "markdownDescription": "Denies the show_rewarded_ad command without any pre-configured scope."
         },
         {
-          "description": "Permissions par défaut du plugin AdMob : init du SDK et affichage de rewarded ads.\n#### This default permission set includes:\n\n- `allow-initialize`\n- `allow-show-rewarded-ad`",
+          "description": "Permissions par défaut du plugin AdMob : init du SDK, affichage de rewarded ads, options de confidentialité UMP.\n#### This default permission set includes:\n\n- `allow-initialize`\n- `allow-show-rewarded-ad`\n- `allow-privacy-options-required`\n- `allow-show-privacy-options`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Permissions par défaut du plugin AdMob : init du SDK et affichage de rewarded ads.\n#### This default permission set includes:\n\n- `allow-initialize`\n- `allow-show-rewarded-ad`"
+          "markdownDescription": "Permissions par défaut du plugin AdMob : init du SDK, affichage de rewarded ads, options de confidentialité UMP.\n#### This default permission set includes:\n\n- `allow-initialize`\n- `allow-show-rewarded-ad`\n- `allow-privacy-options-required`\n- `allow-show-privacy-options`"
         }
       ]
     }

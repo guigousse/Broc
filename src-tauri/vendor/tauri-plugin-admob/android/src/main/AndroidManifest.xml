@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- L'App ID AdMob (meta-data APPLICATION_ID) et la permission AD_ID vivent dans
+         le manifeste de l'APP (gen/android/app), pas ici : ce sont des réglages de
+         l'application, pas du plugin. -->
+</manifest>

@@ -15,6 +15,11 @@ import { notifsActives, setNotifsActives } from "@/lib/notifications/prefs";
 import { vibrationsActives, setVibrationsActives } from "@/lib/haptique/prefs";
 import { definirEnergieInfinie } from "@/lib/iap/energieInfinie";
 import { getIapProvider, achatDisponible } from "@/lib/iap/iapProvider";
+import { plateformeNative } from "@/lib/plateforme";
+import {
+  montrerOptionsConfidentialite,
+  optionsConfidentialiteRequises,
+} from "@/lib/ads/adMobProvider";
 import { useToastSafe } from "@/components/ui/Toast";
 
 interface ReglagesModalProps {
@@ -314,6 +319,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
         </section>
 
         <SectionNotifications />
+        {plateformeNative() === "android" && <SectionConfidentialite />}
         {achatDisponible() && <SectionAchats />}
       </div>
     </div>
@@ -385,6 +391,60 @@ function SectionNotifications() {
           {d.reglages.permissionAccordee}
         </div>
       ) : null}
+    </section>
+  );
+}
+
+/**
+ * Encadré Confidentialité : rouvre le formulaire de consentement UMP (pubs
+ * personnalisées ou non ; la mesure d'audience y est adossée). Google l'exige
+ * pour les joueurs européens — sans lui, la seule issue est de réinstaller.
+ * Android seulement (sous-projet B) : le pont iOS ne l'implémente pas encore.
+ * Rendu uniquement quand UMP juge le point d'entrée requis.
+ */
+function SectionConfidentialite() {
+  const { playClick } = useSettings();
+  const { d } = useLangue();
+  const { toast } = useToastSafe();
+  const [requis, setRequis] = useState(false);
+  const [enCours, setEnCours] = useState(false);
+
+  useEffect(() => {
+    let vivant = true;
+    void optionsConfidentialiteRequises().then((r) => {
+      if (vivant) setRequis(r);
+    });
+    return () => {
+      vivant = false;
+    };
+  }, []);
+
+  if (!requis) return null;
+
+  const ouvrir = async () => {
+    if (enCours) return;
+    playClick();
+    setEnCours(true);
+    try {
+      await montrerOptionsConfidentialite();
+    } catch {
+      toast(d.sheets.erreurPub, { type: "erreur" });
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  return (
+    <section style={carte} aria-label={d.reglages.confidentialite}>
+      <h3 style={sectionTitle}>{d.reglages.confidentialite}</h3>
+      <button
+        type="button"
+        onClick={() => void ouvrir()}
+        disabled={enCours}
+        style={segBtn(true, enCours)}
+      >
+        {d.reglages.optionsConfidentialite}
+      </button>
     </section>
   );
 }

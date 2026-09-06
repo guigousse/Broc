@@ -1,7 +1,7 @@
 use serde::de::DeserializeOwned;
 use tauri::{plugin::PluginApi, AppHandle, Runtime};
 
-use crate::models::AdResult;
+use crate::models::{AdResult, OptionsConfidentialite};
 
 pub fn init<R: Runtime, C: DeserializeOwned>(
     app: &AppHandle<R>,
@@ -17,6 +17,12 @@ impl<R: Runtime> Admob<R> {
         Err(crate::Error::UnsupportedPlatform)
     }
     pub fn show_rewarded_ad(&self, _emplacement: String) -> crate::Result<AdResult> {
+        Err(crate::Error::UnsupportedPlatform)
+    }
+    pub fn privacy_options_required(&self) -> crate::Result<OptionsConfidentialite> {
+        Err(crate::Error::UnsupportedPlatform)
+    }
+    pub fn show_privacy_options(&self) -> crate::Result<()> {
         Err(crate::Error::UnsupportedPlatform)
     }
 }

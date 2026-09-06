@@ -56,6 +56,8 @@ export const es: DictionnaireUI = {
     permissionRequise: "Se requiere permiso del sistema",
     autoriser: "Permitir",
     permissionAccordee: "Permiso concedido ✓",
+    confidentialite: "Privacidad",
+    optionsConfidentialite: "Opciones de privacidad (anuncios)",
     achats: "Compras",
     restaurerAchats: "Restaurar compras",
     restaurationEnCours: "Restaurando…",

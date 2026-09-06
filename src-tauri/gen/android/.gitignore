@@ -18,3 +18,5 @@ keystore.properties
 
 /.tauri
 /tauri.settings.gradle
+# Répertoires de session du compilateur Kotlin ≥ 2.0 (sous-projet B).
+.kotlin/

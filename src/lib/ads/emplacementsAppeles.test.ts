@@ -62,3 +62,79 @@ describe("AD_UNITS (pont natif) — un bloc distinct par emplacement", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
+
+/**
+ * Même garde pour le plugin Kotlin (sous-projet B). Syntaxe Kotlin :
+ *   "energie" to AD_UNIT_ENERGIE,
+ *   "boite-mystere" to "ca-app-pub-…/…",
+ * Tant que les blocs Android n'existent pas dans la console AdMob, les trois
+ * entrées pointent le bloc rewarded de TEST Google : la distinction est alors
+ * volontairement absente, le test la saute en le disant.
+ */
+describe("AD_UNITS (plugin Kotlin Android) — un bloc distinct par emplacement", () => {
+  const BLOC_TEST_GOOGLE = "ca-app-pub-3940256099942544/5224354917";
+  const source = readFileSync(
+    "src-tauri/vendor/tauri-plugin-admob/android/src/main/java/AdmobPlugin.kt",
+    "utf8",
+  );
+  // Constantes `private const val X = "…"` ou `= AUTRE_CONSTANTE`, résolues en
+  // chaîne (une constante peut en référencer une autre).
+  const constantes = new Map(
+    [...source.matchAll(/private const val (\w+) = (?:"([^"]*)"|(\w+))/g)].map((m) => [
+      m[1],
+      m[2] !== undefined ? `"${m[2]}"` : m[3],
+    ]),
+  );
+  const resoudre = (v: string, profondeur = 0): string => {
+    if (v.startsWith('"')) return v.slice(1, -1);
+    const suivant = constantes.get(v);
+    if (suivant === undefined || profondeur > 5) return v;
+    return resoudre(suivant, profondeur + 1);
+  };
+  const table = source.match(/AD_UNITS: Map<String, String> = mapOf\(([\s\S]*?)\n\)/);
+  const blocs = new Map(
+    [...(table?.[1] ?? "").matchAll(/"([^"]+)" to ("[^"]*"|\w+)/g)].map((m) => [
+      m[1],
+      resoudre(m[2]),
+    ]),
+  );
+  const ids = [...blocs.values()];
+  const enTest = ids.length > 0 && ids.every((id) => id === BLOC_TEST_GOOGLE);
+
+  it.each(Object.values(EMPLACEMENTS_PUB))("%s a son propre bloc AdMob", (emplacement) => {
+    const bloc = blocs.get(emplacement);
+    expect(bloc, `emplacement absent de AD_UNITS (Kotlin)`).toBeDefined();
+    expect(bloc, `bloc AdMob non renseigné`).not.toBe("");
+    expect(bloc, `bloc AdMob non résolu (constante inconnue)`).toMatch(/^ca-app-pub-/);
+  });
+
+  it.skipIf(enTest)("aucun bloc n'est partagé entre deux emplacements", () => {
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  /**
+   * L'App ID vit dans le manifeste de l'app, les blocs dans le plugin : deux
+   * fichiers, donc un oubli possible. Mélanger un App ID de test avec des blocs
+   * de production ne casse RIEN de visible — les pubs s'affichent sur un
+   * appareil de test — mais aucune impression réelle n'est comptée en
+   * production. C'est le mode de panne le plus cher et le plus silencieux.
+   */
+  it("l'App ID du manifeste appartient au même compte AdMob que les blocs", () => {
+    const manifeste = readFileSync(
+      "src-tauri/gen/android/app/src/main/AndroidManifest.xml",
+      "utf8",
+    );
+    const appId = manifeste.match(
+      /APPLICATION_ID"\s*\n?\s*android:value="([^"]+)"/,
+    )?.[1];
+    expect(appId, "meta-data APPLICATION_ID absent du manifeste").toBeDefined();
+    const editeur = (v: string) => v.match(/^ca-app-pub-(\d+)/)?.[1];
+    const editeurBlocs = editeur(ids[0] ?? "");
+    expect(
+      editeur(appId ?? ""),
+      enTest
+        ? "blocs de test : l'App ID doit être celui de test Google"
+        : "blocs de PRODUCTION avec un App ID d'un autre compte — aucune impression ne serait comptée",
+    ).toBe(editeurBlocs);
+  });
+});

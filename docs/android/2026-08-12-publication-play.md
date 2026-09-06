@@ -350,3 +350,34 @@ Console change souvent) :
 - Revoir la Data safety une seconde fois : l'achat en tant que tel ne collecte pas de
   donnée personnelle nouvelle, mais la case « achats intégrés » de la fiche doit passer à
   oui.
+
+---
+
+## Sous-projet B — pubs AdMob Android atterries — 2026-09-05
+
+**Feu vert production obtenu le 2026-09-05** (test fermé passé) ; décision : promouvoir la
+**1.5.0 telle quelle**, sans monétisation, et sortir la version à pubs dans une mise à jour.
+
+**Ce que la build de `feat/android-admob` embarque** (recette :
+`docs/android/2026-09-05-recette-admob.md`) : `play-services-ads:25.4.0` + UMP 4.0.0 dans
+le module Android du plugin vendoré, Kotlin 2.1.21 dans le projet généré (pas plus haut :
+`kotlinOptions {}` des modules du registre Cargo), permission `AD_ID` explicite et
+`meta-data APPLICATION_ID` dans le manifeste de l'app, section « Confidentialité » dans
+les Réglages (Android seulement). **App ID et blocs de TEST Google tant que Guillaume n'a
+pas créé l'app Android et ses 3 blocs « Récompensé » dans AdMob** : une build avec les IDs
+de test ne doit aller que sur une piste de test, jamais en production.
+
+**À faire dans Play Console au moment de la sortie monétisée** (pas avant) :
+1. Contenu de l'application → Annonces → « Oui, mon application contient des annonces ».
+2. Data safety → Collecte : « Identifiants de l'appareil ou autres » (identifiant
+   publicitaire), **partagé** avec Google, finalité Publicité ou marketing ; la
+   permission `AD_ID` est déclarée par le manifeste (Play la détecte).
+3. Pages de confidentialité (app + site, 4 langues) : mentionner Android / Google Play et
+   le bouton « Options de confidentialité » à la place de « réinstaller » — sous-projet
+   conformité.
+
+**⛔ Bloquant trouvé pendant la recette, HORS B et déjà dans la 1.5.0 en production** :
+`notification.request_permission` ne rappelle jamais l'invoke côté Kotlin et bloque un
+worker Rust à chaque appel ; au quatrième, plus aucune commande asynchrone ne répond
+(pubs, sauvegarde durable, « Ouverture du local… » figé). Détail et preuve (backtrace
+`debuggerd`) dans la recette §2.1. À corriger **avant** la sortie monétisée.
