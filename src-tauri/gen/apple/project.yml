@@ -59,7 +59,7 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 1.5.1
+        CFBundleShortVersionString: 1.5.2
         CFBundleVersion: "1.0.0"
         ITSAppUsesNonExemptEncryption: false
         FIREBASE_ANALYTICS_COLLECTION_ENABLED: false

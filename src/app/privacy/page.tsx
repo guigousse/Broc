@@ -89,7 +89,8 @@ export default function PrivacyPage() {
 
       <h2 style={h2}>4. Achats intégrés et publicités</h2>
       <p>
-        <strong>Achat intégré.</strong> L’application propose un achat intégré
+        <strong>Achat intégré (iOS uniquement).</strong> Sur iPhone et iPad,
+        l’application propose un achat intégré
         unique et facultatif (« Énergie infinie »). Le paiement est traité
         exclusivement par Apple via l’App Store : Broc n’accède à aucune donnée
         bancaire et ne collecte aucune information de paiement. Le déblocage est
@@ -103,13 +104,16 @@ export default function PrivacyPage() {
         récompensées, uniquement lorsque vous choisissez d’en regarder une pour
         obtenir un bonus en jeu. Elles sont fournies par Google AdMob. À cette
         fin, Google peut collecter des identifiants d’appareil (dont
-        l’identifiant publicitaire, avec votre accord via la popup iOS
-        « Autoriser l’app à suivre vos activités ? »), votre adresse IP et des
+        l’identifiant publicitaire ; sur iOS, sa collecte est soumise à votre
+        accord via la popup « Autoriser l’app à suivre vos activités ? »),
+        votre adresse IP et des
         données de diagnostic publicitaire. Au premier lancement, un formulaire
         de consentement (RGPD) vous permet d’accepter ou de refuser les
         publicités personnalisées ; en cas de refus, des publicités non
-        personnalisées sont affichées. Ce choix n’est pas modifiable
-        directement en jeu à ce jour ; pour le retirer, supprimez puis
+        personnalisées sont affichées. Sur Android, vous pouvez revenir sur ce
+        choix à tout moment depuis les Réglages du jeu, encadré
+        « Confidentialité », bouton « Options de confidentialité » ; sur iOS,
+        pour le retirer, supprimez puis
         réinstallez l’application (le formulaire de consentement sera
         représenté au premier lancement). Les publicités restent dans tous
         les cas facultatives et à votre seule initiative. Pour en savoir plus
@@ -125,10 +129,12 @@ export default function PrivacyPage() {
         .
       </p>
 
-      <h2 style={h2}>5. Mesure d’audience</h2>
+      <h2 style={h2}>5. Mesure d’audience (iOS uniquement)</h2>
       <p>
-        Pour comprendre comment le jeu est joué et l’améliorer, Broc utilise
-        Firebase Analytics, un service de Google. Cette mesure collecte des
+        Sur iPhone et iPad, pour comprendre comment le jeu est joué et
+        l’améliorer, Broc utilise
+        Firebase Analytics, un service de Google. La version Android n’en
+        comporte pas. Cette mesure collecte des
         événements de jeu (progression, écrans consultés, publicités
         regardées), l’identifiant d’installation attribué par Firebase, le
         modèle de votre appareil, la version de son système d’exploitation et
@@ -232,7 +238,8 @@ export default function PrivacyPage() {
 
       <h2 style={h2}>4. In-app purchases and advertising</h2>
       <p>
-        <strong>In-app purchase.</strong> The app offers a single, optional
+        <strong>In-app purchase (iOS only).</strong> On iPhone and iPad, the
+        app offers a single, optional
         in-app purchase (“Unlimited energy”). Payment is processed exclusively
         by Apple through the App Store: Broc never accesses any banking data and
         collects no payment information. The unlock is stored locally on your
@@ -244,12 +251,14 @@ export default function PrivacyPage() {
         <strong>Advertising.</strong> The app displays rewarded ads, only when
         you choose to watch one for an in-game bonus. They are provided by
         Google AdMob. For this purpose, Google may collect device identifiers
-        (including the advertising identifier, with your consent via the iOS
-        “Allow app to track your activity?” prompt), your IP address, and
+        (including the advertising identifier; on iOS, collecting it requires
+        your consent via the “Allow app to track your activity?” prompt), your
+        IP address, and
         advertising diagnostic data. On first launch, a consent form (GDPR)
         lets you accept or decline personalized ads; if declined,
-        non-personalized ads are shown instead. This choice cannot currently
-        be changed directly in the app; to withdraw it, delete and reinstall
+        non-personalized ads are shown instead. On Android you can revisit that
+        choice at any time from the in-game Settings, “Privacy” card, “Privacy
+        options” button; on iOS, to withdraw it, delete and reinstall
         the app (the consent form will be shown again on first launch). Ads
         remain optional either way and only ever play at your own request.
         For details on Google’s practices in this area, see{" "}
@@ -264,10 +273,12 @@ export default function PrivacyPage() {
         .
       </p>
 
-      <h2 style={h2}>5. Analytics</h2>
+      <h2 style={h2}>5. Analytics (iOS only)</h2>
       <p>
-        To understand how the game is played and to improve it, Broc uses
-        Firebase Analytics, a Google service. This measurement collects
+        On iPhone and iPad, to understand how the game is played and to improve
+        it, Broc uses
+        Firebase Analytics, a Google service. The Android version has none.
+        This measurement collects
         gameplay events (progression, screens visited, ads watched), the
         installation identifier assigned by Firebase, your device model, its
         OS version, and your country. It does not collect your name, your
@@ -373,7 +384,8 @@ export default function PrivacyPage() {
 
       <h2 style={h2}>4. Compras integradas y publicidad</h2>
       <p>
-        <strong>Compra integrada.</strong> La aplicación ofrece una única compra
+        <strong>Compra integrada (solo iOS).</strong> En iPhone y iPad, la
+        aplicación ofrece una única compra
         integrada opcional («Energía infinita»). El pago lo procesa
         exclusivamente Apple a través del App Store: Broc no accede a ningún
         dato bancario ni recopila información de pago. El desbloqueo se guarda
@@ -387,13 +399,15 @@ export default function PrivacyPage() {
         recompensados, únicamente cuando eliges ver uno para obtener una
         bonificación en el juego. Los proporciona Google AdMob. Para ello,
         Google puede recopilar identificadores del dispositivo (incluido el
-        identificador publicitario, con tu consentimiento mediante el aviso de
-        iOS «¿Permitir que la app rastree tu actividad?»), tu dirección IP y
+        identificador publicitario; en iOS, su recopilación requiere tu
+        consentimiento mediante el aviso «¿Permitir que la app rastree tu
+        actividad?»), tu dirección IP y
         datos de diagnóstico publicitario. En el primer arranque, un formulario
         de consentimiento (RGPD) te permite aceptar o rechazar los anuncios
         personalizados; en caso de rechazo, se muestran anuncios no
-        personalizados. Esta elección no puede modificarse directamente en el
-        juego por ahora; para retirarla, elimina y vuelve a instalar la
+        personalizados. En Android puedes cambiar esa elección cuando quieras
+        desde los Ajustes del juego, apartado «Privacidad», botón «Opciones de
+        privacidad»; en iOS, para retirarla, elimina y vuelve a instalar la
         aplicación (el formulario de consentimiento se mostrará de nuevo en el
         primer arranque). Los anuncios son en todo caso opcionales y solo se
         reproducen a petición tuya. Para más información sobre las prácticas de
@@ -409,10 +423,12 @@ export default function PrivacyPage() {
         .
       </p>
 
-      <h2 style={h2}>5. Medición de audiencia</h2>
+      <h2 style={h2}>5. Medición de audiencia (solo iOS)</h2>
       <p>
-        Para entender cómo se juega y mejorarlo, Broc utiliza Firebase
-        Analytics, un servicio de Google. Esta medición recopila eventos de
+        En iPhone y iPad, para entender cómo se juega y mejorarlo, Broc utiliza
+        Firebase
+        Analytics, un servicio de Google. La versión de Android no la incluye.
+        Esta medición recopila eventos de
         juego (progreso, pantallas visitadas, anuncios vistos), el
         identificador de instalación asignado por Firebase, el modelo de tu
         dispositivo, la versión de su sistema operativo y tu país. No
@@ -525,7 +541,8 @@ export default function PrivacyPage() {
 
       <h2 style={h2}>4. Αγορές εντός εφαρμογής και διαφημίσεις</h2>
       <p>
-        <strong>Αγορά εντός εφαρμογής.</strong> Η εφαρμογή προσφέρει μία
+        <strong>Αγορά εντός εφαρμογής (μόνο σε iOS).</strong> Σε iPhone και
+        iPad, η εφαρμογή προσφέρει μία
         μοναδική προαιρετική αγορά εντός εφαρμογής («Άπειρη ενέργεια»). Η
         πληρωμή διεκπεραιώνεται αποκλειστικά από την Apple μέσω του App Store:
         το Broc δεν έχει πρόσβαση σε τραπεζικά δεδομένα και δεν συλλέγει καμία
@@ -540,14 +557,16 @@ export default function PrivacyPage() {
         επιβράβευση, μόνο όταν επιλέγετε να παρακολουθήσετε μία για να λάβετε
         ένα μπόνους στο παιχνίδι. Παρέχονται από την Google AdMob. Για τον
         σκοπό αυτό, η Google ενδέχεται να συλλέξει αναγνωριστικά συσκευής
-        (συμπεριλαμβανομένου του διαφημιστικού αναγνωριστικού, με τη
-        συγκατάθεσή σας μέσω του μηνύματος iOS «Να επιτρέπεται στην εφαρμογή
+        (συμπεριλαμβανομένου του διαφημιστικού αναγνωριστικού· σε iOS, η
+        συλλογή του απαιτεί τη συγκατάθεσή σας μέσω του μηνύματος «Να
+        επιτρέπεται στην εφαρμογή
         να παρακολουθεί τη δραστηριότητά σας;»), τη διεύθυνση IP σας και
         διαγνωστικά δεδομένα διαφήμισης. Κατά την πρώτη εκκίνηση, μια φόρμα
         συγκατάθεσης (ΓΚΠΔ) σάς επιτρέπει να αποδεχθείτε ή να απορρίψετε τις
         εξατομικευμένες διαφημίσεις· σε περίπτωση άρνησης, εμφανίζονται μη
-        εξατομικευμένες διαφημίσεις. Αυτή η επιλογή δεν μπορεί προς το παρόν
-        να τροποποιηθεί απευθείας μέσα στο παιχνίδι· για να την αποσύρετε,
+        εξατομικευμένες διαφημίσεις. Σε Android μπορείτε να αλλάξετε αυτή την
+        επιλογή οποιαδήποτε στιγμή από τις Ρυθμίσεις του παιχνιδιού, ενότητα
+        «Απόρρητο», κουμπί «Επιλογές απορρήτου»· σε iOS, για να την αποσύρετε,
         διαγράψτε και επανεγκαταστήστε την εφαρμογή (η φόρμα συγκατάθεσης θα
         εμφανιστεί ξανά κατά την πρώτη εκκίνηση). Οι διαφημίσεις παραμένουν
         σε κάθε περίπτωση προαιρετικές και προβάλλονται μόνο με δική σας
@@ -564,10 +583,12 @@ export default function PrivacyPage() {
         .
       </p>
 
-      <h2 style={h2}>5. Μέτρηση επισκεψιμότητας</h2>
+      <h2 style={h2}>5. Μέτρηση επισκεψιμότητας (μόνο σε iOS)</h2>
       <p>
-        Για να κατανοήσει πώς παίζεται το παιχνίδι και να το βελτιώσει, το
-        Broc χρησιμοποιεί το Firebase Analytics, μια υπηρεσία της Google. Αυτή
+        Σε iPhone και iPad, για να κατανοήσει πώς παίζεται το παιχνίδι και να
+        το βελτιώσει, το
+        Broc χρησιμοποιεί το Firebase Analytics, μια υπηρεσία της Google. Η
+        έκδοση για Android δεν τη διαθέτει. Αυτή
         η μέτρηση συλλέγει συμβάντα παιχνιδιού (πρόοδος, οθόνες που
         επισκεφθήκατε, διαφημίσεις που παρακολουθήσατε), το αναγνωριστικό
         εγκατάστασης που αποδίδεται από το Firebase, το μοντέλο της συσκευής

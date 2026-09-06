@@ -147,11 +147,11 @@ jobs:
       # dans le shell. 1005000 = 1.5.0 selon la convention de Tauri ; le numéro de run
       # garantit la stricte croissance exigée par Play.
       #
-      # La base suit le `version` de package.json (1.5.1 au 2026-09-06) : elle doit être
+      # La base suit le `version` de package.json (1.5.2 au 2026-09-06) : elle doit être
       # relevée à chaque changement de version MINEURE, sans quoi un versionCode de 1.5.x
       # finirait par dépasser la base de 1.6.0. Une version corrective (1.5.0 → 1.5.1) ne
-      # la change donc pas. Le dernier code PRODUIT par ce workflow est 1005005 (run n°5,
-      # contenu 1.5.0) — toute valeur produite ici lui est supérieure.
+      # la change donc pas. Le dernier code PRODUIT par ce workflow est 1005006 (run n°6,
+      # contenu 1.5.1) — toute valeur produite ici lui est supérieure.
       - name: Calculer le versionCode
         run: echo "ANDROID_VERSION_CODE=$((1005000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
 
